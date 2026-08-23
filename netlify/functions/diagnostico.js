@@ -1,37 +1,22 @@
 // Netlify Function: proxy seguro para a API da Anthropic.
 //
-// Porque isto existe: a ferramenta de diagnóstico (blueprint-flow.html)
-// corre no browser do visitante. Chamar a API da Anthropic diretamente
-// do browser exigiria expor a chave de API no código-fonte da página,
-// visível a qualquer pessoa que abra as ferramentas de developer do
-// browser — isso é um risco de segurança sério (a tua chave pode ser
-// roubada e usada por terceiros, gerando custos na tua conta).
-//
-// Esta função corre do lado do servidor (na infraestrutura do Netlify),
-// onde a chave fica escondida numa variável de ambiente, nunca exposta
-// ao browser.
-//
-// --- Como ativar ---
-// 1. Cria uma chave de API em https://console.anthropic.com/settings/keys
-// 2. No painel do Netlify: Project configuration > Environment variables
-//    > Add a variable
-//    Nome:  ANTHROPIC_API_KEY
-//    Valor: a tua chave (começa por "sk-ant-...")
-// 3. Volta a publicar o site (novo deploy) para a variável ficar ativa.
-// 4. A partir daí, o diagnóstico em blueprint-flow.html passa a usar
-//    automaticamente a IA real em vez do gerador local de recurso.
-//
-// Nota: isto tem custos associados à tua conta Anthropic, cobrados por
-// utilização (por diagnóstico gerado). Consulta os preços em
-// https://www.anthropic.com/pricing antes de ativar em produção.
+// VERSÃO DE DIAGNÓSTICO: esta versão tem linhas extra de "console.log"
+// para aparecerem nos Function logs do Netlify e ajudarem a perceber
+// porque é que uma chamada pode estar a falhar. Podes remover estas
+// linhas mais tarde, quando tudo estiver a funcionar bem.
 
 exports.handler = async function (event) {
+  console.log("diagnostico: pedido recebido, método =", event.httpMethod);
+
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log("diagnostico: ANTHROPIC_API_KEY está definida?", !!apiKey, apiKey ? `(começa por ${apiKey.slice(0, 7)}...)` : "");
+
   if (!apiKey) {
+    console.log("diagnostico: a terminar com erro 501 — chave em falta.");
     return {
       statusCode: 501,
       body: JSON.stringify({
@@ -42,6 +27,7 @@ exports.handler = async function (event) {
 
   try {
     const { model, max_tokens, system, messages } = JSON.parse(event.body);
+    console.log("diagnostico: a chamar a Anthropic com o modelo", model || "claude-sonnet-5");
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -58,7 +44,15 @@ exports.handler = async function (event) {
       }),
     });
 
+    console.log("diagnostico: resposta da Anthropic, status =", response.status);
+
     const data = await response.json();
+
+    if (!response.ok) {
+      console.log("diagnostico: corpo do erro da Anthropic:", JSON.stringify(data));
+    } else {
+      console.log("diagnostico: chamada bem sucedida.");
+    }
 
     return {
       statusCode: response.status,
@@ -66,6 +60,7 @@ exports.handler = async function (event) {
       body: JSON.stringify(data),
     };
   } catch (err) {
+    console.log("diagnostico: excepção apanhada:", err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
