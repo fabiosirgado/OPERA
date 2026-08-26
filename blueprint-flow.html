@@ -946,7 +946,7 @@ function OperaBlueprintFlow() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-5",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [{
@@ -1692,7 +1692,8 @@ function OperaBlueprintFlow() {
     }
   }, resultado.chamadaFinal), /*#__PURE__*/React.createElement("button", {
     className: "final-cta-btn",
-    type: "button"
+    type: "button",
+    onClick: () => window.open("https://cal.com/opera-os/discovery-call", "_blank")
   }, "Marcar reunião com a OPERA")), /*#__PURE__*/React.createElement("div", {
     className: "internal-tag"
   }, "Uso interno OPERA, perfil sugerido: ", resultado.ticketInterno)), /*#__PURE__*/React.createElement("div", {

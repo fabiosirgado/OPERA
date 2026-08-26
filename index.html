@@ -563,7 +563,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
         <p class="support">Tu focas-te em angariar, vender, negociar e relacionar-te com os teus clientes. A OPERA trata da operação por trás de cada negócio.</p>
         <div class="btn-row">
           <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
-          <a href="#form" class="btn btn-ghost">Agendar uma reunião</a>
+          <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
         </div>
       </div>
       <div class="hero-visual">
@@ -890,7 +890,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
       <p>Descobre como a OPERA pode funcionar como a extensão operacional da tua estrutura.</p>
       <div class="btn-row">
         <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
-        <a href="#form" class="btn btn-ghost">Agendar uma reunião</a>
+        <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
       </div>
     </div>
   </section>
@@ -903,7 +903,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
           <span class="eyebrow">Contacto</span>
           <h2 style="font-size:32px;">Quero conhecer a OPERA</h2>
         </div>
-        <form class="form-grid" onsubmit="event.preventDefault(); this.querySelector('.form-success').style.display='block'; this.reset();">
+        <form class="form-grid" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return submitContactForm(event)">
+          <input type="hidden" name="form-name" value="contact">
+          <p style="display:none;"><label>Não preencher: <input name="bot-field"></label></p>
           <div class="field"><label for="nome">Nome</label><input id="nome" name="nome" type="text" required></div>
           <div class="field"><label for="empresa">Empresa</label><input id="empresa" name="empresa" type="text" required></div>
           <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
@@ -913,13 +915,37 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
           <div class="full">
             <button type="submit" class="btn btn-primary">Quero conhecer a OPERA</button>
             <p class="form-success" style="display:none;color:var(--teal-300);font-size:13.5px;margin-top:14px;">Obrigado. A equipa OPERA entrará em contacto brevemente.</p>
+            <p class="form-error" style="display:none;color:#e2725b;font-size:13.5px;margin-top:14px;">Não foi possível enviar agora. Tenta novamente ou escreve para geral@opera-os.com.</p>
           </div>
         </form>
       </div>
     </div>
   </section>
 
+  <script>
+    function submitContactForm(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(data).toString(),
+      })
+        .then(() => {
+          form.querySelector('.form-success').style.display = 'block';
+          form.querySelector('.form-error').style.display = 'none';
+          form.reset();
+        })
+        .catch(() => {
+          form.querySelector('.form-error').style.display = 'block';
+        });
+      return false;
+    }
+  </script>
+
 </main>
+
 
 <footer>
   <div class="container footer-inner">
