@@ -119,7 +119,8 @@ header.nav.scrolled{
 }
 .nav-inner{display:flex;align-items:center;justify-content:space-between;}
 .logo{font-family:'Archivo',sans-serif;font-weight:900;font-size:22px;color:#fff;letter-spacing:0.01em;}
-.nav-links{display:flex;gap:34px;align-items:center;}
+.nav-links{display:flex;gap:16px;align-items:center;}
+.nav-links a{white-space:nowrap;font-size:14px;}
 .nav-links a{font-size:14.5px;color:var(--ink-300);font-weight:500;transition:color .25s;}
 .nav-links a:hover{color:#fff;}
 .nav-cta{display:flex;align-items:center;gap:18px;}
@@ -260,6 +261,57 @@ header.nav.scrolled{
 .problem-card .num{font-family:'IBM Plex Mono',monospace;color:var(--ink-500);font-size:13px;margin-bottom:18px;}
 .problem-card h3{margin-bottom:12px;font-size:20px;}
 .problem-card p{color:var(--ink-300);font-size:15px;}
+/* ---------- SALES ASSISTANT ---------- */
+.sa-section{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(900px 500px at 15% 10%, rgba(63,107,255,0.16), transparent 60%),
+    radial-gradient(700px 500px at 90% 80%, rgba(45,215,224,0.08), transparent 55%),
+    linear-gradient(160deg,#0a1130,#0c1442 55%,#080d24);
+}
+.sa-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:stretch;margin-bottom:48px;}
+.sa-steps{display:flex;flex-direction:column;gap:12px;}
+.sa-step{
+  display:flex;align-items:flex-start;gap:16px;
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-md);
+  padding:16px 18px;transition:background .35s,border-color .35s,transform .35s;
+}
+.sa-step:hover{background:var(--glass-strong);border-color:rgba(255,255,255,.18);transform:translateX(3px);}
+.sa-num{
+  flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue-500),var(--blue-600));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Archivo',sans-serif;font-weight:800;font-size:14px;color:#fff;
+}
+.sa-step h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:15.5px;color:#fff;margin-bottom:3px;}
+.sa-step p{font-size:13.5px;color:var(--ink-500);}
+.sa-outcome{
+  border-radius:var(--radius-lg);border:1px solid var(--glass-border);
+  background:linear-gradient(165deg,rgba(63,107,255,0.1),rgba(45,215,224,0.04));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:36px 28px;gap:14px;
+}
+.sa-outcome-icon{font-size:34px;}
+.sa-outcome-label{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);}
+.sa-outcome-divider{width:40px;height:2px;background:linear-gradient(90deg,var(--blue-400),var(--teal-400));margin:6px 0;}
+.sa-outcome-big{font-family:'Archivo',sans-serif;font-weight:900;font-size:26px;color:#fff;line-height:1.25;}
+.sa-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;}
+.sa-benefit{
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-md);
+  padding:20px 14px;
+}
+.sa-benefit .ico{width:36px;height:36px;border-radius:50%;background:rgba(63,107,255,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.sa-benefit span{font-size:12.5px;color:var(--ink-300);line-height:1.4;}
+.sa-closer{
+  text-align:center;max-width:680px;margin:0 auto;font-size:16px;color:var(--ink-300);line-height:1.6;
+}
+.sa-closer strong{color:#fff;}
+@media (max-width:900px){
+  .sa-grid{grid-template-columns:1fr;}
+  .sa-benefits{grid-template-columns:1fr 1fr;}
+}
+
 .problem-close{
   text-align:center;padding-top:16px;border-top:1px solid var(--glass-border);
 }
@@ -525,6 +577,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
     <nav class="nav-links">
       <a href="#o-que-fazemos">O que fazemos</a>
       <a href="#operations">Operations</a>
+      <a href="#sales-assistant">Sales Assistant</a>
       <a href="#legal">Legal</a>
       <a href="#finance">Finance</a>
       <a href="#como-funciona">Como funciona</a>
@@ -541,6 +594,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 <div class="mobile-panel" id="mobilePanel">
   <a href="#o-que-fazemos">O que fazemos</a>
   <a href="#operations">Operations</a>
+  <a href="#sales-assistant">Sales Assistant</a>
   <a href="#legal">Legal</a>
   <a href="#finance">Finance</a>
   <a href="#como-funciona">Como funciona</a>
@@ -695,6 +749,44 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
           <div class="panel-row"><div class="l">⏱️ Prazo</div><span style="color:var(--ink-300);font-size:12.5px;">12 dias</span></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- SALES ASSISTANT -->
+  <section class="section sa-section" id="sales-assistant">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">OPERA · Sales Assistant</span>
+        <h2>Nenhuma lead é desperdiçada.</h2>
+        <p class="lead">A OPERA SA trata da lead do primeiro contacto até à visita agendada, para o consultor só entrar quando é para vender, negociar e fechar.</p>
+      </div>
+
+      <div class="sa-grid">
+        <div class="sa-steps stagger">
+          <div class="sa-step reveal"><span class="sa-num">1</span><div><h4>Atende</h4><p>Inbound de imóveis + tráfego pago.</p></div></div>
+          <div class="sa-step reveal"><span class="sa-num">2</span><div><h4>Qualifica</h4><p>O quê, onde, quando, quanto e financiamento.</p></div></div>
+          <div class="sa-step reveal"><span class="sa-num">3</span><div><h4>Faz follow-up</h4><p>Garante que houve tentativa de contacto, sem nurturing.</p></div></div>
+          <div class="sa-step reveal"><span class="sa-num">4</span><div><h4>Regista</h4><p>Lead + informação + notas no CRM.</p></div></div>
+          <div class="sa-step reveal"><span class="sa-num">5</span><div><h4>Agenda</h4><p>Visitas quando a lead está pronta.</p></div></div>
+          <div class="sa-step reveal"><span class="sa-num">6</span><div><h4>Recupera</h4><p>1 campanha mensal de reativação de leads antigas.</p></div></div>
+        </div>
+
+        <div class="sa-outcome reveal">
+          <div class="sa-outcome-icon">🧑‍💼</div>
+          <div class="sa-outcome-label">O consultor</div>
+          <div class="sa-outcome-divider"></div>
+          <div class="sa-outcome-big">vende, negoceia<br>e fecha.</div>
+        </div>
+      </div>
+
+      <div class="sa-benefits stagger">
+        <div class="sa-benefit reveal"><div class="ico">✓</div><span>Mais oportunidades<br>para o consultor</span></div>
+        <div class="sa-benefit reveal"><div class="ico">⏱</div><span>Mais tempo<br>para vender</span></div>
+        <div class="sa-benefit reveal"><div class="ico">📈</div><span>Mais conversões<br>para o negócio</span></div>
+        <div class="sa-benefit reveal"><div class="ico">💶</div><span>Mais resultados<br>para todos</span></div>
+      </div>
+
+      <p class="sa-closer reveal">A OPERA cuida da primeira e mais crítica etapa. O consultor foca-se no que faz a diferença: <strong>fechar negócios.</strong></p>
     </div>
   </section>
 
