@@ -815,11 +815,7 @@ function RateInput({
     onChange: e => onChange(e.target.value === "" ? "" : parseFloat(e.target.value))
   }), /*#__PURE__*/React.createElement("span", {
     className: "field-suffix"
-  }, "%")), /*#__PURE__*/React.createElement("span", {
-    className: "field-hint"
-  }, "O teu histórico: ", /*#__PURE__*/React.createElement("strong", {
-    className: "mono"
-  }, historico != null ? pct1(historico) : "N/D")));
+  }, "%")));
 }
 function FunnelDiagram({
   title,
@@ -1304,6 +1300,7 @@ function OperaGoalCalculator() {
     linhas.push(`Faturação anual pretendida: ${fmtEur(objetivoAnual)}`);
     linhas.push(`Valor médio dos imóveis: ${fmtEur(valorImovel)}`);
     linhas.push(`Comissão total (pleno): ${comissaoPct}%`);
+    linhas.push(`Despesas mensais do negócio: ${fmtEur(despesas)}`);
     linhas.push(`Divisão do negócio: Angariação ${pctAngariacao}% / Compradores ${pctCompradores}% / Pleno ${pctPleno}%`);
     linhas.push("");
     linhas.push("TAXAS DE CONVERSÃO INSERIDAS");
@@ -1619,6 +1616,18 @@ function OperaGoalCalculator() {
     suffix: "%",
     step: 0.5,
     hint: "Por defeito 5%. Só 1 lado = metade disto."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "row row-3",
+    style: {
+      marginTop: 14
+    }
+  }, /*#__PURE__*/React.createElement(NumInput, {
+    label: "Despesas mensais do negócio",
+    value: despesas,
+    onChange: setDespesas,
+    suffix: "€",
+    step: 100,
+    hint: "Ex: marketing, ferramentas, assistente. Usado no rendimento líquido."
   })), /*#__PURE__*/React.createElement("div", {
     className: "row row-3",
     style: {
