@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPERA Investor · You Invest. We operate.</title>
+<meta name="description" content="A OPERA é o departamento operacional externo do investidor imobiliário. Tu decides onde investir, a OPERA garante que a operação acontece. Operations, Legal e Finance numa única estrutura.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-950:#05081a;
+  --navy-900:#0a1130;
+  --navy-850:#0d1640;
+  --navy-800:#111c4d;
+  --navy-700:#16225a;
+  --blue-600:#2451ff;
+  --blue-500:#3f6bff;
+  --blue-400:#6f8bff;
+  --teal-400:#2dd7e0;
+  --teal-300:#6be8ee;
+  --violet-400:#7c8dff;
+  --ink-0:#ffffff;
+  --ink-200:#dbe2f7;
+  --ink-300:#aeb9dc;
+  --ink-500:#7580ab;
+  --ink-600:#586090;
+  --glass:rgba(255,255,255,0.045);
+  --glass-strong:rgba(255,255,255,0.075);
+  --glass-border:rgba(255,255,255,0.09);
+  --radius-lg:22px;
+  --radius-md:14px;
+  --radius-sm:8px;
+  --maxw:1180px;
+  --ease:cubic-bezier(.16,.8,.24,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;} }
+body{
+  background:var(--navy-950);
+  color:var(--ink-200);
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+.container{max-width:var(--maxw);margin:0 auto;padding:0 32px;}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--teal-300);font-weight:500;display:inline-flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal-300);box-shadow:0 0 12px 2px var(--teal-300);}
+h1,h2,h3,h4{font-family:'Archivo',sans-serif;font-weight:900;color:var(--ink-0);line-height:1.06;letter-spacing:-0.01em;}
+h2{font-size:clamp(30px,4.4vw,50px);}
+h3{font-size:22px;}
+.section{padding:130px 0;position:relative;}
+.section-head{max-width:680px;margin-bottom:64px;}
+.section-head .eyebrow{margin-bottom:20px;}
+.section-head p.lead{color:var(--ink-300);font-size:18px;margin-top:18px;max-width:560px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:15px 26px;border-radius:999px;font-weight:600;font-size:15px;border:1px solid transparent;transition:transform .35s var(--ease), box-shadow .35s var(--ease), background .35s var(--ease), border-color .35s var(--ease);white-space:nowrap;}
+.btn-primary{background:linear-gradient(135deg,var(--blue-500),var(--blue-600) 60%, #1c3fe0);color:#fff;box-shadow:0 8px 24px -8px rgba(36,81,255,.65);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(36,81,255,.85);}
+.btn-ghost{background:var(--glass);color:var(--ink-0);border-color:var(--glass-border);backdrop-filter:blur(6px);}
+.btn-ghost:hover{background:var(--glass-strong);border-color:rgba(255,255,255,0.2);transform:translateY(-2px);}
+.btn-row{display:flex;gap:14px;flex-wrap:wrap;}
+
+/* NAV */
+header.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 0;transition:background .4s var(--ease), border-color .4s var(--ease), padding .4s var(--ease);border-bottom:1px solid transparent;}
+header.nav.scrolled{background:rgba(5,8,26,0.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--glass-border);padding:12px 0;}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Archivo',sans-serif;font-weight:900;font-size:22px;color:#fff;letter-spacing:0.01em;display:flex;align-items:baseline;gap:9px;}
+.logo .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--teal-300);font-weight:500;border:1px solid var(--glass-border);padding:3px 8px;border-radius:5px;}
+.nav-links{display:flex;gap:16px;align-items:center;}
+.nav-links a{white-space:nowrap;font-size:14.5px;color:var(--ink-300);font-weight:500;transition:color .25s;}
+.nav-links a:hover{color:#fff;}
+.nav-cta{display:flex;align-items:center;gap:18px;}
+.nav-cta .btn{padding:11px 20px;font-size:14px;}
+.burger{display:none;width:38px;height:38px;border-radius:8px;background:var(--glass);border:1px solid var(--glass-border);align-items:center;justify-content:center;flex-direction:column;gap:5px;}
+.burger span{width:16px;height:2px;background:#fff;border-radius:2px;}
+.mobile-panel{position:fixed;inset:0;top:64px;background:rgba(5,8,26,0.98);backdrop-filter:blur(20px);z-index:99;display:none;flex-direction:column;padding:36px 32px;gap:26px;}
+.mobile-panel a{font-size:20px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif;}
+.mobile-panel.open{display:flex;}
+@media (max-width:900px){.nav-links{display:none;}.nav-cta .btn-ghost{display:none;}.burger{display:flex;}}
+
+/* orbs */
+.orb-field{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;}
+
+/* HERO */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;padding-top:140px;padding-bottom:80px;background:radial-gradient(1100px 700px at 82% 8%, rgba(45,215,224,0.16), transparent 60%),radial-gradient(900px 600px at 15% 90%, rgba(63,107,255,0.22), transparent 60%),linear-gradient(160deg,#070c22 0%, #0a1130 45%, #0c1442 100%);overflow:hidden;}
+.hero .orb1{width:520px;height:520px;top:-140px;right:-120px;background:radial-gradient(circle at 35% 35%,#4d78ff,#0d1640 72%);opacity:.55;animation:float1 14s ease-in-out infinite;}
+.hero .orb2{width:340px;height:340px;bottom:-80px;right:20%;background:radial-gradient(circle at 40% 40%,#2dd7e0,#0d1640 72%);opacity:.4;animation:float2 16s ease-in-out infinite;}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,24px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-18px)}}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center;}
+.hero-copy .eyebrow{margin-bottom:26px;}
+.hero-copy h1{font-size:clamp(38px,5.6vw,66px);margin-bottom:22px;}
+.hero-copy h1 .accent{background:linear-gradient(100deg,#6f8bff,#2dd7e0 65%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero-sub{font-size:20px;color:#fff;font-weight:600;margin-bottom:14px;font-family:'Archivo',sans-serif;}
+.hero-copy p.support{color:var(--ink-300);font-size:17px;max-width:480px;margin-bottom:36px;}
+.hero-visual{position:relative;height:480px;}
+.mock-card{position:absolute;border-radius:var(--radius-lg);background:linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02));border:1px solid var(--glass-border);backdrop-filter:blur(18px);box-shadow:0 30px 60px -20px rgba(0,0,10,0.55);}
+.mock-main{left:6%;top:6%;width:88%;height:78%;padding:22px;display:flex;flex-direction:column;gap:14px;}
+.mock-topbar{display:flex;justify-content:space-between;align-items:center;}
+.mock-dot-row{display:flex;gap:6px;}
+.mock-dot-row span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);}
+.mock-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--ink-500);text-transform:uppercase;}
+.mock-row{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-200);}
+.mock-row .lbl{display:flex;align-items:center;gap:10px;font-weight:500;}
+.mock-row .lbl .ico{width:26px;height:26px;border-radius:7px;background:rgba(63,107,255,0.18);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;padding:5px 10px;border-radius:999px;font-weight:500;text-transform:uppercase;}
+.chip-pending{background:rgba(255,183,77,0.15);color:#ffcd7d;}
+.chip-progress{background:rgba(63,107,255,0.2);color:#9db2ff;}
+.chip-done{background:rgba(45,215,224,0.16);color:#71e8ee;}
+.mock-float{padding:16px 18px;width:230px;}
+.mock-float.f1{right:-4%;top:2%;}
+.mock-float.f2{left:-6%;bottom:4%;}
+.mock-float .k{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);margin-bottom:6px;}
+.mock-float .v{font-family:'Archivo',sans-serif;font-weight:800;font-size:22px;color:#fff;}
+.mock-float .sub{font-size:12px;color:var(--ink-300);margin-top:4px;}
+.scroll-cue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.6;z-index:2;}
+.scroll-cue .line{width:1px;height:34px;background:linear-gradient(#fff,transparent);animation:scrolldown 2s ease-in-out infinite;}
+@keyframes scrolldown{0%{opacity:0;transform:translateY(-6px)}50%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+@media (max-width:1000px){.hero-grid{grid-template-columns:1fr;}.hero-visual{height:380px;margin-top:20px;}}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease), transform .8s var(--ease);}
+.reveal.in{opacity:1;transform:translateY(0);}
+.stagger .reveal:nth-child(1){transition-delay:0s;}
+.stagger .reveal:nth-child(2){transition-delay:.08s;}
+.stagger .reveal:nth-child(3){transition-delay:.16s;}
+.stagger .reveal:nth-child(4){transition-delay:.24s;}
+
+/* flow steps (used for "O que parece" and "Como funciona") */
+.flow-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px;}
+.flow-step{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:26px 22px;position:relative;}
+.flow-step .num{font-family:'IBM Plex Mono',monospace;color:var(--teal-300);font-size:12px;margin-bottom:14px;}
+.flow-step h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:17px;color:#fff;margin-bottom:8px;}
+.flow-step p{font-size:14px;color:var(--ink-300);}
+.flow-arrow{position:absolute;top:50%;right:-24px;transform:translateY(-50%);color:var(--ink-600);font-size:18px;}
+@media (max-width:900px){.flow-steps{grid-template-columns:1fr;}.flow-arrow{display:none;}}
+.section-close{text-align:center;padding-top:16px;margin-top:48px;border-top:1px solid var(--glass-border);}
+.section-close p{font-size:17px;color:var(--ink-300);font-style:italic;}
+
+/* problem grid */
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:0;}
+.problem-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:34px 28px;transition:transform .4s var(--ease), background .4s var(--ease), border-color .4s var(--ease);}
+.problem-card:hover{transform:translateY(-6px);background:var(--glass-strong);border-color:rgba(255,255,255,.18);}
+.problem-card .num{font-family:'IBM Plex Mono',monospace;color:var(--ink-500);font-size:13px;margin-bottom:18px;}
+.problem-card h3{margin-bottom:12px;font-size:20px;}
+.problem-card p{color:var(--ink-300);font-size:15px;}
+@media (max-width:900px){.problem-grid{grid-template-columns:1fr;}}
+
+/* risk list */
+.risk-list{display:flex;flex-direction:column;gap:4px;margin-bottom:40px;}
+.risk-item{border-left:2px solid var(--blue-400);padding:14px 0 14px 22px;font-size:16.5px;color:var(--ink-200);}
+
+/* highlight block (É aqui que entra a OPERA) */
+.highlight-block{background:linear-gradient(160deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02));border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:44px 40px;}
+.highlight-block h3{font-size:clamp(22px,2.6vw,30px);margin-bottom:10px;}
+.highlight-block h3 .accent{background:linear-gradient(100deg,#6f8bff,#2dd7e0 65%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.highlight-block p.lead-text{color:var(--ink-200);font-size:17px;margin:18px 0 10px;}
+.highlight-block p.sub-text{color:var(--ink-500);font-size:14.5px;}
+
+/* pillar (reused) */
+.pillar{position:relative;overflow:hidden;}
+.pillar .container{position:relative;z-index:2;}
+.pillar-flip{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:start;}
+.pillar-copy h2{margin-bottom:8px;}
+.pillar-copy .headline{font-size:18px;color:var(--ink-200);font-weight:700;margin-bottom:34px;font-family:'Archivo',sans-serif;}
+.pillar-block{margin-bottom:26px;}
+.pillar-block h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:16.5px;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.pillar-block h4::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal-400);box-shadow:0 0 8px 1px var(--teal-400);}
+.pillar-block p.simple{color:var(--ink-300);font-size:14.5px;}
+.panel{background:linear-gradient(165deg,rgba(255,255,255,0.06),rgba(255,255,255,0.015));border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:26px;backdrop-filter:blur(14px);box-shadow:0 30px 70px -30px rgba(0,0,15,0.6);position:relative;}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.panel-head .k{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-500);letter-spacing:.1em;text-transform:uppercase;}
+.panel-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:10px;font-size:13.5px;}
+.panel-row:last-child{margin-bottom:0;}
+.panel-row .l{display:flex;align-items:center;gap:12px;color:var(--ink-200);}
+@media (max-width:900px){.pillar-flip{grid-template-columns:1fr;}.pillar-flip .panel{order:-1;margin-bottom:10px;}}
+
+/* limits section (two column) */
+.limits-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;}
+.limits-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:34px 30px;}
+.limits-card h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;color:#fff;margin-bottom:18px;}
+.limits-check{list-style:none;display:flex;flex-direction:column;gap:14px;}
+.limits-check li{display:flex;align-items:flex-start;gap:10px;font-size:15px;color:var(--ink-200);}
+.limits-check li::before{content:'✓';color:var(--teal-300);font-weight:700;flex-shrink:0;}
+.limits-highlight{background:linear-gradient(160deg,rgba(63,107,255,0.14),rgba(45,215,224,0.05));border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:34px 30px;display:flex;flex-direction:column;justify-content:center;}
+.limits-highlight h3{font-size:clamp(20px,2.4vw,26px);margin-bottom:16px;}
+.limits-highlight h3 .accent{color:var(--teal-300);}
+.limits-highlight p{color:var(--ink-300);font-size:15px;}
+@media (max-width:900px){.limits-grid{grid-template-columns:1fr;}}
+
+/* accompany rows (Como acompanhamos) */
+.accompany-rows{display:flex;flex-direction:column;gap:16px;}
+.accompany-row{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius-md);padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.accompany-pill{font-family:'Archivo',sans-serif;font-weight:700;font-size:14.5px;color:#fff;background:rgba(63,107,255,0.16);border:1px solid rgba(111,139,255,0.3);padding:10px 18px;border-radius:999px;}
+.accompany-arrow{color:var(--ink-500);font-size:16px;}
+
+/* compare grid (Porque faz sentido) */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.compare-card{border-radius:var(--radius-lg);padding:32px 30px;}
+.compare-card.neutral{background:var(--glass);border:1px solid var(--glass-border);}
+.compare-card.opera{background:linear-gradient(160deg,rgba(63,107,255,0.18),rgba(45,215,224,0.06));border:1px solid rgba(111,139,255,0.35);}
+.compare-card h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:20px;}
+.compare-card ul{list-style:none;display:flex;flex-direction:column;gap:14px;}
+.compare-card li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px;color:var(--ink-200);}
+.compare-card.neutral li::before{content:'✓';color:var(--ink-500);flex-shrink:0;}
+.compare-card.opera li::before{content:'✓';color:var(--teal-300);font-weight:700;flex-shrink:0;}
+@media (max-width:900px){.compare-grid{grid-template-columns:1fr;}}
+
+/* pricing */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;}
+.price-card{border-radius:var(--radius-lg);padding:40px 36px;display:flex;flex-direction:column;}
+.price-card.main{background:linear-gradient(160deg,rgba(63,107,255,0.16),rgba(45,215,224,0.05));border:1px solid rgba(111,139,255,0.3);}
+.price-card.custom{background:var(--glass);border:1px solid var(--glass-border);}
+.price-tag-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-300);background:rgba(45,215,224,0.1);border:1px solid rgba(45,215,224,0.3);padding:5px 12px;border-radius:999px;display:inline-block;width:fit-content;margin-bottom:20px;}
+.price-value{font-family:'Archivo',sans-serif;font-weight:900;font-size:52px;color:#fff;line-height:1;}
+.price-unit{font-size:15px;color:var(--ink-500);margin:8px 0 26px;}
+.price-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.price-list li{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink-200);}
+.price-list li::before{content:'✓';color:var(--teal-300);font-weight:700;}
+.price-note{font-size:13.5px;color:var(--ink-500);font-style:italic;margin-top:auto;}
+.price-card.custom h4{font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;color:#fff;margin-bottom:14px;}
+.price-card.custom p{color:var(--ink-300);font-size:15px;margin-bottom:14px;}
+@media (max-width:900px){.pricing-grid{grid-template-columns:1fr;}}
+
+/* final cta */
+.final-cta{position:relative;overflow:hidden;text-align:center;background:radial-gradient(900px 500px at 50% 0%, rgba(63,107,255,0.3), transparent 65%),radial-gradient(700px 400px at 80% 100%, rgba(45,215,224,0.18), transparent 60%),linear-gradient(160deg,#0a1130,#0c1442 60%, #070c22);padding:150px 0;}
+.final-cta h2{font-size:clamp(32px,5vw,54px);margin-bottom:18px;}
+.final-cta p{color:var(--ink-300);font-size:18px;max-width:520px;margin:0 auto 40px;}
+.final-cta .btn-row{justify-content:center;}
+
+/* form */
+.form-section{background:var(--navy-950);}
+.form-wrap{max-width:680px;margin:0 auto;background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015));border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:48px;backdrop-filter:blur(16px);}
+.form-wrap .section-head{margin:0 0 34px;text-align:left;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.form-grid .full{grid-column:1/-1;}
+.field label{display:block;font-size:13px;color:var(--ink-300);margin-bottom:8px;font-weight:500;}
+.field input,.field textarea{width:100%;padding:13px 15px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.03);color:#fff;font-family:'Inter',sans-serif;font-size:14.5px;transition:border-color .3s, background .3s;}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue-400);background:rgba(255,255,255,0.05);}
+.field textarea{resize:vertical;min-height:100px;}
+.form-wrap .btn{margin-top:8px;width:100%;}
+@media (max-width:700px){.form-grid{grid-template-columns:1fr;}.form-wrap{padding:30px 22px;}}
+
+/* footer */
+footer{padding:50px 0;border-top:1px solid var(--glass-border);}
+.footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
+footer .logo{font-size:18px;}
+.footer-meta{color:var(--ink-600);font-size:13px;}
+footer a.back-link{color:var(--ink-500);font-size:13px;}
+footer a.back-link:hover{color:var(--teal-300);}
+
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--teal-400);outline-offset:3px;}
+@media (max-width:600px){.section{padding:90px 0;}.container{padding:0 20px;}}
+</style>
+</head>
+<body>
+
+<header class="nav" id="siteNav">
+  <div class="container nav-inner">
+    <a href="#top" class="logo">OPERA <span class="tag">INVESTOR</span></a>
+    <nav class="nav-links">
+      <a href="#o-que-fazemos">O que fazemos</a>
+      <a href="#operations">Operations</a>
+      <a href="#legal">Legal</a>
+      <a href="#finance">Finance</a>
+      <a href="#como-funciona">Como funciona</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="#form" class="btn btn-ghost">Falar com a equipa</a>
+      <button class="burger" id="burgerBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-panel" id="mobilePanel">
+  <a href="#o-que-fazemos">O que fazemos</a>
+  <a href="#operations">Operations</a>
+  <a href="#legal">Legal</a>
+  <a href="#finance">Finance</a>
+  <a href="#como-funciona">Como funciona</a>
+  <a href="#form" class="btn btn-primary" style="margin-top:10px;">Falar com a equipa</a>
+</div>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Real Estate Investment Operations</span>
+        <h1>Tu decides<br>onde investir.<br><span class="accent">A OPERA garante<br>que a operação acontece.</span></h1>
+        <p class="support">A OPERA é o teu departamento operacional externo. Tu focas-te em encontrar, analisar e decidir investimentos. Nós tratamos da operação por trás de cada negócio.</p>
+        <div class="btn-row">
+          <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
+          <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="mock-card mock-main reveal">
+          <div class="mock-topbar">
+            <div class="mock-dot-row"><span></span><span></span><span></span></div>
+            <span class="mock-title">Processo · Investidor A</span>
+          </div>
+          <div class="mock-row"><div class="lbl"><span class="ico">📄</span>Direitos de preferência · verificação</div><span class="chip chip-done">Resolvido</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">🏦</span>Faturação da operação</div><span class="chip chip-progress">Em curso</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">🗓️</span>Agendamento de escritura</div><span class="chip chip-pending">Pedido</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">✅</span>Checklist documental</div><span class="chip chip-progress">Em curso</span></div>
+        </div>
+        <div class="mock-card mock-float f1 reveal">
+          <div class="k">Departamento</div>
+          <div class="v">Operations</div>
+          <div class="sub">Finance · Legal</div>
+        </div>
+        <div class="mock-card mock-float f2 reveal">
+          <div class="k">Investidor</div>
+          <div class="v">+ tempo para decidir</div>
+          <div class="sub">Foco total no investimento</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-cue"><div class="line"></div></div>
+  </section>
+
+  <!-- O QUE PARECE -->
+  <section class="section" id="o-que-parece" style="padding-bottom:80px;">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">O que parece</span>
+        <h2>O investimento imobiliário parece simples.</h2>
+      </div>
+      <div class="flow-steps stagger">
+        <div class="flow-step reveal"><div class="flow-arrow">→</div><div class="num">01</div><h4>Comprar</h4></div>
+        <div class="flow-step reveal"><div class="flow-arrow">→</div><div class="num">02</div><h4>Remodelar</h4></div>
+        <div class="flow-step reveal"><div class="num">03</div><h4>Vender, arrendar ou ceder posição</h4></div>
+      </div>
+      <div class="section-close reveal" style="border-top:none;margin-top:36px;">
+        <p>No papel, três passos. Na prática, dezenas de decisões operacionais entre cada um deles.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- O PROBLEMA -->
+  <section class="section" id="o-problema" style="padding-top:80px;padding-bottom:80px;">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">O problema</span>
+        <h2>A operação é o travão.</h2>
+      </div>
+      <div class="problem-grid stagger">
+        <div class="problem-card reveal">
+          <div class="num">01</div>
+          <h3>Documentação e prazos</h3>
+          <p>CPCV, direitos de preferência, checklists e financiamento, sempre com um prazo a correr.</p>
+        </div>
+        <div class="problem-card reveal">
+          <div class="num">02</div>
+          <h3>Coordenação fragmentada</h3>
+          <p>Consultor, advogado, banco e notário, cada um no seu canal, sem visão única do processo.</p>
+        </div>
+        <div class="problem-card reveal">
+          <div class="num">03</div>
+          <h3>Controlo financeiro disperso</h3>
+          <p>Faturação, pagamentos e despesas geridos à parte, sem reporting consolidado.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- O RISCO -->
+  <section class="section" id="o-risco" style="padding-top:80px;padding-bottom:80px;">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">O risco</span>
+        <h2>Um negócio pode estar fechado e ainda assim ficar bloqueado.</h2>
+      </div>
+      <div class="risk-list stagger">
+        <div class="risk-item reveal">Um direito de preferência esquecido pode adiar uma escritura.</div>
+        <div class="risk-item reveal">Um documento em falta pode travar um financiamento.</div>
+        <div class="risk-item reveal">Um prazo perdido pode custar uma oportunidade inteira.</div>
+      </div>
+      <div class="section-close reveal">
+        <p>Nenhuma destas falhas está no negócio em si. Estão todas na operação à volta dele.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- O QUE FAZEMOS -->
+  <section class="section" id="o-que-fazemos" style="padding-top:80px;">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">O que fazemos</span>
+        <h2>É aqui que entra a OPERA.</h2>
+      </div>
+      <div class="highlight-block reveal">
+        <h3>O departamento operacional externo<br><span class="accent">do investidor imobiliário.</span></h3>
+        <p class="lead-text">Tu decides onde investir. A OPERA garante que a operação acontece.</p>
+        <p class="sub-text">Sem contratar. Sem construir uma estrutura interna. Sem gerir mais uma equipa.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPERATIONS -->
+  <section class="section pillar" id="operations">
+    <div class="container">
+      <div class="pillar-flip">
+        <div class="pillar-copy reveal">
+          <span class="eyebrow">Operations</span>
+          <h2>Operations</h2>
+          <p class="headline">Gestão processual por trás de cada negócio.</p>
+          <div class="pillar-block">
+            <h4>Processos & Documentação</h4>
+            <p class="simple">Abertura e acompanhamento de processos, gestão documental e controlo de prazos e checklists.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>Coordenação & Escrituras</h4>
+            <p class="simple">Coordenação de intervenientes e parceiros e acompanhamento de escrituras.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>Follow-ups & Estado</h4>
+            <p class="simple">Atualização de estado e follow-ups operacionais. O investidor sabe sempre onde está o processo e quem trata dele.</p>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><span class="k">Processo · Investidor A</span><span class="chip chip-progress">Em curso</span></div>
+          <div class="panel-row"><div class="l">📄 Abertura de processo</div><span class="chip chip-done">Resolvido</span></div>
+          <div class="panel-row"><div class="l">🗝️ Coordenação de escritura</div><span class="chip chip-progress">Em curso</span></div>
+          <div class="panel-row"><div class="l">✅ Checklist documental</div><span class="chip chip-progress">Em curso</span></div>
+          <div class="panel-row"><div class="l">🔁 Follow-up operacional</div><span style="color:var(--ink-300);font-size:12.5px;">Esta semana</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEGAL -->
+  <section class="section pillar" id="legal">
+    <div class="container">
+      <div class="pillar-flip">
+        <div class="pillar-copy reveal">
+          <span class="eyebrow">Legal</span>
+          <h2>Legal</h2>
+          <p class="headline">Suporte jurídico integrado.</p>
+          <div class="pillar-block">
+            <h4>Apoio Contratual</h4>
+            <p class="simple">Revisão documental e apoio jurídico em transações imobiliárias.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>CPCV & Contratos</h4>
+            <p class="simple">Elaboração, validação e revisão de CPCV e contratos imobiliários.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>Suporte Legal</h4>
+            <p class="simple">Esclarecimento de dúvidas legais e coordenação jurídica especializada.</p>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><span class="k">Documento · CPCV</span><span class="chip chip-progress">Em revisão</span></div>
+          <div class="panel-row"><div class="l">📄 Revisão documental</div><span class="chip chip-done">Concluída</span></div>
+          <div class="panel-row"><div class="l">✍️ Elaboração de contrato</div><span class="chip chip-progress">Em curso</span></div>
+          <div class="panel-row"><div class="l">⚖️ Suporte legal especializado</div><span class="chip chip-pending">Pedido</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINANCE -->
+  <section class="section pillar" id="finance">
+    <div class="container">
+      <div class="pillar-flip">
+        <div class="pillar-copy reveal">
+          <span class="eyebrow">Finance</span>
+          <h2>Finance</h2>
+          <p class="headline">Controlo financeiro sem complexidade.</p>
+          <div class="pillar-block">
+            <h4>Faturação & Pagamentos</h4>
+            <p class="simple">Faturação, controlo de pagamentos e acompanhamento de receitas vs. despesas.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>Organização Financeira</h4>
+            <p class="simple">Controlo de despesas, prazos e relatório financeiro de gestão mensal do negócio.</p>
+          </div>
+          <div class="pillar-block">
+            <h4>Fiscal & Compliance</h4>
+            <p class="simple">Controlo de IVA e impostos. Porque investir é uma coisa, gerir financeiramente é outra.</p>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><span class="k">Relatório · Mensal</span><span class="chip chip-done">Atualizado</span></div>
+          <div class="panel-row"><div class="l">🏦 Faturação & pagamentos</div><span style="color:var(--ink-300);font-size:12.5px;">Em dia</span></div>
+          <div class="panel-row"><div class="l">📊 Receitas vs. despesas</div><span class="chip chip-progress">Consolidado</span></div>
+          <div class="panel-row"><div class="l">🧾 IVA & impostos</div><span class="chip chip-done">Controlado</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA / SUPPORT -->
+  <section class="section" id="como-funciona">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Como funciona</span>
+        <h2>Support</h2>
+      </div>
+      <div class="flow-steps stagger">
+        <div class="flow-step reveal">
+          <div class="num">01 · PEDIR</div>
+          <h4>Pedir</h4>
+          <p>O investidor faz um pedido simples. A OPERA recebe, classifica e direciona para Operations, Finance ou Legal.</p>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step reveal">
+          <div class="num">02 · ACOMPANHAR</div>
+          <h4>Acompanhar</h4>
+          <p>O investidor acompanha o estado do pedido em tempo real. Menos emails perdidos. Sem falta de resposta.</p>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step reveal">
+          <div class="num">03 · RESOLVER</div>
+          <h4>Resolver</h4>
+          <p>A OPERA resolve e confirma. Um ponto de contacto para tudo o que não deveria estar nas mãos do investidor.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO ACOMPANHAMOS -->
+  <section class="section" id="como-acompanhamos">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Como acompanhamos</span>
+        <h2>Um acompanhamento para cada modelo de negócio.</h2>
+      </div>
+      <div class="accompany-rows stagger">
+        <div class="accompany-row reveal">
+          <span class="accompany-pill">Compra</span><span class="accompany-arrow">→</span>
+          <span class="accompany-pill">Remodelação</span><span class="accompany-arrow">→</span>
+          <span class="accompany-pill">Revenda</span>
+        </div>
+        <div class="accompany-row reveal">
+          <span class="accompany-pill">Compra</span><span class="accompany-arrow">→</span>
+          <span class="accompany-pill">Cedência de posição</span>
+        </div>
+        <div class="accompany-row reveal">
+          <span class="accompany-pill">Compra</span><span class="accompany-arrow">→</span>
+          <span class="accompany-pill">Remodelação</span><span class="accompany-arrow">→</span>
+          <span class="accompany-pill">Arrendamento</span>
+        </div>
+      </div>
+      <div class="section-close reveal">
+        <p>Cada etapa é uma transação. Cada transação é acompanhada.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORQUE FAZ SENTIDO -->
+  <section class="section" id="porque-faz-sentido">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Porque faz sentido</span>
+        <h2>Construir isto por dentro custa mais do que parece.</h2>
+      </div>
+      <div class="compare-grid stagger">
+        <div class="compare-card neutral reveal">
+          <h4>Estrutura interna</h4>
+          <ul>
+            <li>Contratar ou alocar pessoas para legal, processual e financeiro</li>
+            <li>Gerir mais uma equipa</li>
+            <li>Capacidade limitada ao número de pessoas contratadas</li>
+            <li>Custo fixo, independente do volume de negócios</li>
+          </ul>
+        </div>
+        <div class="compare-card opera reveal">
+          <h4>OPERA Investor</h4>
+          <ul>
+            <li>Uma estrutura especializada, já operacional</li>
+            <li>Sem contratações nem gestão de equipa própria</li>
+            <li>Capacidade para acompanhar mais operações sem crescer a estrutura</li>
+            <li>Um único custo mensal, previsível</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="container reveal">
+      <h2>Continua a decidir onde investir.<br>Nós tratamos da operação.</h2>
+      <p>Descobre como a OPERA pode funcionar como o teu departamento operacional externo.</p>
+      <div class="btn-row">
+        <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
+        <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section class="section form-section" id="form">
+    <div class="container">
+      <div class="form-wrap reveal">
+        <div class="section-head">
+          <span class="eyebrow">Contacto</span>
+          <h2 style="font-size:32px;">Quero conhecer a OPERA</h2>
+        </div>
+        <form class="form-grid" name="investor-contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return submitContactForm(event)">
+          <input type="hidden" name="form-name" value="investor-contact">
+          <p style="display:none;"><label>Não preencher: <input name="bot-field"></label></p>
+          <div class="field"><label for="nome">Nome</label><input id="nome" name="nome" type="text" required></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required></div>
+          <div class="field"><label for="telefone">Telefone</label><input id="telefone" name="telefone" type="tel"></div>
+          <div class="field"><label for="transacoes">Transações por ano (aprox.)</label><input id="transacoes" name="transacoes" type="text"></div>
+          <div class="field full"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem"></textarea></div>
+          <div class="full">
+            <button type="submit" class="btn btn-primary">Quero conhecer a OPERA</button>
+            <p class="form-success" style="display:none;color:var(--teal-300);font-size:13.5px;margin-top:14px;">Obrigado. A equipa OPERA entrará em contacto brevemente.</p>
+            <p class="form-error" style="display:none;color:#e2725b;font-size:13.5px;margin-top:14px;">Não foi possível enviar agora. Tenta novamente ou escreve para geral@opera-os.com.</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function submitContactForm(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(data).toString(),
+      })
+        .then(() => {
+          form.querySelector('.form-success').style.display = 'block';
+          form.querySelector('.form-error').style.display = 'none';
+          form.reset();
+        })
+        .catch(() => {
+          form.querySelector('.form-error').style.display = 'block';
+        });
+      return false;
+    }
+  </script>
+
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <span class="logo">OPERA <span class="tag">INVESTOR</span></span>
+    <span class="footer-meta">Real Estate Investment Operations</span>
+    <a href="index.html" class="back-link">← Voltar ao site principal da OPERA</a>
+  </div>
+</footer>
+
+<script>
+const nav = document.getElementById('siteNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 30);
+}, {passive:true});
+
+const burger = document.getElementById('burgerBtn');
+const panel = document.getElementById('mobilePanel');
+burger.addEventListener('click', () => panel.classList.toggle('open'));
+panel.querySelectorAll('a').forEach(a => a.addEventListener('click', () => panel.classList.remove('open')));
+
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in');
+      io.unobserve(entry.target);
+    }
+  });
+}, {threshold:0.15});
+revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
