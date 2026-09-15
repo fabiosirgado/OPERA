@@ -665,7 +665,6 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const activeDeal = deals.find((d) => d.name === client.name && ACTIVE_STAGES.includes(d.stage));
   const pipelineDeal = deals.find((d) => d.name === client.name);
   const dealDaysInStage = pipelineDeal ? Math.floor((today - pipelineDeal.stageEnteredAt) / (1000 * 60 * 60 * 24)) : null;
-  const dealIsTerminal = pipelineDeal && (pipelineDeal.stage === "Closed" || pipelineDeal.stage === LOST_STAGE);
   const markDealStage = async (stage) => {
     setDeals((prev) => prev.map((d) => (d.id === pipelineDeal.id ? { ...d, stage, stageEnteredAt: new Date() } : d)));
     try { await db.updateDeal(pipelineDeal.id, { stage, stage_entered_at: new Date().toISOString() }); } catch (e) { alert(e.message); }
@@ -812,12 +811,10 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                   </span>
                 </div>
                 <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>{dealDaysInStage}d nesta etapa · responsável {pipelineDeal.owner}</div>
-                {!dealIsTerminal && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => markDealStage("Closed")} style={{ flex: 1, background: C.green, border: "none", borderRadius: 6, padding: "8px 0", color: "#06281c", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Ganho</button>
-                    <button onClick={() => markDealStage(LOST_STAGE)} style={{ flex: 1, background: "transparent", border: `1px solid ${C.red}`, borderRadius: 6, padding: "8px 0", color: C.red, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Perdido</button>
-                  </div>
-                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => markDealStage("Closed")} style={{ flex: 1, background: C.green, border: "none", borderRadius: 6, padding: "8px 0", color: "#06281c", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Ganho</button>
+                  <button onClick={() => markDealStage(LOST_STAGE)} style={{ flex: 1, background: "transparent", border: `1px solid ${C.red}`, borderRadius: 6, padding: "8px 0", color: C.red, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Perdido</button>
+                </div>
               </div>
             </>
           )}
