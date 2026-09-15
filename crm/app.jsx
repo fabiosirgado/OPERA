@@ -57,6 +57,7 @@ const TYPE_ICONS = {
   "Suporte Técnico": "🛠️", "Pedido Aberto": "💬",
 };
 const ACTIVE_STAGES = ["Em Onboarding", "Entrega de Serviço"];
+const WON_STAGES = ["Closed", "Em Onboarding", "Entrega de Serviço"];
 const ACTIVITY_TYPES = ["Chamada", "Reunião", "Email", "Tarefa"];
 
 const today = new Date();
@@ -90,7 +91,13 @@ function mapDeal(row) {
     id: row.id, clientId: row.client_id, name: row.name, contact: row.contact,
     value: Number(row.value) || 0, stage: row.stage, owner: row.owner,
     date: new Date(row.created_at), stageEnteredAt: new Date(row.stage_entered_at),
+    closedAt: row.closed_at ? new Date(row.closed_at) : null,
   };
+}
+function dealStagePatch(stage) {
+  const patch = { stage, stage_entered_at: new Date().toISOString() };
+  if (stage === "Closed") patch.closed_at = new Date().toISOString();
+  return patch;
 }
 function mapClientNote(row) {
   return { id: row.id, text: row.text, pinned: row.pinned, date: new Date(row.created_at) };
@@ -666,8 +673,8 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const pipelineDeal = deals.find((d) => d.name === client.name);
   const dealDaysInStage = pipelineDeal ? Math.floor((today - pipelineDeal.stageEnteredAt) / (1000 * 60 * 60 * 24)) : null;
   const markDealStage = async (stage) => {
-    setDeals((prev) => prev.map((d) => (d.id === pipelineDeal.id ? { ...d, stage, stageEnteredAt: new Date() } : d)));
-    try { await db.updateDeal(pipelineDeal.id, { stage, stage_entered_at: new Date().toISOString() }); } catch (e) { alert(e.message); }
+    setDeals((prev) => prev.map((d) => (d.id === pipelineDeal.id ? { ...d, stage, stageEnteredAt: new Date(), closedAt: stage === "Closed" ? new Date() : d.closedAt } : d)));
+    try { await db.updateDeal(pipelineDeal.id, dealStagePatch(stage)); } catch (e) { alert(e.message); }
   };
   const clientPedidos = pedidos.filter((p) => p.client === client.name).sort((a, b) => b.createdAt - a.createdAt);
   const notes = extra.notes || [];
@@ -1004,12 +1011,12 @@ function EquipaApp({ profile }) {
     const activeClients = deals.filter((d) => ACTIVE_STAGES.includes(d.stage));
     const mrr = activeClients.reduce((sum, d) => sum + d.value, 0);
     const arr = mrr * 12;
-    const closedInPeriod = deals.filter((d) => d.stage === "Closed" && inPeriod(d));
+    const closedInPeriod = deals.filter((d) => WON_STAGES.includes(d.stage) && d.closedAt && withinPeriod(d.closedAt, periodDays));
     const faturacao = closedInPeriod.reduce((sum, d) => sum + d.value, 0);
     const totalLeadsAllTime = deals.length;
-    const totalClosedAllTime = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Serviço"].includes(d.stage)).length;
+    const totalClosedAllTime = deals.filter((d) => WON_STAGES.includes(d.stage)).length;
     const conversao = totalLeadsAllTime > 0 ? Math.round((totalClosedAllTime / totalLeadsAllTime) * 100) : 0;
-    const closedAllValues = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Serviço"].includes(d.stage));
+    const closedAllValues = deals.filter((d) => WON_STAGES.includes(d.stage));
     const ticketMedio = closedAllValues.length > 0 ? Math.round(closedAllValues.reduce((s, d) => s + d.value, 0) / closedAllValues.length) : 0;
     const pedidosVolume = pedidos.filter((p) => withinPeriod(p.due, periodDays)).length;
     return { leads: countStage("Lead"), r1: countStage("R1"), r2: countStage("R2"), closed: closedInPeriod.length, mrr, arr, faturacao, clientesAtivos: activeClients.length, conversao, ticketMedio, pedidosVolume };
@@ -1044,16 +1051,16 @@ function EquipaApp({ profile }) {
   const onDragStart = (e, id) => e.dataTransfer.setData("id", id);
   const onDropDeal = (e, stage) => {
     const id = e.dataTransfer.getData("id");
-    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage, stageEnteredAt: new Date() } : d)));
-    db.updateDeal(id, { stage, stage_entered_at: new Date().toISOString() }).catch((e) => { alert(e.message); reloadDeals(); });
+    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage, stageEnteredAt: new Date(), closedAt: stage === "Closed" ? new Date() : d.closedAt } : d)));
+    db.updateDeal(id, dealStagePatch(stage)).catch((e) => { alert(e.message); reloadDeals(); });
   };
   const onAdvanceDeal = (id) => {
     const deal = deals.find((d) => d.id === id);
     if (!deal) return;
     const idx = STAGE_ORDER.indexOf(deal.stage);
     const next = idx >= 0 && idx < STAGE_ORDER.length - 1 ? STAGE_ORDER[idx + 1] : deal.stage;
-    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: next, stageEnteredAt: new Date() } : d)));
-    db.updateDeal(id, { stage: next, stage_entered_at: new Date().toISOString() }).catch((e) => { alert(e.message); reloadDeals(); });
+    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: next, stageEnteredAt: new Date(), closedAt: next === "Closed" ? new Date() : d.closedAt } : d)));
+    db.updateDeal(id, dealStagePatch(next)).catch((e) => { alert(e.message); reloadDeals(); });
   };
   const onDropPedido = (e, stage) => {
     const id = e.dataTransfer.getData("id");
