@@ -778,7 +778,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
 
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <MetricCard label="MRR" value={activeDeal ? fmtEUR(activeDeal.value) : "—"} color={C.accent} />
-        <MetricCard label="Estado" value={activeDeal ? "Ativo" : "Prospect"} color={activeDeal ? C.green : C.amber} />
+        <MetricCard label="Estado" value={pipelineDeal ? pipelineDeal.stage : "Prospect"} color={activeDeal ? C.green : pipelineDeal && pipelineDeal.stage === LOST_STAGE ? C.red : C.amber} />
         <MetricCard label="Pedidos" value={clientPedidos.length} />
       </div>
 
@@ -1374,6 +1374,7 @@ function EquipaApp({ profile }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {clients.map((c) => {
                 const activeDeal = deals.find((d) => d.name === c.name && ACTIVE_STAGES.includes(d.stage));
+                const clientDeal = deals.find((d) => d.name === c.name);
                 const nPedidos = pedidos.filter((p) => p.client === c.name).length;
                 return (
                   <div key={c.id} onClick={() => openClient(c.id)} className="op-card-hover"
@@ -1387,7 +1388,9 @@ function EquipaApp({ profile }) {
                         <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{c.contact} · {nPedidos} pedido{nPedidos !== 1 ? "s" : ""}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: activeDeal ? C.green : C.amber }}>{activeDeal ? fmtEUR(activeDeal.value) + "/mês" : "Prospect"}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: activeDeal ? C.green : clientDeal && clientDeal.stage === LOST_STAGE ? C.red : C.amber }}>
+                      {activeDeal ? fmtEUR(activeDeal.value) + "/mês" : clientDeal ? clientDeal.stage : "Prospect"}
+                    </div>
                   </div>
                 );
               })}
