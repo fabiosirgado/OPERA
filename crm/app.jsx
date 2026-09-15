@@ -977,6 +977,8 @@ function EquipaApp({ profile }) {
   const [newDeal, setNewDeal] = useState({ name: "", value: "", owner: "Fábio", contact: "", email: "", phone: "" });
   const [addingClient, setAddingClient] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", contact: "", email: "", phone: "" });
+  const [addingPedido, setAddingPedido] = useState(false);
+  const [newPedido, setNewPedido] = useState({ clientId: "", type: PRESET_TYPES[0], customTitle: "", description: "", propertyId: "", owner: "Fábio", dueDate: "", dueTime: "" });
 
   const reloadClients = async () => setClients(await db.listClients());
   const reloadDeals = async () => setDeals(await db.listDeals());
@@ -1124,6 +1126,31 @@ function EquipaApp({ profile }) {
       setNewClient({ name: "", contact: "", email: "", phone: "" });
       setAddingClient(false);
       openClient(client.id);
+    } catch (e) { alert(e.message); }
+  };
+
+  const submitNewPedido = async () => {
+    if (!newPedido.clientId) { alert("Escolhe um cliente."); return; }
+    if (newPedido.type === "Pedido Aberto" && !newPedido.customTitle.trim()) { alert("Dá um título ao pedido."); return; }
+    if (!newPedido.description.trim()) { alert("Descreve o pedido."); return; }
+    if (!newPedido.dueDate) { alert("Indica o prazo."); return; }
+    const due = new Date(`${newPedido.dueDate}T${newPedido.dueTime || "18:00"}:00`);
+    try {
+      await db.createPedido({
+        client_id: newPedido.clientId,
+        type: newPedido.type,
+        custom_title: newPedido.type === "Pedido Aberto" ? newPedido.customTitle.trim() : null,
+        description: newPedido.description.trim(),
+        property_id: newPedido.propertyId.trim() || null,
+        stage: "Recebido",
+        owner: newPedido.owner,
+        due: due.toISOString(),
+        seen: true,
+        client_seen: false,
+      });
+      await reloadPedidos();
+      setNewPedido({ clientId: "", type: PRESET_TYPES[0], customTitle: "", description: "", propertyId: "", owner: "Fábio", dueDate: "", dueTime: "" });
+      setAddingPedido(false);
     } catch (e) { alert(e.message); }
   };
 
@@ -1323,8 +1350,71 @@ function EquipaApp({ profile }) {
                   <option value="Todos">Todos os clientes</option>
                   {[...new Set(pedidos.map((p) => p.client))].map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+                <button onClick={() => setAddingPedido(true)}
+                  style={{ background: C.accent, border: "none", borderRadius: 8, padding: "9px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  + Novo Pedido
+                </button>
               </div>
             </div>
+
+            {addingPedido && (
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16, marginBottom: 20, maxWidth: 480 }}>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Cliente</div>
+                <select value={newPedido.clientId} onChange={(e) => setNewPedido({ ...newPedido, clientId: e.target.value })}
+                  style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12 }}>
+                  <option value="">Escolher cliente…</option>
+                  {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+
+                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Tipo de pedido</div>
+                    <select value={newPedido.type} onChange={(e) => setNewPedido({ ...newPedido, type: e.target.value })}
+                      style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13 }}>
+                      {[...PRESET_TYPES, "Pedido Aberto"].map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Responsável</div>
+                    <select value={newPedido.owner} onChange={(e) => setNewPedido({ ...newPedido, owner: e.target.value })}
+                      style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13 }}>
+                      <option value="Fábio">Fábio</option>
+                      <option value="Nicole">Nicole</option>
+                    </select>
+                  </div>
+                </div>
+
+                {newPedido.type === "Pedido Aberto" && (
+                  <>
+                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Título do pedido</div>
+                    <input value={newPedido.customTitle} onChange={(e) => setNewPedido({ ...newPedido, customTitle: e.target.value })} placeholder="ex. Apoio para dossier de investidor"
+                      style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12, boxSizing: "border-box" }} />
+                  </>
+                )}
+
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Descrição</div>
+                <textarea value={newPedido.description} onChange={(e) => setNewPedido({ ...newPedido, description: e.target.value })} rows={3} placeholder="Descreva o pedido..."
+                  style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12, resize: "vertical", boxSizing: "border-box" }} />
+
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>ID do imóvel (opcional)</div>
+                <input value={newPedido.propertyId} onChange={(e) => setNewPedido({ ...newPedido, propertyId: e.target.value })} placeholder="ex. LX-231"
+                  style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12, boxSizing: "border-box" }} />
+
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Prazo</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                  <input type="date" value={newPedido.dueDate} onChange={(e) => setNewPedido({ ...newPedido, dueDate: e.target.value })}
+                    style={{ flex: 1, background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13 }} />
+                  <input type="time" value={newPedido.dueTime} onChange={(e) => setNewPedido({ ...newPedido, dueTime: e.target.value })}
+                    style={{ width: 110, background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13 }} />
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={submitNewPedido} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 14px", color: "#fff", fontSize: 13, cursor: "pointer" }}>Criar pedido</button>
+                  <button onClick={() => setAddingPedido(false)} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.muted, fontSize: 13, cursor: "pointer" }}>Cancelar</button>
+                </div>
+              </div>
+            )}
+
             <div className="op-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}>
               {OP_STAGES.map((stage) => {
                 const stagePedidos = filteredPedidos.filter((p) => p.stage === stage);
