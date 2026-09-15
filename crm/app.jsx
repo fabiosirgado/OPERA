@@ -50,10 +50,10 @@ const STAGE_META = {
   "Em Validação": { color: "#2DC7D8", icon: "🧐" },
   "Concluído": { color: "#2ED8A7", icon: "🎉" },
 };
-const PRESET_TYPES = ["Nova Angariação", "CPCV", "Preparação de Escritura", "Factura", "Alteração de Anúncio", "Campanha de Marketing", "Relatório Financeiro", "Suporte Técnico"];
+const PRESET_TYPES = ["Nova Angariação", "CPCV", "Preparação de Escritura", "Factura", "Alteração de Anúncio", "Atualização de Documentação", "Relatório Financeiro", "Suporte Técnico"];
 const TYPE_ICONS = {
   "Nova Angariação": "🏠", "CPCV": "📝", "Preparação de Escritura": "⚖️", "Factura": "🧾",
-  "Alteração de Anúncio": "📢", "Campanha de Marketing": "📣", "Relatório Financeiro": "📊",
+  "Alteração de Anúncio": "📢", "Campanha de Marketing": "📣", "Atualização de Documentação": "📁", "Relatório Financeiro": "📊",
   "Suporte Técnico": "🛠️", "Pedido Aberto": "💬",
 };
 const ACTIVE_STAGES = ["Em Onboarding", "Entrega de Serviço"];
