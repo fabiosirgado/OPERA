@@ -31,8 +31,8 @@ const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Manro
 .op-fade-in { animation: opFadeIn 0.3s ease; }`;
 
 // ---------- Static business data (not stored in DB) ----------
-const STAGE_ORDER = ["Lead", "Follow up", "R1", "R2", "Em Decisão", "Closed", "Em Onboarding", "Entrega de Serviço"];
-const LOST_STAGE = "Não Quer Avançar";
+const STAGE_ORDER = ["Lead", "Follow up", "R1", "R2", "Em Decis√£o", "Closed", "Em Onboarding", "Entrega de Servi√ßo"];
+const LOST_STAGE = "N√£o Quer Avan√ßar";
 const STAGE_COLUMNS = [...STAGE_ORDER, LOST_STAGE];
 const STRIPE_COLORS = ["#2ED8A7", "#F5B942", "#E8734A", "#8B7CF6", "#3D6BFF"];
 function hashId(id) {
@@ -42,29 +42,29 @@ function hashId(id) {
   return Math.abs(h);
 }
 const stripeFor = (id) => STRIPE_COLORS[hashId(id) % STRIPE_COLORS.length];
-const OP_STAGES = ["Recebido", "Em Análise", "Em Execução", "Em Validação", "Concluído"];
+const OP_STAGES = ["Recebido", "Em An√°lise", "Em Execu√ß√£o", "Em Valida√ß√£o", "Conclu√≠do"];
 const STAGE_META = {
-  "Recebido": { color: "#3D6BFF", icon: "📥" },
-  "Em Análise": { color: "#F5B942", icon: "🔍" },
-  "Em Execução": { color: "#8B7CF6", icon: "⚙️" },
-  "Em Validação": { color: "#2DC7D8", icon: "🧐" },
-  "Concluído": { color: "#2ED8A7", icon: "🎉" },
+  "Recebido": { color: "#3D6BFF", icon: "üì•" },
+  "Em An√°lise": { color: "#F5B942", icon: "üîç" },
+  "Em Execu√ß√£o": { color: "#8B7CF6", icon: "‚öôÔ∏è" },
+  "Em Valida√ß√£o": { color: "#2DC7D8", icon: "üßê" },
+  "Conclu√≠do": { color: "#2ED8A7", icon: "üéâ" },
 };
-const PRESET_TYPES = ["Nova Angariação", "CPCV", "Preparação de Escritura", "Factura", "Alteração de Anúncio", "Campanha de Marketing", "Relatório Financeiro", "Suporte Técnico"];
+const PRESET_TYPES = ["Nova Angaria√ß√£o", "CPCV", "Prepara√ß√£o de Escritura", "Factura", "Altera√ß√£o de An√∫ncio", "Campanha de Marketing", "Relat√≥rio Financeiro", "Suporte T√©cnico"];
 const TYPE_ICONS = {
-  "Nova Angariação": "🏠", "CPCV": "📝", "Preparação de Escritura": "⚖️", "Factura": "🧾",
-  "Alteração de Anúncio": "📢", "Campanha de Marketing": "📣", "Relatório Financeiro": "📊",
-  "Suporte Técnico": "🛠️", "Pedido Aberto": "💬",
+  "Nova Angaria√ß√£o": "üè†", "CPCV": "üìù", "Prepara√ß√£o de Escritura": "‚öñÔ∏è", "Factura": "üßæ",
+  "Altera√ß√£o de An√∫ncio": "üì¢", "Campanha de Marketing": "üì£", "Relat√≥rio Financeiro": "üìä",
+  "Suporte T√©cnico": "üõ†Ô∏è", "Pedido Aberto": "üí¨",
 };
-const ACTIVE_STAGES = ["Em Onboarding", "Entrega de Serviço"];
-const ACTIVITY_TYPES = ["Chamada", "Reunião", "Email", "Tarefa"];
+const ACTIVE_STAGES = ["Em Onboarding", "Entrega de Servi√ßo"];
+const ACTIVITY_TYPES = ["Chamada", "Reuni√£o", "Email", "Tarefa"];
 
 const today = new Date();
 
 const PERIODS = [
   { key: "dia", label: "Dia", days: 1 },
   { key: "semana", label: "Semana", days: 7 },
-  { key: "mes", label: "Mês", days: 30 },
+  { key: "mes", label: "M√™s", days: 30 },
   { key: "trimestre", label: "Trimestre", days: 90 },
   { key: "semestre", label: "Semestre", days: 182 },
   { key: "ano", label: "Ano", days: 365 },
@@ -115,6 +115,7 @@ function mapPedido(row) {
     owner: row.owner,
     due: row.due ? new Date(row.due) : today,
     seen: row.seen,
+    clientSeen: row.client_seen !== false,
     createdAt: row.created_at ? new Date(row.created_at) : today,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
     tasks: tasks.map((t) => ({ id: t.id, text: t.text, done: t.done })),
@@ -193,7 +194,7 @@ const db = {
     return data;
   },
   async updatePedidoStage(id, stage) {
-    const patch = { stage, completed_at: stage === "Concluído" ? new Date().toISOString() : null };
+    const patch = { stage, completed_at: stage === "Conclu√≠do" ? new Date().toISOString() : null };
     const { error } = await sb.from("pedidos").update(patch).eq("id", id);
     if (error) throw error;
   },
@@ -206,6 +207,10 @@ const db = {
   },
   async markPedidoSeen(id) {
     const { error } = await sb.from("pedidos").update({ seen: true }).eq("id", id);
+    if (error) throw error;
+  },
+  async markPedidoClientSeen(id) {
+    const { error } = await sb.from("pedidos").update({ client_seen: true }).eq("id", id);
     if (error) throw error;
   },
 
@@ -322,17 +327,17 @@ function DealCard({ deal, onDragStart, onOpen, onAdvance, isLast }) {
         <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: "Inter, sans-serif" }}>{deal.name}</div>
         {deal.contact && deal.contact !== deal.name && <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{deal.contact}</div>}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-          <span style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>{fmtEUR(deal.value)}/mês</span>
+          <span style={{ fontSize: 12, color: C.accent, fontWeight: 600 }}>{fmtEUR(deal.value)}/m√™s</span>
           <span style={{ fontSize: 11, color: C.muted }}>{deal.owner}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
           <span style={{ fontSize: 10, color: isStale ? C.amber : C.muted, display: "flex", alignItems: "center", gap: 4 }}>
-            {isStale && "⚠️"} {daysInStage}d na etapa
+            {isStale && "‚ö†Ô∏è"} {daysInStage}d na etapa
           </span>
           {!isLast && deal.stage !== LOST_STAGE && (
-            <span onClick={(e) => { e.stopPropagation(); onAdvance(deal.id); }} title="Avançar etapa"
+            <span onClick={(e) => { e.stopPropagation(); onAdvance(deal.id); }} title="Avan√ßar etapa"
               style={{ cursor: "pointer", color: C.muted, fontSize: 14, background: C.surface, borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              ›
+              ‚Ä∫
             </span>
           )}
         </div>
@@ -342,7 +347,7 @@ function DealCard({ deal, onDragStart, onOpen, onAdvance, isLast }) {
 }
 
 function PedidoCard({ pedido, onDragStart, onOpen }) {
-  const overdue = pedido.due < today && pedido.stage !== "Concluído";
+  const overdue = pedido.due < today && pedido.stage !== "Conclu√≠do";
   const doneTasks = pedido.tasks.filter((t) => t.done).length;
   const isNew = pedido.seen === false;
   const meta = STAGE_META[pedido.stage];
@@ -360,17 +365,17 @@ function PedidoCard({ pedido, onDragStart, onOpen }) {
       )}
       <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>{pedido.client}</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
-        <span style={{ fontSize: 12 }}>{TYPE_ICONS[pedido.type] || "📄"}</span>{pedidoTitle(pedido)}
+        <span style={{ fontSize: 12 }}>{TYPE_ICONS[pedido.type] || "üìÑ"}</span>{pedidoTitle(pedido)}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
         <span style={{ fontSize: 11, color: overdue ? C.red : C.muted }}>Prazo: {fmtDate(pedido.due)}</span>
         <span style={{ fontSize: 11, color: C.muted }}>{pedido.owner}</span>
       </div>
       <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
-        {pedido.propertyId && <span style={{ fontSize: 10, color: C.green }}>🏠 {pedido.propertyId}</span>}
-        {pedido.tasks.length > 0 && <span style={{ fontSize: 10, color: C.accent }}>✓ {doneTasks}/{pedido.tasks.length}</span>}
+        {pedido.propertyId && <span style={{ fontSize: 10, color: C.green }}>üè† {pedido.propertyId}</span>}
+        {pedido.tasks.length > 0 && <span style={{ fontSize: 10, color: C.accent }}>‚úì {doneTasks}/{pedido.tasks.length}</span>}
         {pedido.notes.length > 0 && <span style={{ fontSize: 10, color: C.muted }}>{pedido.notes.length} nota{pedido.notes.length > 1 ? "s" : ""}</span>}
-        {pedido.messages.length > 0 && <span style={{ fontSize: 10, color: C.amber }}>💬 {pedido.messages.length}</span>}
+        {pedido.messages.length > 0 && <span style={{ fontSize: 10, color: C.amber }}>üí¨ {pedido.messages.length}</span>}
       </div>
     </div>
   );
@@ -385,7 +390,7 @@ function ChatThread({ messages, onSend, senderRole }) {
         {messages.length === 0 && <div style={{ fontSize: 12, color: C.muted }}>Ainda sem mensagens.</div>}
         {messages.map((m) => {
           const mine = m.sender === senderRole;
-          const avatar = m.sender === "cliente" ? "🧑" : "🏢";
+          const avatar = m.sender === "cliente" ? "üßë" : "üè¢";
           return (
             <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", gap: 8, flexDirection: mine ? "row-reverse" : "row" }}>
               <div style={{ width: 24, height: 24, borderRadius: "50%", background: mine ? C.accent : C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>{avatar}</div>
@@ -418,7 +423,7 @@ function SidePanel({ onClose, eyebrow, width = 380, children }) {
         style={{ width, maxWidth: "90%", height: "100%", background: C.surface, borderLeft: `1px solid ${C.border}`, padding: 22, overflowY: "auto", fontFamily: "Inter, sans-serif" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
           <div style={{ fontSize: 11, color: C.muted }}>{eyebrow}</div>
-          <span onClick={onClose} style={{ cursor: "pointer", color: C.muted, fontSize: 18, lineHeight: 1 }}>×</span>
+          <span onClick={onClose} style={{ cursor: "pointer", color: C.muted, fontSize: 18, lineHeight: 1 }}>√ó</span>
         </div>
         {children}
       </div>
@@ -448,13 +453,13 @@ function PedidoHeader({ pedido, onUpdateHeader }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
           <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 18, color: C.text }}>{pedidoTitle(pedido)}</div>
           {pedido.type === "Pedido Aberto" && (
-            <span onClick={() => { setTitleDraft(pedidoTitle(pedido)); setEditingTitle(true); }} style={{ cursor: "pointer", fontSize: 13, color: C.muted }}>✎</span>
+            <span onClick={() => { setTitleDraft(pedidoTitle(pedido)); setEditingTitle(true); }} style={{ cursor: "pointer", fontSize: 13, color: C.muted }}>‚úé</span>
           )}
         </div>
       )}
 
       <div style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>ID do Imóvel</div>
+        <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>ID do Im√≥vel</div>
         {editingProp ? (
           <div style={{ display: "flex", gap: 6 }}>
             <input value={propDraft} onChange={(e) => setPropDraft(e.target.value)} autoFocus placeholder="ex. LX-231"
@@ -463,11 +468,11 @@ function PedidoHeader({ pedido, onUpdateHeader }) {
           </div>
         ) : pedido.propertyId ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 6, padding: "4px 10px" }}>🏠 {pedido.propertyId}</span>
-            <span onClick={() => { setPropDraft(pedido.propertyId); setEditingProp(true); }} style={{ cursor: "pointer", fontSize: 12, color: C.muted }}>✎</span>
+            <span style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 6, padding: "4px 10px" }}>üè† {pedido.propertyId}</span>
+            <span onClick={() => { setPropDraft(pedido.propertyId); setEditingProp(true); }} style={{ cursor: "pointer", fontSize: 12, color: C.muted }}>‚úé</span>
           </div>
         ) : (
-          <span onClick={() => { setPropDraft(""); setEditingProp(true); }} style={{ cursor: "pointer", fontSize: 12, color: C.accent }}>+ Adicionar ID do imóvel</span>
+          <span onClick={() => { setPropDraft(""); setEditingProp(true); }} style={{ cursor: "pointer", fontSize: 12, color: C.accent }}>+ Adicionar ID do im√≥vel</span>
         )}
       </div>
     </>
@@ -494,13 +499,13 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
 
       <div style={{ display: "flex", gap: 16, marginBottom: 20, fontSize: 12, color: C.muted, flexWrap: "wrap" }}>
         <div><div style={{ marginBottom: 2 }}>Estado</div><div style={{ color: C.text }}>{pedido.stage}</div></div>
-        <div><div style={{ marginBottom: 2 }}>Responsável</div><div style={{ color: C.text }}>{pedido.owner}</div></div>
+        <div><div style={{ marginBottom: 2 }}>Respons√°vel</div><div style={{ color: C.text }}>{pedido.owner}</div></div>
         <div><div style={{ marginBottom: 2 }}>Prazo</div><div style={{ color: C.text }}>{fmtDateTime(pedido.due)}</div></div>
       </div>
 
       {pedido.description && (
         <>
-          <SectionTitle>Descrição do pedido</SectionTitle>
+          <SectionTitle>Descri√ß√£o do pedido</SectionTitle>
           <div style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: 10, marginBottom: 18 }}>{pedido.description}</div>
         </>
       )}
@@ -510,7 +515,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
           <SectionTitle>Ficheiros do cliente</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
             {pedido.attachments.map((a) => (
-              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
+              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>üìé {a.name}</div>
             ))}
           </div>
         </>
@@ -521,7 +526,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
         <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
           <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} />
           <span style={{ flex: 1, fontSize: 13, color: t.done ? C.muted : C.text, textDecoration: t.done ? "line-through" : "none" }}>{t.text}</span>
-          <span onClick={() => removeTask(t.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+          <span onClick={() => removeTask(t.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>√ó</span>
         </div>
       ))}
       <div style={{ display: "flex", gap: 6, marginTop: 8, marginBottom: 22 }}>
@@ -576,7 +581,7 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
                   background: reached ? meta.color : C.surfaceRaised, border: `2px solid ${reached ? meta.color : C.border}`,
                   boxShadow: isCurrent ? `0 0 0 5px ${meta.color}33` : "none", transition: "all 0.3s",
                 }}>
-                  {reached ? (i < currentIndex ? "✓" : meta.icon) : ""}
+                  {reached ? (i < currentIndex ? "‚úì" : meta.icon) : ""}
                 </div>
                 <div style={{ fontSize: 9, fontWeight: isCurrent ? 700 : 500, color: reached ? meta.color : C.muted, marginTop: 6, textAlign: "center", lineHeight: 1.25 }}>{s}</div>
               </div>
@@ -599,7 +604,7 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
 
       {pedido.description && (
         <>
-          <SectionTitle>A sua descrição</SectionTitle>
+          <SectionTitle>A sua descri√ß√£o</SectionTitle>
           <div style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: 10, marginBottom: 18 }}>{pedido.description}</div>
         </>
       )}
@@ -609,7 +614,7 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
           <SectionTitle>Ficheiros enviados</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
             {pedido.attachments.map((a) => (
-              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
+              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>üìé {a.name}</div>
             ))}
           </div>
         </>
@@ -651,7 +656,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   };
 
   const saveContact = async () => {
-    const patch = { contact: contactDraft.contact.trim() || "—", email: contactDraft.email.trim() || "—", phone: contactDraft.phone.trim() || "—" };
+    const patch = { contact: contactDraft.contact.trim() || "‚Äî", email: contactDraft.email.trim() || "‚Äî", phone: contactDraft.phone.trim() || "‚Äî" };
     setClients((prev) => prev.map((c) => (c.id === client.id ? { ...c, ...patch } : c)));
     setEditingContact(false);
     try { await db.updateClient(client.id, patch); } catch (e) { alert(e.message); }
@@ -669,12 +674,12 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const notes = extra.notes || [];
   const activities = extra.activities || [];
 
-  const pedidosEmAtraso = clientPedidos.filter((p) => p.due < today && p.stage !== "Concluído");
+  const pedidosEmAtraso = clientPedidos.filter((p) => p.due < today && p.stage !== "Conclu√≠do");
   const activitiesEmAtraso = activities.filter((a) => !a.done && a.due && new Date(a.due) < today);
   const alerts = [
-    ...pedidosEmAtraso.map((p) => ({ id: `p${p.id}`, text: `Pedido "${pedidoTitle(p)}" está em atraso (prazo ${fmtDate(p.due)}).`, level: "red" })),
-    ...activitiesEmAtraso.map((a) => ({ id: `a${a.id}`, text: `Atividade "${a.text}" está em atraso.`, level: "amber" })),
-    ...(!activeDeal ? [{ id: "prospect", text: "Sem serviço ativo — cliente ainda em fase de prospecção.", level: "amber" }] : []),
+    ...pedidosEmAtraso.map((p) => ({ id: `p${p.id}`, text: `Pedido "${pedidoTitle(p)}" est√° em atraso (prazo ${fmtDate(p.due)}).`, level: "red" })),
+    ...activitiesEmAtraso.map((a) => ({ id: `a${a.id}`, text: `Atividade "${a.text}" est√° em atraso.`, level: "amber" })),
+    ...(!activeDeal ? [{ id: "prospect", text: "Sem servi√ßo ativo ‚Äî cliente ainda em fase de prospec√ß√£o.", level: "amber" }] : []),
   ];
 
   const addNote = async () => {
@@ -717,13 +722,13 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
 
   const timeline = useMemo(() => {
     const events = [];
-    if (pipelineDeal) events.push({ id: "deal", date: pipelineDeal.stageEnteredAt, icon: "💼", text: `Negócio em "${pipelineDeal.stage}" (${fmtEUR(pipelineDeal.value)}/mês)` });
+    if (pipelineDeal) events.push({ id: "deal", date: pipelineDeal.stageEnteredAt, icon: "üíº", text: `Neg√≥cio em "${pipelineDeal.stage}" (${fmtEUR(pipelineDeal.value)}/m√™s)` });
     clientPedidos.forEach((p) => {
-      events.push({ id: `p${p.id}`, date: p.due, icon: "📦", text: `Pedido "${pedidoTitle(p)}" — estado atual: ${p.stage}` });
-      p.messages.forEach((m) => events.push({ id: `m${p.id}-${m.id}`, date: m.date, icon: "💬", text: `${m.sender === "cliente" ? "Cliente" : "Equipa"} em "${pedidoTitle(p)}": ${m.text}` }));
+      events.push({ id: `p${p.id}`, date: p.due, icon: "üì¶", text: `Pedido "${pedidoTitle(p)}" ‚Äî estado atual: ${p.stage}` });
+      p.messages.forEach((m) => events.push({ id: `m${p.id}-${m.id}`, date: m.date, icon: "üí¨", text: `${m.sender === "cliente" ? "Cliente" : "Equipa"} em "${pedidoTitle(p)}": ${m.text}` }));
     });
-    notes.forEach((n) => events.push({ id: `n${n.id}`, date: n.date, icon: "📝", text: n.text }));
-    activities.filter((a) => a.done).forEach((a) => events.push({ id: `act${a.id}`, date: a.due ? new Date(a.due) : new Date(), icon: "✅", text: `${a.type} concluída: ${a.text}` }));
+    notes.forEach((n) => events.push({ id: `n${n.id}`, date: n.date, icon: "üìù", text: n.text }));
+    activities.filter((a) => a.done).forEach((a) => events.push({ id: `act${a.id}`, date: a.due ? new Date(a.due) : new Date(), icon: "‚úÖ", text: `${a.type} conclu√≠da: ${a.text}` }));
     return events.sort((a, b) => b.date - a.date);
   }, [pipelineDeal, clientPedidos, notes, activities]);
 
@@ -766,21 +771,21 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
             </div>
             <span onClick={() => { setContactDraft({ contact: client.contact, email: client.email, phone: client.phone }); setEditingContact(true); }}
               style={{ display: "inline-block", marginTop: 8, cursor: "pointer", fontSize: 12, color: C.accent }}>
-              ✎ Editar contacto
+              ‚úé Editar contacto
             </span>
           </>
         )}
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-        <MetricCard label="MRR" value={activeDeal ? fmtEUR(activeDeal.value) : "—"} color={C.accent} />
+        <MetricCard label="MRR" value={activeDeal ? fmtEUR(activeDeal.value) : "‚Äî"} color={C.accent} />
         <MetricCard label="Estado" value={activeDeal ? "Ativo" : "Prospect"} color={activeDeal ? C.green : C.amber} />
         <MetricCard label="Pedidos" value={clientPedidos.length} />
       </div>
 
       {alerts.length > 0 && tab !== "alertas" && (
         <div onClick={() => setTab("alertas")} style={{ background: "rgba(242,97,122,0.12)", border: `1px solid ${C.red}`, borderRadius: 8, padding: "8px 12px", fontSize: 12, color: C.red, marginBottom: 16, cursor: "pointer" }}>
-          ⚠️ {alerts.length} alerta{alerts.length > 1 ? "s" : ""} — ver detalhe
+          ‚ö†Ô∏è {alerts.length} alerta{alerts.length > 1 ? "s" : ""} ‚Äî ver detalhe
         </div>
       )}
 
@@ -798,15 +803,15 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
         <>
           {pipelineDeal && (
             <>
-              <SectionTitle>Negócio no funil</SectionTitle>
+              <SectionTitle>Neg√≥cio no funil</SectionTitle>
               <div style={{ background: C.surfaceRaised, borderRadius: 8, padding: 12, marginBottom: 18 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: C.accent, fontFamily: "Manrope, sans-serif" }}>{fmtEUR(pipelineDeal.value)}/mês</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: C.accent, fontFamily: "Manrope, sans-serif" }}>{fmtEUR(pipelineDeal.value)}/m√™s</span>
                   <span style={{ fontSize: 11, color: pipelineDeal.stage === LOST_STAGE ? C.red : C.text, background: pipelineDeal.stage === LOST_STAGE ? "rgba(242,97,122,0.15)" : C.accentSoft, padding: "4px 10px", borderRadius: 6, fontWeight: 700 }}>
                     {pipelineDeal.stage}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>{dealDaysInStage}d nesta etapa · responsável {pipelineDeal.owner}</div>
+                <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>{dealDaysInStage}d nesta etapa ¬∑ respons√°vel {pipelineDeal.owner}</div>
                 {!dealIsTerminal && (
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={() => markDealStage("Closed")} style={{ flex: 1, background: C.green, border: "none", borderRadius: 6, padding: "8px 0", color: "#06281c", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Ganho</button>
@@ -819,14 +824,14 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
 
           <SectionTitle>Acesso ao portal</SectionTitle>
           <div style={{ background: C.surfaceRaised, borderRadius: 8, padding: 12, marginBottom: 18 }}>
-            {linkedProfiles.length === 0 && <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Ainda ninguém tem acesso ao portal para este cliente.</div>}
+            {linkedProfiles.length === 0 && <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Ainda ningu√©m tem acesso ao portal para este cliente.</div>}
             {linkedProfiles.map((p) => (
-              <div key={p.id} style={{ fontSize: 13, color: C.text, marginBottom: 6 }}>👤 {p.full_name || p.email || p.id}</div>
+              <div key={p.id} style={{ fontSize: 13, color: C.text, marginBottom: 6 }}>üë§ {p.full_name || p.email || p.id}</div>
             ))}
             <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
               <select value={selectedProfileId} onChange={(e) => setSelectedProfileId(e.target.value)}
                 style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }}>
-                <option value="">Associar conta registada…</option>
+                <option value="">Associar conta registada‚Ä¶</option>
                 {unlinkedProfiles.map((p) => <option key={p.id} value={p.id}>{p.email || p.full_name || p.id}</option>)}
               </select>
               <button onClick={linkProfile} disabled={!selectedProfileId} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", opacity: selectedProfileId ? 1 : 0.5 }}>Associar</button>
@@ -840,7 +845,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                 style={{ background: C.surfaceRaised, borderRadius: 8, padding: "10px 12px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                 <div>
                   <div style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{pedidoTitle(p)}</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>{fmtDate(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>{fmtDate(p.due)}{p.propertyId ? ` ¬∑ üè† ${p.propertyId}` : ""}</div>
                 </div>
                 <span style={{ fontSize: 11, color: C.accent, background: C.accentSoft, padding: "4px 8px", borderRadius: 6 }}>{p.stage}</span>
               </div>
@@ -865,11 +870,11 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                   <div style={{ fontSize: 13, color: C.text, flex: 1 }}>{n.text}</div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <span onClick={() => togglePin(n.id)} title="Afixar nota" style={{ cursor: "pointer", color: n.pinned ? C.accent : C.muted, fontSize: 13 }}>📌</span>
-                    <span onClick={() => removeNote(n.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+                    <span onClick={() => togglePin(n.id)} title="Afixar nota" style={{ cursor: "pointer", color: n.pinned ? C.accent : C.muted, fontSize: 13 }}>üìå</span>
+                    <span onClick={() => removeNote(n.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>√ó</span>
                   </div>
                 </div>
-                <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>{fmtDateTime(n.date)}{n.pinned ? " · afixada" : ""}</div>
+                <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>{fmtDateTime(n.date)}{n.pinned ? " ¬∑ afixada" : ""}</div>
               </div>
             ))}
             {sortedNotes.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Sem notas ainda.</div>}
@@ -905,9 +910,9 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 11, color: C.accent, fontWeight: 700 }}>{a.type}</div>
                     <div style={{ fontSize: 13, color: a.done ? C.muted : C.text, textDecoration: a.done ? "line-through" : "none" }}>{a.text}</div>
-                    {a.due && <div style={{ fontSize: 11, color: overdue ? C.red : C.muted, marginTop: 2 }}>Prazo: {fmtDate(new Date(a.due))}{overdue ? " · em atraso" : ""}</div>}
+                    {a.due && <div style={{ fontSize: 11, color: overdue ? C.red : C.muted, marginTop: 2 }}>Prazo: {fmtDate(new Date(a.due))}{overdue ? " ¬∑ em atraso" : ""}</div>}
                   </div>
-                  <span onClick={() => removeActivity(a.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+                  <span onClick={() => removeActivity(a.id)} style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>√ó</span>
                 </div>
               );
             })}
@@ -938,7 +943,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
               background: a.level === "red" ? "rgba(242,97,122,0.12)" : "rgba(245,185,66,0.12)",
               border: `1px solid ${a.level === "red" ? C.red : C.amber}`, borderRadius: 8, padding: "10px 12px", fontSize: 13, color: C.text,
             }}>
-              {a.level === "red" ? "🔴" : "🟠"} {a.text}
+              {a.level === "red" ? "üî¥" : "üü†"} {a.text}
             </div>
           ))}
           {alerts.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Sem alertas para este cliente.</div>}
@@ -965,7 +970,7 @@ function EquipaApp({ profile }) {
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [openClientId, setOpenClientId] = useState(null);
   const [addingDeal, setAddingDeal] = useState(false);
-  const [newDeal, setNewDeal] = useState({ name: "", value: "", owner: "Fábio", contact: "", email: "", phone: "" });
+  const [newDeal, setNewDeal] = useState({ name: "", value: "", owner: "F√°bio", contact: "", email: "", phone: "" });
   const [addingClient, setAddingClient] = useState(false);
   const [newClient, setNewClient] = useState({ name: "", contact: "", email: "", phone: "" });
 
@@ -1005,9 +1010,9 @@ function EquipaApp({ profile }) {
     const closedInPeriod = deals.filter((d) => d.stage === "Closed" && inPeriod(d));
     const faturacao = closedInPeriod.reduce((sum, d) => sum + d.value, 0);
     const totalLeadsAllTime = deals.length;
-    const totalClosedAllTime = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Serviço"].includes(d.stage)).length;
+    const totalClosedAllTime = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Servi√ßo"].includes(d.stage)).length;
     const conversao = totalLeadsAllTime > 0 ? Math.round((totalClosedAllTime / totalLeadsAllTime) * 100) : 0;
-    const closedAllValues = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Serviço"].includes(d.stage));
+    const closedAllValues = deals.filter((d) => ["Closed", "Em Onboarding", "Entrega de Servi√ßo"].includes(d.stage));
     const ticketMedio = closedAllValues.length > 0 ? Math.round(closedAllValues.reduce((s, d) => s + d.value, 0) / closedAllValues.length) : 0;
     const pedidosVolume = pedidos.filter((p) => withinPeriod(p.due, periodDays)).length;
     return { leads: countStage("Lead"), r1: countStage("R1"), r2: countStage("R2"), closed: closedInPeriod.length, mrr, arr, faturacao, clientesAtivos: activeClients.length, conversao, ticketMedio, pedidosVolume };
@@ -1015,9 +1020,9 @@ function EquipaApp({ profile }) {
 
   const opStats = useMemo(() => {
     const total = pedidos.length;
-    const emAtraso = pedidos.filter((p) => p.due < today && p.stage !== "Concluído").length;
-    const concluidos = pedidos.filter((p) => p.stage === "Concluído").length;
-    const noPrazo = concluidos > 0 ? Math.round(((concluidos - pedidos.filter((p) => p.stage === "Concluído" && p.due < today).length) / concluidos) * 100) : 100;
+    const emAtraso = pedidos.filter((p) => p.due < today && p.stage !== "Conclu√≠do").length;
+    const concluidos = pedidos.filter((p) => p.stage === "Conclu√≠do").length;
+    const noPrazo = concluidos > 0 ? Math.round(((concluidos - pedidos.filter((p) => p.stage === "Conclu√≠do" && p.due < today).length) / concluidos) * 100) : 100;
 
     const withCycle = pedidos.filter((p) => p.completedAt && p.createdAt);
     const avgCycleDays = withCycle.length > 0
@@ -1025,7 +1030,7 @@ function EquipaApp({ profile }) {
       : null;
 
     const in48h = new Date(today.getTime() + 48 * 60 * 60 * 1000);
-    const aRisco = pedidos.filter((p) => p.stage !== "Concluído" && p.due >= today && p.due <= in48h).length;
+    const aRisco = pedidos.filter((p) => p.stage !== "Conclu√≠do" && p.due >= today && p.due <= in48h).length;
 
     const newThisWeek = pedidos.filter((p) => p.createdAt && withinPeriod(p.createdAt, 7)).length;
 
@@ -1055,7 +1060,7 @@ function EquipaApp({ profile }) {
   };
   const onDropPedido = (e, stage) => {
     const id = e.dataTransfer.getData("id");
-    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, stage, completedAt: stage === "Concluído" ? new Date() : null } : p)));
+    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, stage, completedAt: stage === "Conclu√≠do" ? new Date() : null } : p)));
     db.updatePedidoStage(id, stage).catch((e) => { alert(e.message); reloadPedidos(); });
   };
   const openPedidoSeen = (id) => {
@@ -1069,7 +1074,7 @@ function EquipaApp({ profile }) {
     if (!client) client = clients.find((c) => c.name === deal.name);
     if (!client) {
       try {
-        client = await db.createClient({ name: deal.name, contact: deal.contact || "—", email: null, phone: null });
+        client = await db.createClient({ name: deal.name, contact: deal.contact || "‚Äî", email: null, phone: null });
         setClients((prev) => [...prev, client]);
         if (!deal.clientId) db.updateDeal(deal.id, { client_id: client.id }).then(reloadDeals);
       } catch (e) { alert(e.message); return; }
@@ -1084,7 +1089,7 @@ function EquipaApp({ profile }) {
       let client = clients.find((c) => c.name === name);
       if (!client) {
         client = await db.createClient({
-          name, contact: newDeal.contact.trim() || "—",
+          name, contact: newDeal.contact.trim() || "‚Äî",
           email: newDeal.email.trim() || null, phone: newDeal.phone.trim() || null,
         });
         setClients((prev) => [...prev, client]);
@@ -1095,7 +1100,7 @@ function EquipaApp({ profile }) {
         stage_entered_at: new Date().toISOString(),
       });
       await reloadDeals();
-      setNewDeal({ name: "", value: "", owner: "Fábio", contact: "", email: "", phone: "" });
+      setNewDeal({ name: "", value: "", owner: "F√°bio", contact: "", email: "", phone: "" });
       setAddingDeal(false);
       openClient(client.id);
     } catch (e) { alert(e.message); }
@@ -1108,7 +1113,7 @@ function EquipaApp({ profile }) {
       const existing = clients.find((c) => c.name === name);
       if (existing) { setAddingClient(false); openClient(existing.id); return; }
       const client = await db.createClient({
-        name, contact: newClient.contact.trim() || "—",
+        name, contact: newClient.contact.trim() || "‚Äî",
         email: newClient.email.trim() || null, phone: newClient.phone.trim() || null,
       });
       setClients((prev) => [...prev, client]);
@@ -1129,13 +1134,13 @@ function EquipaApp({ profile }) {
   const unseenCount = pedidos.filter((p) => p.seen === false).length;
 
   const NAV = [
-    { key: "dashboard", label: "Dashboard", icon: "📊" },
-    { key: "crm", label: "CRM Comercial", icon: "🧭" },
-    { key: "operacional", label: "Operacional", icon: "🗂️", badge: unseenCount },
-    { key: "clientes", label: "Clientes", icon: "👥" },
+    { key: "dashboard", label: "Dashboard", icon: "üìä" },
+    { key: "crm", label: "CRM Comercial", icon: "üß≠" },
+    { key: "operacional", label: "Operacional", icon: "üóÇÔ∏è", badge: unseenCount },
+    { key: "clientes", label: "Clientes", icon: "üë•" },
   ];
 
-  if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
+  if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar‚Ä¶</div>;
   if (loadError) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, fontSize: 13, padding: 24, textAlign: "center" }}>Erro ao carregar dados: {loadError}</div>;
 
   return (
@@ -1171,39 +1176,39 @@ function EquipaApp({ profile }) {
               </div>
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>📈 Comercial</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>üìà Comercial</div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-              <MetricCard label="Leads" value={metrics.leads} icon="🧲" />
-              <MetricCard label="R1" value={metrics.r1} icon="☎️" />
-              <MetricCard label="R2" value={metrics.r2} icon="🤝" />
-              <MetricCard label="Closed" value={metrics.closed} color={C.green} icon="✅" />
-              <MetricCard label="MRR" value={fmtEUR(metrics.mrr)} color={C.accent} sub="clientes ativos" icon="💰" />
-              <MetricCard label="ARR" value={fmtEUR(metrics.arr)} color={C.accent} icon="📆" />
-              <MetricCard label="Faturação" value={fmtEUR(metrics.faturacao)} color={C.amber} sub="deals fechados no período" icon="🧾" />
+              <MetricCard label="Leads" value={metrics.leads} icon="üß≤" />
+              <MetricCard label="R1" value={metrics.r1} icon="‚òéÔ∏è" />
+              <MetricCard label="R2" value={metrics.r2} icon="ü§ù" />
+              <MetricCard label="Closed" value={metrics.closed} color={C.green} icon="‚úÖ" />
+              <MetricCard label="MRR" value={fmtEUR(metrics.mrr)} color={C.accent} sub="clientes ativos" icon="üí∞" />
+              <MetricCard label="ARR" value={fmtEUR(metrics.arr)} color={C.accent} icon="üìÜ" />
+              <MetricCard label="Fatura√ß√£o" value={fmtEUR(metrics.faturacao)} color={C.amber} sub="deals fechados no per√≠odo" icon="üßæ" />
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 30 }}>
-              <MetricCard label="Clientes Ativos" value={metrics.clientesAtivos} sub="onboard + entrega serviço" icon="👥" />
-              <MetricCard label="Taxa de Conversão" value={`${metrics.conversao}%`} sub="lead → cliente" icon="🎯" />
-              <MetricCard label="Ticket Médio" value={fmtEUR(metrics.ticketMedio)} sub="por cliente fechado" icon="🏷️" />
-              <MetricCard label="Nº Pedidos" value={metrics.pedidosVolume} color={C.amber} sub="volume operacional no período" icon="📦" />
+              <MetricCard label="Clientes Ativos" value={metrics.clientesAtivos} sub="onboard + entrega servi√ßo" icon="üë•" />
+              <MetricCard label="Taxa de Convers√£o" value={`${metrics.conversao}%`} sub="lead ‚Üí cliente" icon="üéØ" />
+              <MetricCard label="Ticket M√©dio" value={fmtEUR(metrics.ticketMedio)} sub="por cliente fechado" icon="üè∑Ô∏è" />
+              <MetricCard label="N¬∫ Pedidos" value={metrics.pedidosVolume} color={C.amber} sub="volume operacional no per√≠odo" icon="üì¶" />
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>🗂️ Operacional</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>üóÇÔ∏è Operacional</div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-              <MetricCard label="Total de Pedidos" value={opStats.total} icon="📋" />
-              <MetricCard label="Em Atraso" value={opStats.emAtraso} color={opStats.emAtraso > 0 ? C.red : C.green} icon="⏰" />
-              <MetricCard label="Concluídos" value={opStats.concluidos} color={C.green} icon="✅" />
-              <MetricCard label="No Prazo" value={`${opStats.noPrazo}%`} sub="dos pedidos concluídos" icon="🎯" />
+              <MetricCard label="Total de Pedidos" value={opStats.total} icon="üìã" />
+              <MetricCard label="Em Atraso" value={opStats.emAtraso} color={opStats.emAtraso > 0 ? C.red : C.green} icon="‚è∞" />
+              <MetricCard label="Conclu√≠dos" value={opStats.concluidos} color={C.green} icon="‚úÖ" />
+              <MetricCard label="No Prazo" value={`${opStats.noPrazo}%`} sub="dos pedidos conclu√≠dos" icon="üéØ" />
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
-              <MetricCard label="Tempo Médio de Conclusão" value={opStats.avgCycleDays !== null ? `${opStats.avgCycleDays}d` : "—"} sub="da criação à conclusão" icon="⏱️" />
-              <MetricCard label="A Risco (48h)" value={opStats.aRisco} color={opStats.aRisco > 0 ? C.amber : C.green} sub="prazo nas próximas 48h" icon="⚠️" />
-              <MetricCard label="Novos esta Semana" value={opStats.newThisWeek} color={C.accent} icon="🆕" />
+              <MetricCard label="Tempo M√©dio de Conclus√£o" value={opStats.avgCycleDays !== null ? `${opStats.avgCycleDays}d` : "‚Äî"} sub="da cria√ß√£o √† conclus√£o" icon="‚è±Ô∏è" />
+              <MetricCard label="A Risco (48h)" value={opStats.aRisco} color={opStats.aRisco > 0 ? C.amber : C.green} sub="prazo nas pr√≥ximas 48h" icon="‚ö†Ô∏è" />
+              <MetricCard label="Novos esta Semana" value={opStats.newThisWeek} color={C.accent} icon="üÜï" />
             </div>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <div className="op-card-hover" style={{ flex: "1 1 260px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>📊 Pedidos por Tipo</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>üìä Pedidos por Tipo</div>
                 {opStats.topTypes.map(([type, count]) => (
                   <div key={type} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <span style={{ fontSize: 12, color: C.text }}>{type}</span>
@@ -1212,7 +1217,7 @@ function EquipaApp({ profile }) {
                 ))}
               </div>
               <div className="op-card-hover" style={{ flex: "1 1 200px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>🧑‍💼 Pedidos por Responsável</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>üßë‚Äçüíº Pedidos por Respons√°vel</div>
                 {Object.entries(opStats.byOwner).map(([owner, count]) => (
                   <div key={owner} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                     <span style={{ fontSize: 12, color: C.text }}>{owner}</span>
@@ -1237,20 +1242,20 @@ function EquipaApp({ profile }) {
             {addingDeal && (
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16, marginBottom: 20, maxWidth: 480 }}>
                 <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Nome do cliente / lead</div>
-                <input value={newDeal.name} onChange={(e) => setNewDeal({ ...newDeal, name: e.target.value })} placeholder="ex. Nova Imobiliária Lda"
+                <input value={newDeal.name} onChange={(e) => setNewDeal({ ...newDeal, name: e.target.value })} placeholder="ex. Nova Imobili√°ria Lda"
                   style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12, boxSizing: "border-box" }} />
 
                 <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Valor mensal estimado (€)</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Valor mensal estimado (‚Ç¨)</div>
                     <input type="number" value={newDeal.value} onChange={(e) => setNewDeal({ ...newDeal, value: e.target.value })} placeholder="500"
                       style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, boxSizing: "border-box" }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Responsável</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Respons√°vel</div>
                     <select value={newDeal.owner} onChange={(e) => setNewDeal({ ...newDeal, owner: e.target.value })}
                       style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13 }}>
-                      <option value="Fábio">Fábio</option>
+                      <option value="F√°bio">F√°bio</option>
                       <option value="Nicole">Nicole</option>
                     </select>
                   </div>
@@ -1282,13 +1287,13 @@ function EquipaApp({ profile }) {
                     style={{ minWidth: 210, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, flexShrink: 0 }}>
                     <div style={{ marginBottom: 10 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: stage === LOST_STAGE ? C.red : C.text }}>{stage}</div>
-                      <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{fmtEUR(total)} · {stageDeals.length} negócio{stageDeals.length !== 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{fmtEUR(total)} ¬∑ {stageDeals.length} neg√≥cio{stageDeals.length !== 1 ? "s" : ""}</div>
                     </div>
                     {stageDeals.map((d) => (
-                      <DealCard key={d.id} deal={d} onDragStart={onDragStart} onOpen={openClientByDeal} onAdvance={onAdvanceDeal} isLast={stage === "Entrega de Serviço"} />
+                      <DealCard key={d.id} deal={d} onDragStart={onDragStart} onOpen={openClientByDeal} onAdvance={onAdvanceDeal} isLast={stage === "Entrega de Servi√ßo"} />
                     ))}
                     {stageDeals.length === 0 && (
-                      <div style={{ fontSize: 11, color: C.muted, textAlign: "center", padding: "18px 4px", opacity: 0.6 }}>Sem negócios aqui</div>
+                      <div style={{ fontSize: 11, color: C.muted, textAlign: "center", padding: "18px 4px", opacity: 0.6 }}>Sem neg√≥cios aqui</div>
                     )}
                   </div>
                 );
@@ -1302,7 +1307,7 @@ function EquipaApp({ profile }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
               <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 20, color: C.text }}>Pedidos dos Clientes</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <input value={propertySearch} onChange={(e) => setPropertySearch(e.target.value)} placeholder="🔍 ID do imóvel..."
+                <input value={propertySearch} onChange={(e) => setPropertySearch(e.target.value)} placeholder="üîç ID do im√≥vel..."
                   style={{ background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, width: 160 }} />
                 <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
                   style={{ background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13 }}>
@@ -1349,7 +1354,7 @@ function EquipaApp({ profile }) {
             {addingClient && (
               <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16, marginBottom: 20, maxWidth: 440 }}>
                 <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Nome do cliente</div>
-                <input value={newClient.name} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} placeholder="ex. Nova Imobiliária Lda"
+                <input value={newClient.name} onChange={(e) => setNewClient({ ...newClient, name: e.target.value })} placeholder="ex. Nova Imobili√°ria Lda"
                   style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 12, boxSizing: "border-box" }} />
 
                 <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Contacto (opcional)</div>
@@ -1382,10 +1387,10 @@ function EquipaApp({ profile }) {
                       </div>
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: C.text, fontFamily: "Manrope, sans-serif" }}>{c.name}</div>
-                        <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{c.contact} · {nPedidos} pedido{nPedidos !== 1 ? "s" : ""}</div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{c.contact} ¬∑ {nPedidos} pedido{nPedidos !== 1 ? "s" : ""}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: activeDeal ? C.green : C.amber }}>{activeDeal ? fmtEUR(activeDeal.value) + "/mês" : "Prospect"}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: activeDeal ? C.green : C.amber }}>{activeDeal ? fmtEUR(activeDeal.value) + "/m√™s" : "Prospect"}</div>
                   </div>
                 );
               })}
@@ -1449,21 +1454,27 @@ function ClientPortal({ profile }) {
     return (
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, textAlign: "center" }}>
         <div style={{ maxWidth: 420, color: C.muted, fontSize: 14 }}>
-          A sua conta ainda não está associada a nenhum cliente OPERA. Contacte a equipa OPERA para ativarmos o seu acesso ao portal.
+          A sua conta ainda n√£o est√° associada a nenhum cliente OPERA. Contacte a equipa OPERA para ativarmos o seu acesso ao portal.
         </div>
       </div>
     );
   }
-  if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
+  if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar‚Ä¶</div>;
   if (loadError) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, fontSize: 13, padding: 24, textAlign: "center" }}>Erro ao carregar dados: {loadError}</div>;
 
   const allMyPedidos = pedidos.slice().sort((a, b) => b.createdAt - a.createdAt);
   const myPedidos = allMyPedidos.filter((p) => {
-    if (filter === "curso") return p.stage !== "Concluído";
-    if (filter === "concluidos") return p.stage === "Concluído";
+    if (filter === "curso") return p.stage !== "Conclu√≠do";
+    if (filter === "concluidos") return p.stage === "Conclu√≠do";
     return true;
   });
   const openPedido = pedidos.find((p) => p.id === openPedidoId);
+
+  const openPedidoSeen = (id) => {
+    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, clientSeen: true } : p)));
+    db.markPedidoClientSeen(id).catch(() => {});
+    setOpenPedidoId(id);
+  };
 
   const resetForm = () => { setStep("idle"); setCreatingType(null); setCustomTitle(""); setDescription(""); setPropertyId(""); setFiles([]); setDueDate(""); setDueTime(""); setFormError(""); };
   const pickType = (type) => { setCreatingType(type); setCustomTitle(""); setStep("form"); };
@@ -1476,7 +1487,7 @@ function ClientPortal({ profile }) {
   const removeFile = (id) => setFiles((prev) => prev.filter((f) => f.id !== id));
 
   const submitPedido = async () => {
-    if (creatingType === "Pedido Aberto" && !customTitle.trim()) { setFormError("Dê um título ao seu pedido."); return; }
+    if (creatingType === "Pedido Aberto" && !customTitle.trim()) { setFormError("D√™ um t√≠tulo ao seu pedido."); return; }
     if (!description.trim()) { setFormError("Por favor descreva o pedido."); return; }
     if (!dueDate) { setFormError("Por favor indique a data em que precisa do pedido."); return; }
     const due = new Date(`${dueDate}T${dueTime || "18:00"}:00`);
@@ -1510,20 +1521,20 @@ function ClientPortal({ profile }) {
   const FILTERS = [
     { key: "todos", label: "Todos" },
     { key: "curso", label: "Em Curso" },
-    { key: "concluidos", label: "Concluídos" },
+    { key: "concluidos", label: "Conclu√≠dos" },
   ];
 
   return (
     <div style={{ flex: 1, padding: "24px 28px", overflowY: "auto" }}>
-      <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 22, color: C.text, marginBottom: 4 }}>Olá, {clientName} 👋</div>
+      <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 22, color: C.text, marginBottom: 4 }}>Ol√°, {clientName} üëã</div>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 24 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
 
       {justSubmitted && (
         <div className="op-fade-in" style={{ background: "rgba(46,216,167,0.12)", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 14px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 18 }}>✅</span>
+          <span style={{ fontSize: 18 }}>‚úÖ</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.green }}>Pedido enviado com sucesso!</div>
-            <div style={{ fontSize: 11, color: C.muted }}>A equipa OPERA foi notificada e vai começar a tratar disto em breve.</div>
+            <div style={{ fontSize: 11, color: C.muted }}>A equipa OPERA foi notificada e vai come√ßar a tratar disto em breve.</div>
           </div>
         </div>
       )}
@@ -1531,13 +1542,13 @@ function ClientPortal({ profile }) {
       {step === "idle" && (
         <button onClick={() => setStep("picking")}
           style={{ background: C.accent, border: "none", borderRadius: 8, padding: "13px 22px", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginBottom: 30, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 14px rgba(61,107,255,0.35)" }}>
-          <span style={{ fontSize: 16 }}>＋</span> Novo Pedido
+          <span style={{ fontSize: 16 }}>Ôºã</span> Novo Pedido
         </button>
       )}
 
       {step === "picking" && (
         <div className="op-fade-in" style={{ marginBottom: 30 }}>
-          <SectionTitle>Que tipo de pedido é?</SectionTitle>
+          <SectionTitle>Que tipo de pedido √©?</SectionTitle>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
             {[...PRESET_TYPES, "Pedido Aberto"].map((type) => (
               <button key={type} onClick={() => pickType(type)} className="op-type-btn"
@@ -1565,7 +1576,7 @@ function ClientPortal({ profile }) {
 
           {creatingType === "Pedido Aberto" && (
             <>
-              <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Título do pedido</div>
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>T√≠tulo do pedido</div>
               <input value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} placeholder="ex. Apoio para dossier de investidor"
                 style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 14, boxSizing: "border-box" }} />
             </>
@@ -1575,7 +1586,7 @@ function ClientPortal({ profile }) {
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Explique o que precisa..."
             style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 14, resize: "vertical", boxSizing: "border-box" }} />
 
-          <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>ID do imóvel (opcional)</div>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>ID do im√≥vel (opcional)</div>
           <input value={propertyId} onChange={(e) => setPropertyId(e.target.value)} placeholder="ex. LX-231"
             style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 14, boxSizing: "border-box" }} />
 
@@ -1584,7 +1595,7 @@ function ClientPortal({ profile }) {
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
             padding: "16px 10px", cursor: "pointer", marginBottom: 10, color: C.muted, fontSize: 12,
           }}>
-            <span style={{ fontSize: 20 }}>📎</span>
+            <span style={{ fontSize: 20 }}>üìé</span>
             Clique para escolher ficheiros
             <input type="file" multiple onChange={handleFiles} style={{ display: "none" }} />
           </label>
@@ -1592,8 +1603,8 @@ function ClientPortal({ profile }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
               {files.map((f) => (
                 <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: C.text, background: C.surfaceRaised, borderRadius: 6, padding: "5px 8px" }}>
-                  <span>📎 {f.name}</span>
-                  <span onClick={() => removeFile(f.id)} style={{ cursor: "pointer", color: C.muted }}>×</span>
+                  <span>üìé {f.name}</span>
+                  <span onClick={() => removeFile(f.id)} style={{ cursor: "pointer", color: C.muted }}>√ó</span>
                 </div>
               ))}
             </div>
@@ -1636,16 +1647,25 @@ function ClientPortal({ profile }) {
           const meta = STAGE_META[p.stage];
           const stageIdx = OP_STAGES.indexOf(p.stage);
           return (
-            <div key={p.id} onClick={() => setOpenPedidoId(p.id)} className="op-card-hover"
-              style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `4px solid ${meta.color}`, borderRadius: 10, padding: "14px 16px", cursor: "pointer" }}>
+            <div key={p.id} onClick={() => openPedidoSeen(p.id)}
+              className={`op-card-hover${!p.clientSeen ? " op-new-pulse" : ""}`}
+              style={{
+                background: C.surface, borderLeft: `4px solid ${meta.color}`, borderRadius: 10, padding: "14px 16px", cursor: "pointer", position: "relative",
+                border: !p.clientSeen ? `1.5px solid ${C.amber}` : `1px solid ${C.border}`, borderLeftWidth: 4, borderLeftColor: meta.color,
+              }}>
+              {!p.clientSeen && (
+                <span style={{ position: "absolute", top: -8, right: 8, background: C.amber, color: "#1a1400", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>
+                  NOVO
+                </span>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                   <div style={{ width: 34, height: 34, borderRadius: 8, background: `${meta.color}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
-                    {TYPE_ICONS[p.type] || "📄"}
+                    {TYPE_ICONS[p.type] || "üìÑ"}
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{pedidoTitle(p)}</div>
-                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}</div>
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` ¬∑ üè† ${p.propertyId}` : ""}</div>
                   </div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: meta.color, background: `${meta.color}22`, padding: "5px 10px", borderRadius: 6, whiteSpace: "nowrap" }}>
@@ -1662,7 +1682,7 @@ function ClientPortal({ profile }) {
         })}
         {myPedidos.length === 0 && (
           <div style={{ fontSize: 13, color: C.muted, textAlign: "center", padding: "30px 0" }}>
-            {allMyPedidos.length === 0 ? "Ainda não fez nenhum pedido — comece por criar um acima 👆" : "Sem pedidos nesta categoria."}
+            {allMyPedidos.length === 0 ? "Ainda n√£o fez nenhum pedido ‚Äî comece por criar um acima üëÜ" : "Sem pedidos nesta categoria."}
           </div>
         )}
       </div>
@@ -1713,7 +1733,7 @@ function LoginScreen() {
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Indique o seu email para receber um link de acesso.</div>
         {sent ? (
           <div style={{ background: "rgba(46,216,167,0.12)", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 14px", fontSize: 13, color: C.green }}>
-            ✅ Link enviado para {email}. Verifique o seu email.
+            ‚úÖ Link enviado para {email}. Verifique o seu email.
           </div>
         ) : (
           <>
@@ -1752,10 +1772,10 @@ function OperaCRM() {
   const signOut = () => sb.auth.signOut();
 
   let body;
-  if (session === undefined) body = <CenteredMessage>A carregar…</CenteredMessage>;
+  if (session === undefined) body = <CenteredMessage>A carregar‚Ä¶</CenteredMessage>;
   else if (session === null) body = <LoginScreen />;
   else if (profileError) body = <CenteredMessage>Erro ao carregar perfil: {profileError}</CenteredMessage>;
-  else if (!profile) body = <CenteredMessage>A carregar…</CenteredMessage>;
+  else if (!profile) body = <CenteredMessage>A carregar‚Ä¶</CenteredMessage>;
   else if (profile.role === "equipa") body = <EquipaApp profile={profile} />;
   else body = <ClientPortal profile={profile} />;
 
