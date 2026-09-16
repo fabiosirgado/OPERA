@@ -1125,7 +1125,7 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
         </tr>`).join("");
 
       const container = document.createElement("div");
-      container.style.cssText = "position:fixed; left:-9999px; top:0; width:760px;";
+      container.style.cssText = "position:absolute; left:0; top:0; width:760px; z-index:-1000; opacity:0.01; pointer-events:none;";
       container.innerHTML = `
         <div style="font-family: Georgia, 'Times New Roman', serif; padding:44px; background:#ffffff; color:#1a1a2e;">
           <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid #3D6BFF; padding-bottom:16px; margin-bottom:26px;">
@@ -1179,12 +1179,13 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
           <div style="margin-top:32px; font-size:10px; color:#aaa; text-align:center;">Gerado automaticamente pela OPERA CRM</div>
         </div>`;
       document.body.appendChild(container);
-      await html2pdf().from(container).set({
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await html2pdf().set({
         margin: 0,
         filename: `Relatorio-${clientName.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}.pdf`,
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
         jsPDF: { unit: "pt", format: "a4" },
-      }).save();
+      }).from(container).save();
       document.body.removeChild(container);
     } catch (e) {
       alert("Não foi possível gerar o PDF: " + e.message);
