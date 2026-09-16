@@ -82,6 +82,7 @@ const fmtEUR = (n) => Number(n || 0).toLocaleString("pt-PT", { style: "currency"
 const fmtDate = (d) => d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 const fmtDateTime = (d) => `${d.toLocaleDateString("pt-PT")} ${d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}`;
 const pedidoTitle = (p) => (p.type === "Pedido Aberto" ? (p.customTitle || "Pedido Aberto") : p.type);
+const safeStorageName = (name) => name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
 // ================= DATA LAYER (Supabase) =================
 const PEDIDO_SELECT = "*, clients(id,name), pedido_tasks(*), pedido_notes(*), pedido_attachments(*), pedido_mensagens(*)";
@@ -243,7 +244,7 @@ const db = {
     if (error) throw error;
   },
   async uploadAttachment(pedidoId, file, uploadedBy) {
-    const path = `${pedidoId}/${Date.now()}_${file.name}`;
+    const path = `${pedidoId}/${Date.now()}_${safeStorageName(file.name)}`;
     const { error: upErr } = await sb.storage.from("attachments").upload(path, file);
     if (upErr) throw upErr;
     const { error } = await sb.from("pedido_attachments").insert({ pedido_id: pedidoId, name: file.name, storage_path: path, uploaded_by: uploadedBy });
@@ -380,7 +381,7 @@ const db = {
     return data;
   },
   async uploadFinanceiroDoc(clientId, tipo, file) {
-    const path = `${clientId}/${Date.now()}_${file.name}`;
+    const path = `${clientId}/${Date.now()}_${safeStorageName(file.name)}`;
     const { error: upErr } = await sb.storage.from("financeiro-docs").upload(path, file);
     if (upErr) throw upErr;
     const base64 = await finFileToBase64(file);
