@@ -2451,6 +2451,8 @@ function ClientPortal({ profile }) {
   const [dueTime, setDueTime] = useState("");
   const [formError, setFormError] = useState("");
   const [filter, setFilter] = useState("todos");
+  const [tipoFilter, setTipoFilter] = useState("todos");
+  const [searchQuery, setSearchQuery] = useState("");
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -2487,8 +2489,14 @@ function ClientPortal({ profile }) {
 
   const allMyPedidos = pedidos.slice().sort((a, b) => b.createdAt - a.createdAt);
   const myPedidos = allMyPedidos.filter((p) => {
-    if (filter === "curso") return p.stage !== "Concluído";
-    if (filter === "concluidos") return p.stage === "Concluído";
+    if (filter === "curso" && p.stage === "Concluído") return false;
+    if (filter === "concluidos" && p.stage !== "Concluído") return false;
+    if (tipoFilter !== "todos" && p.type !== tipoFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const haystack = `${pedidoTitle(p)} ${p.description || ""} ${p.propertyId || ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
   const openPedido = pedidos.find((p) => p.id === openPedidoId);
@@ -2675,6 +2683,16 @@ function ClientPortal({ profile }) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="🔍 Pesquisar por título, descrição ou ID do imóvel..."
+          style={{ flex: "1 1 240px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13, boxSizing: "border-box" }} />
+        <select value={tipoFilter} onChange={(e) => setTipoFilter(e.target.value)}
+          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13 }}>
+          <option value="todos">Todos os tipos</option>
+          {[...PRESET_TYPES, "Pedido Aberto"].map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
