@@ -1,4 +1,4 @@
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useRef } = React;
 const { createClient } = window.supabase;
 const sb = createClient(window.OPERA_CONFIG.SUPABASE_URL, window.OPERA_CONFIG.SUPABASE_ANON_KEY);
 
@@ -325,6 +325,53 @@ const db = {
   },
   async removeClientInvite(id) {
     const { error } = await sb.from("client_invites").delete().eq("id", id);
+    if (error) throw error;
+  },
+
+  // -- financeiro (despesas / receitas / extrato bancário) --
+  async listDespesas(clientId) {
+    const { data, error } = await sb.from("financeiro_despesas").select("*").eq("client_id", clientId).order("date", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+  async addDespesa(payload) {
+    const { data, error } = await sb.from("financeiro_despesas").insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async updateDespesaRubrica(id, rubrica) {
+    const { error } = await sb.from("financeiro_despesas").update({ rubrica }).eq("id", id);
+    if (error) throw error;
+  },
+  async removeDespesa(id) {
+    const { error } = await sb.from("financeiro_despesas").delete().eq("id", id);
+    if (error) throw error;
+  },
+  async listReceitas(clientId) {
+    const { data, error } = await sb.from("financeiro_receitas").select("*").eq("client_id", clientId).order("date", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+  async addReceita(payload) {
+    const { data, error } = await sb.from("financeiro_receitas").insert(payload).select().single();
+    if (error) throw error;
+    return data;
+  },
+  async removeReceita(id) {
+    const { error } = await sb.from("financeiro_receitas").delete().eq("id", id);
+    if (error) throw error;
+  },
+  async listExtrato(clientId) {
+    const { data, error } = await sb.from("financeiro_extrato").select("*").eq("client_id", clientId).order("date", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+  async addExtratoRows(rows) {
+    const { error } = await sb.from("financeiro_extrato").insert(rows);
+    if (error) throw error;
+  },
+  async confirmExtrato(id) {
+    const { error } = await sb.from("financeiro_extrato").update({ status: "reconciliado" }).eq("id", id);
     if (error) throw error;
   },
 };
@@ -676,6 +723,531 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
   );
 }
 
+// ---------- Financeiro (P&L do cliente, gerido pela equipa OPERA) ----------
+const fmtEURDec = (n) => Number(n || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const FIN_RUBRICAS = [
+  { name: "Comissões OPERA", color: "#3D6BFF", icon: "🤝" },
+  { name: "Manutenção", color: "#8B7CF6", icon: "🔧" },
+  { name: "Condomínio", color: "#2DC7D8", icon: "🏢" },
+  { name: "Seguros", color: "#F5B942", icon: "🛡️" },
+  { name: "Limpeza", color: "#2ED8A7", icon: "🧹" },
+  { name: "Marketing", color: "#E8734A", icon: "📣" },
+  { name: "Impostos", color: "#F2617A", icon: "🧾" },
+  { name: "Utilities", color: "#6B7CA0", icon: "💡" },
+  { name: "Outros", color: "#6B7CA0", icon: "📦" },
+];
+const finRubricaFor = (name) => FIN_RUBRICAS.find((r) => r.name === name) || FIN_RUBRICAS[FIN_RUBRICAS.length - 1];
+const finParseDate = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const finDateStr = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const finMesesAbrev = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const FIN_PERIODS = [
+  { key: "dia", label: "Dia" }, { key: "semana", label: "Semana" }, { key: "mes", label: "Mês" },
+  { key: "trimestre", label: "Trimestre" }, { key: "semestre", label: "Semestre" }, { key: "ano", label: "Ano" },
+];
+const FIN_BUCKET_COUNT = { dia: 14, semana: 10, mes: 12, trimestre: 8, semestre: 6, ano: 3 };
+function finIsoWeek(d) {
+  const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  return Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+}
+function finBucketInfo(d, granularity) {
+  const y = d.getFullYear(), m = d.getMonth();
+  if (granularity === "dia") return { key: `${y}-${m}-${d.getDate()}`, label: fmtDate(d) };
+  if (granularity === "semana") { const w = finIsoWeek(d); return { key: `${y}-W${w}`, label: `S${w}` }; }
+  if (granularity === "mes") return { key: `${y}-${m}`, label: `${finMesesAbrev[m]} ${String(y).slice(2)}` };
+  if (granularity === "trimestre") { const q = Math.floor(m / 3) + 1; return { key: `${y}-T${q}`, label: `T${q} ${y}` }; }
+  if (granularity === "semestre") { const s = m < 6 ? 1 : 2; return { key: `${y}-S${s}`, label: `S${s} ${y}` }; }
+  return { key: `${y}`, label: `${y}` };
+}
+function finAggregateField(buckets, field) {
+  const totals = {};
+  buckets.forEach((b) => Object.entries(b[field] || {}).forEach(([k, v]) => { totals[k] = (totals[k] || 0) + v; }));
+  return Object.entries(totals).sort((a, b) => b[1] - a[1]);
+}
+function finBuildBuckets(despesas, receitas, granularity) {
+  const map = new Map();
+  despesas.forEach((e) => {
+    const date = finParseDate(e.date);
+    const b = finBucketInfo(date, granularity);
+    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
+    const rec = map.get(b.key);
+    rec.despesa += Number(e.amount);
+    rec.byRubrica[e.rubrica] = (rec.byRubrica[e.rubrica] || 0) + Number(e.amount);
+    rec.byFornecedor[e.vendor] = (rec.byFornecedor[e.vendor] || 0) + Number(e.amount);
+    if (date > rec.order) rec.order = date;
+  });
+  receitas.forEach((r) => {
+    const date = finParseDate(r.date);
+    const b = finBucketInfo(date, granularity);
+    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
+    const rec = map.get(b.key);
+    rec.receita += Number(r.amount);
+    if (date > rec.order) rec.order = date;
+  });
+  return Array.from(map.values()).sort((a, b) => a.order - b.order).slice(-FIN_BUCKET_COUNT[granularity]);
+}
+function finParseAmount(raw) {
+  if (!raw) return NaN;
+  let s = String(raw).trim().replace(/[€\s]/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  return parseFloat(s);
+}
+function finParseDateFlexible(s) {
+  if (!s) return null;
+  s = s.trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const m = s.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  return null;
+}
+function finParseCsv(text) {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const delim = lines[0].includes(";") ? ";" : ",";
+  const rows = lines.map((l) => l.split(delim).map((c) => c.trim().replace(/^"|"$/g, "")));
+  const firstIsData = finParseDateFlexible(rows[0][0]);
+  const dataRows = firstIsData ? rows : rows.slice(1);
+  return dataRows.map((cols) => {
+    const date = finParseDateFlexible(cols[0]);
+    const description = cols[1] || "—";
+    const amount = finParseAmount(cols[2]);
+    return { date, description, amount };
+  }).filter((r) => r.date && !isNaN(r.amount));
+}
+
+function FinDonutChart({ data, centerLabel, centerValue }) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  let acc = 0;
+  const stops = data.map((d) => {
+    const start = (acc / total) * 360;
+    acc += d.value;
+    const end = (acc / total) * 360;
+    return `${d.color} ${start.toFixed(2)}deg ${end.toFixed(2)}deg`;
+  });
+  return (
+    <div style={{ position: "relative", width: 140, height: 140, flexShrink: 0 }}>
+      <div style={{ width: 140, height: 140, borderRadius: "50%", background: `conic-gradient(${stops.join(", ")})` }} />
+      <div style={{ position: "absolute", inset: 20, borderRadius: "50%", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 10, color: C.muted }}>{centerLabel}</div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: C.text, fontFamily: "Manrope, sans-serif" }}>{centerValue}</div>
+      </div>
+    </div>
+  );
+}
+
+function FinTrendChart({ buckets }) {
+  const max = Math.max(1, ...buckets.map((b) => Math.max(b.receita, b.despesa)));
+  const w = 680, h = 200, padL = 46, padB = 26, padT = 10;
+  const groupW = (w - padL - 10) / Math.max(buckets.length, 1);
+  const barW = Math.min(18, groupW / 3);
+  const scaleY = (v) => (h - padB - padT) * (v / max);
+  const ticks = [0, 0.5, 1].map((f) => Math.round(max * f));
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: "auto", overflow: "visible" }}>
+      {ticks.map((t, i) => {
+        const y = h - padB - scaleY(t);
+        return (
+          <g key={i}>
+            <line x1={padL} y1={y} x2={w} y2={y} stroke={C.border} strokeWidth="1" strokeDasharray="3,3" />
+            <text x={padL - 8} y={y + 4} textAnchor="end" fontSize="10" fill={C.muted}>{fmtEUR(t)}</text>
+          </g>
+        );
+      })}
+      {buckets.map((b, i) => {
+        const x = padL + i * groupW + groupW / 2;
+        return (
+          <g key={b.key}>
+            <rect x={x - barW - 2} y={h - padB - scaleY(b.receita)} width={barW} height={scaleY(b.receita)} rx="2" fill={C.accent} />
+            <rect x={x + 2} y={h - padB - scaleY(b.despesa)} width={barW} height={scaleY(b.despesa)} rx="2" fill="#F2994A" />
+            <text x={x} y={h - 8} textAnchor="middle" fontSize="10" fill={C.muted}>{b.label}</text>
+          </g>
+        );
+      })}
+      <g transform={`translate(${w - 150}, 0)`}>
+        <rect x="0" y="0" width="10" height="10" rx="2" fill={C.accent} /><text x="14" y="9" fontSize="11" fill={C.muted}>Receita</text>
+        <rect x="72" y="0" width="10" height="10" rx="2" fill="#F2994A" /><text x="86" y="9" fontSize="11" fill={C.muted}>Despesa</text>
+      </g>
+    </svg>
+  );
+}
+
+function FinSectionCard({ title, icon, action, children, style: extraStyle }) {
+  return (
+    <div style={{ background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 10, padding: 18, ...extraStyle }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: "Manrope, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+          {icon && <span style={{ fontSize: 15 }}>{icon}</span>}{title}
+        </div>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FinBadge({ text, color }) {
+  return <span style={{ fontSize: 10, fontWeight: 700, color, background: `${color}22`, border: `1px solid ${color}55`, borderRadius: 20, padding: "3px 9px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>{text}</span>;
+}
+
+function FinMiniStat({ icon, label, value, color }) {
+  return (
+    <div style={{ background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", flex: "1 1 0", minWidth: 190, display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ fontSize: 20, flexShrink: 0 }}>{icon}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 11, color: C.muted, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, color: color || C.text, fontFamily: "Manrope, sans-serif" }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+const FIN_VENDOR_PALETTE = ["#3D6BFF", "#2DC7D8", "#8B7CF6", "#5AC8FA", "#4FD1C5", "#6C8EFF", "#F2994A", "#E8734A"];
+function FinRankingPorCampo({ buckets, field, title, icon, colorFor, emptyLabel }) {
+  const rows = finAggregateField(buckets, field).slice(0, 8);
+  const total = rows.reduce((s, [, v]) => s + v, 0) || 1;
+  const donutData = rows.map(([name, amount], i) => ({ name, value: amount, color: colorFor(name, i) }));
+  return (
+    <FinSectionCard title={title} icon={icon}>
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 12, color: C.muted }}>{emptyLabel}</div>
+      ) : (
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "center" }}>
+          <FinDonutChart data={donutData} centerLabel="Total" centerValue={fmtEUR(total)} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minWidth: 200 }}>
+            {rows.map(([name, amount], i) => {
+              const pct = (amount / total) * 100;
+              const color = colorFor(name, i);
+              return (
+                <div key={name}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                    <span style={{ color: C.text }}>{name}</span>
+                    <span style={{ color: C.muted, fontVariantNumeric: "tabular-nums" }}>{fmtEUR(amount)} · {pct.toFixed(0)}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: C.surface, overflow: "hidden" }}>
+                    <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 3 }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </FinSectionCard>
+  );
+}
+
+function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous, extrato }) {
+  const margem = current.receita - current.despesa;
+  const margemPrev = previous.receita - previous.despesa;
+  const delta = (now, prev) => (prev === 0 ? null : ((now - prev) / Math.abs(prev)) * 100);
+  const dReceita = delta(current.receita, previous.receita);
+  const dDespesa = delta(current.despesa, previous.despesa);
+  const dMargem = delta(margem, margemPrev);
+  const fmtDelta = (d) => (d === null ? "Sem período anterior" : `${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs período anterior`);
+  const margemPct = current.receita ? (margem / current.receita) * 100 : null;
+  const [topRubricaNome, topRubricaValor] = finAggregateField(buckets, "byRubrica")[0] || ["—", 0];
+  const reconciliados = extrato.filter((b) => b.status === "reconciliado").length;
+  const taxaReconciliacao = extrato.length ? (reconciliados / extrato.length) * 100 : null;
+
+  return (
+    <>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", flexWrap: "wrap" }}>
+          {FIN_PERIODS.map((p) => (
+            <span key={p.key} onClick={() => setGranularity(p.key)}
+              style={{ padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", color: granularity === p.key ? "#fff" : C.muted, background: granularity === p.key ? C.accent : "transparent" }}>
+              {p.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
+        <MetricCard label="Receita" value={fmtEUR(current.receita)} color={C.accent} sub={fmtDelta(dReceita)} />
+        <MetricCard label="Despesa" value={fmtEUR(current.despesa)} color="#F2994A" sub={fmtDelta(dDespesa)} />
+        <MetricCard label="Margem" value={fmtEUR(margem)} color={margem >= 0 ? C.green : C.red} sub={fmtDelta(dMargem)} />
+      </div>
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <FinMiniStat icon="📐" label="Margem sobre receita" value={margemPct === null ? "—" : `${margemPct.toFixed(0)}%`} color={margemPct >= 0 ? C.green : C.red} />
+        <FinMiniStat icon="🏷️" label={`Maior despesa · ${topRubricaNome}`} value={fmtEUR(topRubricaValor)} color="#F2994A" />
+        <FinMiniStat icon="🏦" label="Extrato reconciliado" value={taxaReconciliacao === null ? "—" : `${taxaReconciliacao.toFixed(0)}%`} color={taxaReconciliacao >= 90 ? C.green : C.amber} />
+      </div>
+
+      <FinSectionCard title="Receita vs. Despesa" icon="📈" style={{ marginBottom: 20 }}>
+        {buckets.length === 0 ? <div style={{ fontSize: 12, color: C.muted }}>Ainda sem lançamentos neste período.</div> : <FinTrendChart buckets={buckets} />}
+      </FinSectionCard>
+
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 380px" }}>
+          <FinRankingPorCampo buckets={buckets} field="byRubrica" title="Despesas por rubrica" icon="🏷️"
+            colorFor={(name) => finRubricaFor(name).color} emptyLabel="Ainda sem despesas neste período." />
+        </div>
+        <div style={{ flex: "1 1 380px" }}>
+          <FinRankingPorCampo buckets={buckets} field="byFornecedor" title="Despesas por fornecedor" icon="🧑‍💼"
+            colorFor={(name, i) => FIN_VENDOR_PALETTE[i % FIN_VENDOR_PALETTE.length]} emptyLabel="Ainda sem despesas neste período." />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function FinLancamentos({ despesas, receitas, isEquipa, onAddDespesa, onAddReceita, onChangeRubrica, onDeleteDespesa, onDeleteReceita }) {
+  const [novaDespesa, setNovaDespesa] = useState({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "" });
+  const [novaReceita, setNovaReceita] = useState({ date: finDateStr(new Date()), description: "", amount: "" });
+  const [saving, setSaving] = useState(false);
+
+  const submitDespesa = async () => {
+    if (!novaDespesa.vendor.trim() || !novaDespesa.amount) return;
+    setSaving(true);
+    try {
+      await onAddDespesa({ date: novaDespesa.date, vendor: novaDespesa.vendor.trim(), rubrica: novaDespesa.rubrica, amount: Number(novaDespesa.amount) });
+      setNovaDespesa({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "" });
+    } catch (e) { alert(e.message); } finally { setSaving(false); }
+  };
+  const submitReceita = async () => {
+    if (!novaReceita.description.trim() || !novaReceita.amount) return;
+    setSaving(true);
+    try {
+      await onAddReceita({ date: novaReceita.date, description: novaReceita.description.trim(), amount: Number(novaReceita.amount) });
+      setNovaReceita({ date: finDateStr(new Date()), description: "", amount: "" });
+    } catch (e) { alert(e.message); } finally { setSaving(false); }
+  };
+
+  const combined = [
+    ...despesas.map((d) => ({ ...d, tipo: "custo" })),
+    ...receitas.map((r) => ({ ...r, tipo: "emitida" })),
+  ].sort((a, b) => finParseDate(b.date) - finParseDate(a.date));
+
+  const inputStyle = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "7px 10px", color: C.text, fontSize: 12, boxSizing: "border-box" };
+
+  return (
+    <>
+      {isEquipa && (
+        <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+          <FinSectionCard title="+ Nova despesa" icon="🧾" style={{ flex: "1 1 320px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input type="date" value={novaDespesa.date} onChange={(e) => setNovaDespesa({ ...novaDespesa, date: e.target.value })} style={inputStyle} />
+              <input placeholder="Fornecedor" value={novaDespesa.vendor} onChange={(e) => setNovaDespesa({ ...novaDespesa, vendor: e.target.value })} style={inputStyle} />
+              <select className="op-select" value={novaDespesa.rubrica} onChange={(e) => setNovaDespesa({ ...novaDespesa, rubrica: e.target.value })} style={inputStyle}>
+                {FIN_RUBRICAS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+              </select>
+              <input type="number" step="0.01" placeholder="Valor (€)" value={novaDespesa.amount} onChange={(e) => setNovaDespesa({ ...novaDespesa, amount: e.target.value })} style={inputStyle} />
+              <button onClick={submitDespesa} disabled={saving} style={{ background: "#F2994A", border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar despesa</button>
+            </div>
+          </FinSectionCard>
+          <FinSectionCard title="+ Nova receita" icon="📤" style={{ flex: "1 1 320px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input type="date" value={novaReceita.date} onChange={(e) => setNovaReceita({ ...novaReceita, date: e.target.value })} style={inputStyle} />
+              <input placeholder="Descrição (ex. Renda — Apartamento X)" value={novaReceita.description} onChange={(e) => setNovaReceita({ ...novaReceita, description: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="Valor (€)" value={novaReceita.amount} onChange={(e) => setNovaReceita({ ...novaReceita, amount: e.target.value })} style={inputStyle} />
+              <button onClick={submitReceita} disabled={saving} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar receita</button>
+            </div>
+          </FinSectionCard>
+        </div>
+      )}
+
+      <FinSectionCard title="Lançamentos" icon="📄">
+        {combined.length === 0 ? (
+          <div style={{ fontSize: 12, color: C.muted }}>Ainda não há lançamentos.</div>
+        ) : (
+          <div className="op-scroll" style={{ maxHeight: 380, overflowY: "auto", overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ textAlign: "left", color: C.muted }}>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Data</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Descrição</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Tipo</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Rubrica</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
+                  {isEquipa && <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {combined.map((it) => (
+                  <tr key={`${it.tipo}-${it.id}`} style={{ borderTop: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "8px", color: C.muted, whiteSpace: "nowrap" }}>{fmtDate(finParseDate(it.date))}</td>
+                    <td style={{ padding: "8px", color: C.text }}>{it.tipo === "custo" ? it.vendor : it.description}</td>
+                    <td style={{ padding: "8px" }}><FinBadge text={it.tipo === "custo" ? "Custo" : "Emitida"} color={it.tipo === "custo" ? "#F2994A" : C.accent} /></td>
+                    <td style={{ padding: "8px" }}>
+                      {it.tipo === "emitida" ? (
+                        <span style={{ color: C.muted }}>—</span>
+                      ) : isEquipa ? (
+                        <select className="op-select" value={it.rubrica} onChange={(e) => onChangeRubrica(it.id, e.target.value)}
+                          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, color: C.text, fontSize: 11, padding: "3px 6px" }}>
+                          {FIN_RUBRICAS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                        </select>
+                      ) : (
+                        <FinBadge text={it.rubrica} color={finRubricaFor(it.rubrica).color} />
+                      )}
+                    </td>
+                    <td style={{ padding: "8px", textAlign: "right", color: it.tipo === "emitida" ? C.accent : C.text, fontVariantNumeric: "tabular-nums" }}>
+                      {it.tipo === "emitida" ? "+" : "-"}{fmtEURDec(it.amount)}
+                    </td>
+                    {isEquipa && (
+                      <td style={{ padding: "8px" }}>
+                        <span onClick={() => (it.tipo === "custo" ? onDeleteDespesa(it.id) : onDeleteReceita(it.id))} style={{ cursor: "pointer", color: C.muted }} title="Apagar">×</span>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </FinSectionCard>
+    </>
+  );
+}
+
+function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm }) {
+  const fileRef = useRef(null);
+  const counts = rows.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {});
+  const handlePick = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const text = await file.text();
+    const parsed = finParseCsv(text);
+    if (!parsed.length) { alert("Não consegui ler linhas válidas deste CSV. Confirma que tem as colunas Data, Descrição, Valor."); return; }
+    onImportCsv(parsed);
+  };
+  return (
+    <>
+      {isEquipa && (
+        <div style={{ marginBottom: 20 }}>
+          <div onClick={() => fileRef.current.click()} className="op-type-btn"
+            style={{ border: `2px dashed ${C.border}`, borderRadius: 12, cursor: "pointer", background: C.surfaceRaised, textAlign: "center", padding: "16px 14px" }}>
+            <div style={{ fontSize: 20, marginBottom: 6 }}>⬆️</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 3 }}>Importar extrato bancário (CSV)</div>
+            <div style={{ fontSize: 11, color: C.muted }}>Ficheiro com 3 colunas, por esta ordem: Data, Descrição, Valor</div>
+            <input ref={fileRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handlePick} />
+          </div>
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <FinMiniStat icon="✅" label="reconciliados" value={counts.reconciliado || 0} color={C.green} />
+        <FinMiniStat icon="⏳" label="por confirmar" value={counts.pendente || 0} color={C.amber} />
+        <FinMiniStat icon="⚠️" label="sem correspondência" value={counts.sem_correspondencia || 0} color={C.red} />
+      </div>
+      <FinSectionCard title="Movimentos bancários" icon="🏦">
+        {rows.length === 0 ? (
+          <div style={{ fontSize: 12, color: C.muted }}>Ainda sem extrato importado.</div>
+        ) : (
+          <div className="op-scroll" style={{ maxHeight: 380, overflowY: "auto", overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ textAlign: "left", color: C.muted }}>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Data</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Descrição</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} style={{ borderTop: `1px solid ${C.border}` }}>
+                    <td style={{ padding: "8px", color: C.muted, whiteSpace: "nowrap" }}>{fmtDate(finParseDate(r.date))}</td>
+                    <td style={{ padding: "8px", color: C.text }}>{r.description}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: r.amount >= 0 ? C.accent : C.text, fontVariantNumeric: "tabular-nums" }}>{fmtEURDec(r.amount)}</td>
+                    <td style={{ padding: "8px" }}>
+                      {isEquipa && r.status !== "reconciliado" ? (
+                        <span onClick={() => onConfirm(r.id)} style={{ cursor: "pointer" }} title="Marcar como reconciliado">
+                          <FinBadge text={(r.status === "pendente" ? "Por confirmar" : "Sem correspondência") + " · confirmar ✓"} color={r.status === "pendente" ? C.amber : C.red} />
+                        </span>
+                      ) : (
+                        <FinBadge text={r.status === "reconciliado" ? "Reconciliado" : r.status === "pendente" ? "Por confirmar" : "Sem correspondência"} color={r.status === "reconciliado" ? C.green : r.status === "pendente" ? C.amber : C.red} />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {!isEquipa && <div style={{ marginTop: 14, fontSize: 11, color: C.muted }}>Reconciliação gerida pela equipa OPERA.</div>}
+      </FinSectionCard>
+    </>
+  );
+}
+
+function FinanceiroPanel({ clientId, isEquipa }) {
+  const [subTab, setSubTab] = useState("visao");
+  const [granularity, setGranularity] = useState("mes");
+  const [despesas, setDespesas] = useState([]);
+  const [receitas, setReceitas] = useState([]);
+  const [extrato, setExtrato] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const reload = () => Promise.all([db.listDespesas(clientId), db.listReceitas(clientId), db.listExtrato(clientId)])
+    .then(([d, r, e]) => { setDespesas(d); setReceitas(r); setExtrato(e); });
+
+  useEffect(() => {
+    setLoading(true);
+    reload().catch((e) => setLoadError(e.message)).finally(() => setLoading(false));
+  }, [clientId]);
+
+  if (loading) return <div style={{ fontSize: 13, color: C.muted, padding: 20 }}>A carregar…</div>;
+  if (loadError) return <div style={{ fontSize: 13, color: C.red, padding: 20 }}>Erro ao carregar dados financeiros: {loadError}</div>;
+
+  const buckets = finBuildBuckets(despesas, receitas, granularity);
+  const current = buckets[buckets.length - 1] || { receita: 0, despesa: 0 };
+  const previous = buckets[buckets.length - 2] || { receita: 0, despesa: 0 };
+
+  const addDespesa = async (payload) => { const row = await db.addDespesa({ client_id: clientId, source: "manual", ...payload }); setDespesas((prev) => [row, ...prev]); };
+  const addReceita = async (payload) => { const row = await db.addReceita({ client_id: clientId, source: "manual", ...payload }); setReceitas((prev) => [row, ...prev]); };
+  const changeRubrica = (id, rubrica) => { setDespesas((prev) => prev.map((d) => (d.id === id ? { ...d, rubrica } : d))); db.updateDespesaRubrica(id, rubrica).catch((e) => alert(e.message)); };
+  const deleteDespesa = (id) => { setDespesas((prev) => prev.filter((d) => d.id !== id)); db.removeDespesa(id).catch((e) => alert(e.message)); };
+  const deleteReceita = (id) => { setReceitas((prev) => prev.filter((r) => r.id !== id)); db.removeReceita(id).catch((e) => alert(e.message)); };
+
+  const importCsv = async (parsedRows) => {
+    const despesaByKey = {}, receitaByKey = {};
+    despesas.forEach((d) => { despesaByKey[`${d.date}|${Number(d.amount).toFixed(2)}`] = true; });
+    receitas.forEach((r) => { receitaByKey[`${r.date}|${Number(r.amount).toFixed(2)}`] = true; });
+    const rows = parsedRows.map((p) => {
+      const key = `${p.date}|${Math.abs(p.amount).toFixed(2)}`;
+      const matched = p.amount < 0 ? despesaByKey[key] : receitaByKey[key];
+      return { client_id: clientId, date: p.date, description: p.description, amount: p.amount, status: matched ? "reconciliado" : "pendente" };
+    });
+    try {
+      await db.addExtratoRows(rows);
+      setExtrato((prev) => [...rows.map((r, i) => ({ ...r, id: `tmp${Date.now()}${i}` })), ...prev]);
+      reload();
+    } catch (e) { alert(e.message); }
+  };
+  const confirmExtrato = (id) => { setExtrato((prev) => prev.map((r) => (r.id === id ? { ...r, status: "reconciliado" } : r))); db.confirmExtrato(id).catch((e) => alert(e.message)); };
+
+  const TABS = [
+    { key: "visao", label: "Visão Geral", icon: "📊" },
+    { key: "lancamentos", label: "Lançamentos", icon: "📄" },
+    { key: "reconciliacao", label: "Reconciliação", icon: "🏦" },
+  ];
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 20 }}>
+        {TABS.map((t) => (
+          <span key={t.key} onClick={() => setSubTab(t.key)}
+            style={{ padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: subTab === t.key ? "#fff" : C.muted, background: subTab === t.key ? C.accent : "transparent", display: "flex", alignItems: "center", gap: 6 }}>
+            <span>{t.icon}</span>{t.label}
+          </span>
+        ))}
+      </div>
+
+      {subTab === "visao" && <FinVisaoGeral granularity={granularity} setGranularity={setGranularity} buckets={buckets} current={current} previous={previous} extrato={extrato} />}
+      {subTab === "lancamentos" && (
+        <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa}
+          onAddDespesa={addDespesa} onAddReceita={addReceita} onChangeRubrica={changeRubrica}
+          onDeleteDespesa={deleteDespesa} onDeleteReceita={deleteReceita} />
+      )}
+      {subTab === "reconciliacao" && <FinReconciliacao rows={extrato} isEquipa={isEquipa} onImportCsv={importCsv} onConfirm={confirmExtrato} />}
+    </div>
+  );
+}
+
 // ---------- Client detail panel (ficha de cliente, estilo Pipedrive) ----------
 function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onUpdateExtra, onClose, onOpenPedido }) {
   const [tab, setTab] = useState("geral");
@@ -799,11 +1371,12 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
     { key: "notas", label: `Notas${notes.length ? ` (${notes.length})` : ""}` },
     { key: "atividades", label: `Atividades${activities.filter((a) => !a.done).length ? ` (${activities.filter((a) => !a.done).length})` : ""}` },
     { key: "timeline", label: "Timeline" },
+    { key: "financeiro", label: "Financeiro" },
     { key: "alertas", label: `Alertas${alerts.length ? ` (${alerts.length})` : ""}` },
   ];
 
   return (
-    <SidePanel onClose={onClose} eyebrow="Ficha de Cliente" width={460}>
+    <SidePanel onClose={onClose} eyebrow="Ficha de Cliente" width={tab === "financeiro" ? 920 : 460}>
       <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 18, color: C.text, marginBottom: 10 }}>{client.name}</div>
 
       <div style={{ background: C.surfaceRaised, borderRadius: 8, padding: 12, marginBottom: 14 }}>
@@ -1004,6 +1577,8 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
           {timeline.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Sem acontecimentos registados.</div>}
         </div>
       )}
+
+      {tab === "financeiro" && <FinanceiroPanel clientId={client.id} isEquipa={true} />}
 
       {tab === "alertas" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1578,6 +2153,7 @@ function ClientPortal({ profile }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [clientName, setClientName] = useState("");
+  const [section, setSection] = useState("pedidos");
   const [pedidos, setPedidos] = useState([]);
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [step, setStep] = useState("idle");
@@ -1689,8 +2265,20 @@ function ClientPortal({ profile }) {
   return (
     <div style={{ flex: 1, padding: "24px 28px", overflowY: "auto" }}>
       <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 22, color: C.text, marginBottom: 4 }}>Olá, {clientName} 👋</div>
-      <div style={{ fontSize: 13, color: C.muted, marginBottom: 24 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
 
+      <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 24 }}>
+        {[{ key: "pedidos", label: "Pedidos", icon: "📋" }, { key: "financeiro", label: "Financeiro", icon: "📊" }].map((s) => (
+          <span key={s.key} onClick={() => setSection(s.key)}
+            style={{ padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: section === s.key ? "#fff" : C.muted, background: section === s.key ? C.accent : "transparent", display: "flex", alignItems: "center", gap: 6 }}>
+            <span>{s.icon}</span>{s.label}
+          </span>
+        ))}
+      </div>
+
+      {section === "financeiro" && <FinanceiroPanel clientId={profile.client_id} isEquipa={false} />}
+
+      {section === "pedidos" && <>
       {justSubmitted && (
         <div className="op-fade-in" style={{ background: "rgba(46,216,167,0.12)", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 14px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 18 }}>✅</span>
@@ -1850,6 +2438,7 @@ function ClientPortal({ profile }) {
       </div>
 
       {openPedido && <PedidoDetailClient pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />}
+      </>}
     </div>
   );
 }
