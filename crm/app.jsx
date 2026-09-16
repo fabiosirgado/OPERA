@@ -777,7 +777,6 @@ function finFileToBase64(file) {
   });
 }
 const FIN_RUBRICAS = [
-  { name: "Comissões OPERA", color: "#3D6BFF", icon: "🤝" },
   { name: "Manutenção", color: "#8B7CF6", icon: "🔧" },
   { name: "Condomínio", color: "#2DC7D8", icon: "🏢" },
   { name: "Seguros", color: "#F5B942", icon: "🛡️" },
@@ -785,6 +784,9 @@ const FIN_RUBRICAS = [
   { name: "Marketing", color: "#E8734A", icon: "📣" },
   { name: "Impostos", color: "#F2617A", icon: "🧾" },
   { name: "Utilities", color: "#6B7CA0", icon: "💡" },
+  { name: "Tecnologia", color: "#3D6BFF", icon: "💻" },
+  { name: "Equipamentos", color: "#FB923C", icon: "🧰" },
+  { name: "Material de Escritório", color: "#94A3B8", icon: "🗂️" },
   { name: "Outros", color: "#6B7CA0", icon: "📦" },
 ];
 const finRubricaFor = (name) => FIN_RUBRICAS.find((r) => r.name === name) || FIN_RUBRICAS[FIN_RUBRICAS.length - 1];
