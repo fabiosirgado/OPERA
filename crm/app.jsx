@@ -1750,6 +1750,7 @@ function EquipaApp({ profile }) {
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [openClientId, setOpenClientId] = useState(null);
   const [openClientTab, setOpenClientTab] = useState("geral");
+  const [financeiroClientId, setFinanceiroClientId] = useState(null);
   const [addingDeal, setAddingDeal] = useState(false);
   const [newDeal, setNewDeal] = useState({ name: "", value: "", owner: "Fábio", contact: "", email: "", phone: "" });
   const [addingClient, setAddingClient] = useState(false);
@@ -2273,7 +2274,7 @@ function EquipaApp({ profile }) {
           </>
         )}
 
-        {page === "financeiro" && (
+        {page === "financeiro" && !financeiroClientId && (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 10 }}>
               <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 20, color: C.text }}>Financeiro</div>
@@ -2281,7 +2282,7 @@ function EquipaApp({ profile }) {
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>Escolhe um cliente para ver o P&L, lançamentos e reconciliação bancária dele.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {clients.map((c) => (
-                <div key={c.id} onClick={() => openClient(c.id, "financeiro")} className="op-card-hover"
+                <div key={c.id} onClick={() => setFinanceiroClientId(c.id)} className="op-card-hover"
                   style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: stripeFor(c.id), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#0A0F1E", flexShrink: 0 }}>
@@ -2294,6 +2295,19 @@ function EquipaApp({ profile }) {
               ))}
               {clients.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Ainda não há clientes.</div>}
             </div>
+          </>
+        )}
+
+        {page === "financeiro" && financeiroClientId && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+              <span onClick={() => setFinanceiroClientId(null)} style={{ cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 600 }}>← Clientes</span>
+              <span style={{ color: C.border }}>/</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.text, fontFamily: "Manrope, sans-serif" }}>
+                {(clients.find((c) => c.id === financeiroClientId) || {}).name}
+              </span>
+            </div>
+            <FinanceiroPanel clientId={financeiroClientId} clientName={(clients.find((c) => c.id === financeiroClientId) || {}).name} isEquipa={true} />
           </>
         )}
       </div>
