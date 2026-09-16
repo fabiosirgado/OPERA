@@ -1054,21 +1054,6 @@ function finBlocksToHtml(blocks) {
   }).join("\n");
 }
 
-let finHtml2PdfPromise = null;
-function finLoadHtml2Pdf() {
-  if (window.html2pdf) return Promise.resolve(window.html2pdf);
-  if (!finHtml2PdfPromise) {
-    finHtml2PdfPromise = new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => resolve(window.html2pdf);
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-  return finHtml2PdfPromise;
-}
-
 function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
   const [month, setMonth] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
   const [loading, setLoading] = useState(false);
@@ -1103,95 +1088,82 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
     } catch (e) { setError(e.message); setLoading(false); }
   };
 
-  const [downloading, setDownloading] = useState(false);
+  const download = () => {
+    const bodyHtml = finBlocksToHtml(finParseMarkdown(report));
+    const label = mesLabel();
+    const receita = current ? current.receita : 0;
+    const despesa = current ? current.despesa : 0;
+    const margem = receita - despesa;
+    const maxVal = Math.max(receita, despesa, 1);
+    const topRubricas = buckets ? finAggregateField(buckets, "byRubrica").slice(0, 6) : [];
+    const totalRubricas = topRubricas.reduce((s, [, v]) => s + v, 0) || 1;
+    const rubricaRowsHtml = topRubricas.map(([name, amount]) => `
+      <tr><td>${finEscapeHtml(name)}</td><td style="text-align:right">${fmtEUR(amount)}</td><td style="text-align:right; color:#888;">${((amount / totalRubricas) * 100).toFixed(0)}%</td></tr>`).join("");
 
-  const download = async () => {
-    setDownloading(true);
-    try {
-      const html2pdf = await finLoadHtml2Pdf();
-      const bodyHtml = finBlocksToHtml(finParseMarkdown(report));
-      const label = mesLabel();
-      const receita = current ? current.receita : 0;
-      const despesa = current ? current.despesa : 0;
-      const margem = receita - despesa;
-      const maxVal = Math.max(receita, despesa, 1);
-      const topRubricas = buckets ? finAggregateField(buckets, "byRubrica").slice(0, 6) : [];
-      const totalRubricas = topRubricas.reduce((s, [, v]) => s + v, 0) || 1;
-      const rubricaRowsHtml = topRubricas.map(([name, amount]) => `
-        <tr>
-          <td style="padding:7px 0; border-bottom:1px solid #eee;">${finEscapeHtml(name)}</td>
-          <td style="padding:7px 0; border-bottom:1px solid #eee; text-align:right;">${fmtEUR(amount)}</td>
-          <td style="padding:7px 0; border-bottom:1px solid #eee; text-align:right; color:#888;">${((amount / totalRubricas) * 100).toFixed(0)}%</td>
-        </tr>`).join("");
+    const html = `<!doctype html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Relatório Financeiro — ${finEscapeHtml(clientName)}</title>
+<style>
+  @page { margin: 22mm 18mm; }
+  body { font-family: Georgia, 'Times New Roman', serif; max-width: 720px; margin: 40px auto; padding: 0 24px; color: #1a1a2e; line-height: 1.6; }
+  .header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid #3D6BFF; padding-bottom:16px; margin-bottom:26px; }
+  .logo { font-family: Arial, Helvetica, sans-serif; font-weight:800; font-size:24px; }
+  .logo span { color:#3D6BFF; }
+  .eyebrow { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .meta { color:#666; font-size:13px; margin-bottom:26px; }
+  .kpis { display:flex; gap:14px; margin-bottom:28px; }
+  .kpi { flex:1; border-radius:10px; padding:16px; }
+  .kpi-label { font-size:11px; margin-bottom:4px; }
+  .kpi-value { font-size:21px; font-weight:800; font-family: Arial, sans-serif; }
+  .chart-title, .table-title { font-size:13px; font-weight:700; margin-bottom:12px; font-family: Arial, sans-serif; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .bar-label { width:64px; font-size:11px; color:#666; }
+  .bar-track { flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden; }
+  .bar-fill { height:100%; }
+  .bar-value { width:80px; text-align:right; font-size:11px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:28px; }
+  th { text-align:left; color:#888; padding-bottom:6px; border-bottom:2px solid #eee; }
+  td { padding:7px 0; border-bottom:1px solid #eee; }
+  h2 { font-size:17px; color:#3D6BFF; margin-top:26px; }
+  h3 { font-size:13px; color:#666; text-transform:uppercase; letter-spacing:0.4px; }
+  ul { padding-left:20px; }
+  .footer { margin-top:32px; font-size:10px; color:#aaa; text-align:center; }
+  .noprint { text-align:center; margin:18px 0 30px; }
+  .noprint button { background:#3D6BFF; color:#fff; border:none; border-radius:8px; padding:12px 22px; font-size:14px; font-weight:700; cursor:pointer; font-family: Arial, sans-serif; }
+  @media print { .noprint { display:none; } body { margin: 0 auto; } }
+</style></head>
+<body>
+  <div class="noprint"><button onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button></div>
 
-      const container = document.createElement("div");
-      container.style.cssText = "position:fixed; top:0; left:0; width:760px; z-index:999999; background:#ffffff; pointer-events:none;";
-      container.innerHTML = `
-        <div style="font-family: Georgia, 'Times New Roman', serif; padding:44px; background:#ffffff; color:#1a1a2e;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid #3D6BFF; padding-bottom:16px; margin-bottom:26px;">
-            <div style="font-family: Arial, Helvetica, sans-serif; font-weight:800; font-size:24px; letter-spacing:-0.5px;">OPERA <span style="color:#3D6BFF;">CRM</span></div>
-            <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">Relatório Financeiro Mensal</div>
-          </div>
+  <div class="header">
+    <div class="logo">OPERA <span>CRM</span></div>
+    <div class="eyebrow">Relatório Financeiro Mensal</div>
+  </div>
+  <h1>${finEscapeHtml(clientName)}</h1>
+  <div class="meta">Referente a ${finEscapeHtml(label)}</div>
 
-          <h1 style="font-size:22px; margin:0 0 4px;">${finEscapeHtml(clientName)}</h1>
-          <div style="color:#666; font-size:13px; margin-bottom:26px;">Referente a ${finEscapeHtml(label)}</div>
+  <div class="kpis">
+    <div class="kpi" style="background:#EEF2FF;"><div class="kpi-label" style="color:#5b6b8c;">Receita</div><div class="kpi-value" style="color:#3D6BFF;">${fmtEUR(receita)}</div></div>
+    <div class="kpi" style="background:#FFF3EA;"><div class="kpi-label" style="color:#8a6b4f;">Despesa</div><div class="kpi-value" style="color:#F2994A;">${fmtEUR(despesa)}</div></div>
+    <div class="kpi" style="background:${margem >= 0 ? "#EAFAF3" : "#FDECEF"};"><div class="kpi-label" style="color:#666;">Margem</div><div class="kpi-value" style="color:${margem >= 0 ? "#1BA97A" : "#E23D5C"};">${fmtEUR(margem)}</div></div>
+  </div>
 
-          <div style="display:flex; gap:14px; margin-bottom:28px;">
-            <div style="flex:1; background:#EEF2FF; border-radius:10px; padding:16px;">
-              <div style="font-size:11px; color:#5b6b8c; margin-bottom:4px;">Receita</div>
-              <div style="font-size:21px; font-weight:800; color:#3D6BFF; font-family: Arial, sans-serif;">${fmtEUR(receita)}</div>
-            </div>
-            <div style="flex:1; background:#FFF3EA; border-radius:10px; padding:16px;">
-              <div style="font-size:11px; color:#8a6b4f; margin-bottom:4px;">Despesa</div>
-              <div style="font-size:21px; font-weight:800; color:#F2994A; font-family: Arial, sans-serif;">${fmtEUR(despesa)}</div>
-            </div>
-            <div style="flex:1; background:${margem >= 0 ? "#EAFAF3" : "#FDECEF"}; border-radius:10px; padding:16px;">
-              <div style="font-size:11px; color:#666; margin-bottom:4px;">Margem</div>
-              <div style="font-size:21px; font-weight:800; color:${margem >= 0 ? "#1BA97A" : "#E23D5C"}; font-family: Arial, sans-serif;">${fmtEUR(margem)}</div>
-            </div>
-          </div>
+  <div class="chart-title">Receita vs. Despesa</div>
+  <div class="bar-row"><div class="bar-label">Receita</div><div class="bar-track"><div class="bar-fill" style="width:${((receita / maxVal) * 100).toFixed(0)}%; background:#3D6BFF;"></div></div><div class="bar-value">${fmtEUR(receita)}</div></div>
+  <div class="bar-row" style="margin-bottom:28px;"><div class="bar-label">Despesa</div><div class="bar-track"><div class="bar-fill" style="width:${((despesa / maxVal) * 100).toFixed(0)}%; background:#F2994A;"></div></div><div class="bar-value">${fmtEUR(despesa)}</div></div>
 
-          <div style="margin-bottom:28px;">
-            <div style="font-size:13px; font-weight:700; margin-bottom:12px; font-family: Arial, sans-serif;">Receita vs. Despesa</div>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <div style="width:64px; font-size:11px; color:#666;">Receita</div>
-              <div style="flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden;"><div style="width:${((receita / maxVal) * 100).toFixed(0)}%; background:#3D6BFF; height:100%;"></div></div>
-              <div style="width:80px; text-align:right; font-size:11px;">${fmtEUR(receita)}</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:64px; font-size:11px; color:#666;">Despesa</div>
-              <div style="flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden;"><div style="width:${((despesa / maxVal) * 100).toFixed(0)}%; background:#F2994A; height:100%;"></div></div>
-              <div style="width:80px; text-align:right; font-size:11px;">${fmtEUR(despesa)}</div>
-            </div>
-          </div>
+  ${topRubricas.length > 0 ? `
+  <div class="table-title">Despesas por rubrica</div>
+  <table><thead><tr><th>Rubrica</th><th style="text-align:right;">Valor</th><th style="text-align:right;">%</th></tr></thead><tbody>${rubricaRowsHtml}</tbody></table>` : ""}
 
-          ${topRubricas.length > 0 ? `
-          <div style="margin-bottom:28px;">
-            <div style="font-size:13px; font-weight:700; margin-bottom:10px; font-family: Arial, sans-serif;">Despesas por rubrica</div>
-            <table style="width:100%; border-collapse:collapse; font-size:12px;">
-              <thead><tr style="text-align:left; color:#888;"><th style="padding-bottom:6px; border-bottom:2px solid #eee;">Rubrica</th><th style="text-align:right; padding-bottom:6px; border-bottom:2px solid #eee;">Valor</th><th style="text-align:right; padding-bottom:6px; border-bottom:2px solid #eee;">%</th></tr></thead>
-              <tbody>${rubricaRowsHtml}</tbody>
-            </table>
-          </div>` : ""}
+  <div style="border-top:1px solid #eee; padding-top:20px;">${bodyHtml}</div>
+  <div class="footer">Gerado automaticamente pela OPERA CRM</div>
+</body></html>`;
 
-          <div style="border-top:1px solid #eee; padding-top:20px; line-height:1.6;">${bodyHtml}</div>
-
-          <div style="margin-top:32px; font-size:10px; color:#aaa; text-align:center;">Gerado automaticamente pela OPERA CRM</div>
-        </div>`;
-      document.body.appendChild(container);
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-      await html2pdf().set({
-        margin: 0,
-        filename: `Relatorio-${clientName.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}.pdf`,
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "pt", format: "a4" },
-      }).from(container).save();
-      document.body.removeChild(container);
-    } catch (e) {
-      alert("Não foi possível gerar o PDF: " + e.message);
-    } finally {
-      setDownloading(false);
-    }
+    const win = window.open("", "_blank");
+    if (!win) { alert("O browser bloqueou a nova janela. Permite pop-ups para opera-os.com e tenta outra vez."); return; }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
   };
 
   return (
@@ -1203,8 +1175,8 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
           {loading ? "A gerar…" : "✨ Gerar relatório"}
         </button>
         {report && !loading && (
-          <button onClick={download} disabled={downloading} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: downloading ? "default" : "pointer", opacity: downloading ? 0.7 : 1 }}>
-            {downloading ? "A preparar PDF…" : "⬇️ Descarregar PDF"}
+          <button onClick={download} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            📄 Abrir relatório (PDF)
           </button>
         )}
       </div>
