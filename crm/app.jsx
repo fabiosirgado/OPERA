@@ -377,8 +377,13 @@ const db = {
     const { error } = await sb.from("financeiro_extrato").update({ status: "reconciliado" }).eq("id", id);
     if (error) throw error;
   },
-  async gerarRelatorioFinanceiro(clientId, ano, mes) {
-    const { data, error } = await sb.rpc("gerar_relatorio_financeiro", { p_client_id: clientId, p_ano: ano, p_mes: mes });
+  async iniciarRelatorioFinanceiro(clientId, ano, mes) {
+    const { data, error } = await sb.rpc("iniciar_relatorio_financeiro", { p_client_id: clientId, p_ano: ano, p_mes: mes });
+    if (error) throw error;
+    return data;
+  },
+  async checkRelatorioStatus(id) {
+    const { data, error } = await sb.from("financeiro_relatorios").select("*").eq("id", id).single();
     if (error) throw error;
     return data;
   },
@@ -1057,13 +1062,30 @@ function FinRelatorioMensal({ clientId, clientName }) {
 
   const mesLabel = () => { const [y, m] = month.split("-").map(Number); return `${finMesesAbrev[m - 1]} de ${y}`; };
 
+  const pollReport = (id) => {
+    let tries = 0;
+    const interval = setInterval(async () => {
+      tries++;
+      try {
+        const row = await db.checkRelatorioStatus(id);
+        if (row.status !== "processando" || tries > 20) {
+          clearInterval(interval);
+          setLoading(false);
+          if (row.status === "processado") setReport(row.texto);
+          else if (row.status === "erro") setError(row.ai_error || "Erro ao gerar relatório.");
+          else setError("A IA está a demorar mais do que o normal. Tenta gerar novamente daqui a pouco.");
+        }
+      } catch (e2) { clearInterval(interval); setLoading(false); setError(e2.message); }
+    }, 3000);
+  };
+
   const gerar = async () => {
     setLoading(true); setError(""); setReport("");
     try {
       const [y, m] = month.split("-").map(Number);
-      const text = await db.gerarRelatorioFinanceiro(clientId, y, m);
-      setReport(text);
-    } catch (e) { setError(e.message); } finally { setLoading(false); }
+      const rowId = await db.iniciarRelatorioFinanceiro(clientId, y, m);
+      pollReport(rowId);
+    } catch (e) { setError(e.message); setLoading(false); }
   };
 
   const download = () => {
