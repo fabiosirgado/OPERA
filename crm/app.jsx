@@ -127,7 +127,7 @@ function mapPedido(row) {
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
     tasks: tasks.map((t) => ({ id: t.id, text: t.text, done: t.done })),
     notes: notes.map((n) => ({ id: n.id, text: n.text, date: new Date(n.created_at) })),
-    attachments: attachments.map((a) => ({ id: a.id, name: a.name, storagePath: a.storage_path })),
+    attachments: attachments.map((a) => ({ id: a.id, name: a.name, storagePath: a.storage_path, uploadedBy: a.uploaded_by })),
     messages: messages.map((m) => ({ id: m.id, sender: m.sender, text: m.text, date: new Date(m.created_at) })),
   };
 }
@@ -242,15 +242,21 @@ const db = {
     const { error } = await sb.from("pedido_mensagens").insert({ pedido_id: pedidoId, sender, text });
     if (error) throw error;
   },
-  async uploadAttachment(pedidoId, file) {
+  async uploadAttachment(pedidoId, file, uploadedBy) {
     const path = `${pedidoId}/${Date.now()}_${file.name}`;
     const { error: upErr } = await sb.storage.from("attachments").upload(path, file);
     if (upErr) throw upErr;
-    const { error } = await sb.from("pedido_attachments").insert({ pedido_id: pedidoId, name: file.name, storage_path: path });
+    const { error } = await sb.from("pedido_attachments").insert({ pedido_id: pedidoId, name: file.name, storage_path: path, uploaded_by: uploadedBy });
+    if (error) throw error;
+  },
+  async removeAttachment(id, storagePath) {
+    const { error: rmErr } = await sb.storage.from("attachments").remove([storagePath]);
+    if (rmErr) throw rmErr;
+    const { error } = await sb.from("pedido_attachments").delete().eq("id", id);
     if (error) throw error;
   },
   async getAttachmentUrl(path) {
-    const { data, error } = await sb.storage.from("attachments").createSignedUrl(path, 600);
+    const { data, error } = await sb.storage.from("attachments").createSignedUrl(path, 600, { download: true });
     if (error) throw error;
     return data.signedUrl;
   },
@@ -512,6 +518,12 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
   const addNote = () => { if (!newNote.trim()) return; const text = newNote.trim(); setNewNote(""); run(() => db.addNote(pedido.id, text)); };
   const sendMessage = (text) => run(() => db.sendMessage(pedido.id, "equipa", text));
   const openAttachment = (a) => db.getAttachmentUrl(a.storagePath).then((url) => window.open(url, "_blank")).catch((e) => alert(e.message));
+  const uploadFiles = (e) => {
+    const chosen = Array.from(e.target.files || []);
+    e.target.value = "";
+    chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, file, "equipa")));
+  };
+  const removeAttachment = (a) => { if (window.confirm(`Apagar "${a.name}"?`)) run(() => db.removeAttachment(a.id, a.storagePath)); };
 
   return (
     <SidePanel onClose={onClose} eyebrow={pedido.client}>
@@ -530,16 +542,24 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
         </>
       )}
 
+      <SectionTitle>Ficheiros</SectionTitle>
       {pedido.attachments.length > 0 && (
-        <>
-          <SectionTitle>Ficheiros do cliente</SectionTitle>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
-            {pedido.attachments.map((a) => (
-              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
-            ))}
-          </div>
-        </>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+          {pedido.attachments.map((a) => (
+            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px" }}>
+              <span onClick={() => openAttachment(a)} style={{ flex: 1, cursor: "pointer" }}>📎 {a.name}</span>
+              <span onClick={() => removeAttachment(a)} title="Apagar ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+            </div>
+          ))}
+        </div>
       )}
+      <label className="op-type-btn" style={{
+        display: "inline-flex", alignItems: "center", gap: 6, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+        padding: "8px 12px", cursor: "pointer", color: C.muted, fontSize: 12, marginBottom: 18,
+      }}>
+        📎 Adicionar ficheiro
+        <input type="file" multiple onChange={uploadFiles} style={{ display: "none" }} />
+      </label>
 
       <SectionTitle>Tarefas</SectionTitle>
       {pedido.tasks.map((t) => (
@@ -581,6 +601,11 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
   const run = async (fn) => { try { await fn(); await onReload(); } catch (e) { alert(e.message); } };
   const sendMessage = (text) => run(() => db.sendMessage(pedido.id, "cliente", text));
   const openAttachment = (a) => db.getAttachmentUrl(a.storagePath).then((url) => window.open(url, "_blank")).catch((e) => alert(e.message));
+  const uploadFiles = (e) => {
+    const chosen = Array.from(e.target.files || []);
+    e.target.value = "";
+    chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, file, "cliente")));
+  };
   const currentIndex = OP_STAGES.indexOf(pedido.stage);
 
   return (
@@ -629,16 +654,21 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
         </>
       )}
 
+      <SectionTitle>Ficheiros</SectionTitle>
       {pedido.attachments.length > 0 && (
-        <>
-          <SectionTitle>Ficheiros enviados</SectionTitle>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
-            {pedido.attachments.map((a) => (
-              <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
-            ))}
-          </div>
-        </>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+          {pedido.attachments.map((a) => (
+            <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
+          ))}
+        </div>
       )}
+      <label className="op-type-btn" style={{
+        display: "inline-flex", alignItems: "center", gap: 6, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+        padding: "8px 12px", cursor: "pointer", color: C.muted, fontSize: 12, marginBottom: 18,
+      }}>
+        📎 Adicionar ficheiro
+        <input type="file" multiple onChange={uploadFiles} style={{ display: "none" }} />
+      </label>
 
       <SectionTitle>Conversa com a OPERA</SectionTitle>
       <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="cliente" />
@@ -1637,7 +1667,7 @@ function ClientPortal({ profile }) {
         seen: false,
       });
       for (const f of files) {
-        await db.uploadAttachment(created.id, f.file);
+        await db.uploadAttachment(created.id, f.file, "cliente");
       }
       await reloadPedidos();
       resetForm();
