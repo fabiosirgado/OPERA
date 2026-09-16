@@ -1054,7 +1054,22 @@ function finBlocksToHtml(blocks) {
   }).join("\n");
 }
 
-function FinRelatorioMensal({ clientId, clientName }) {
+let finHtml2PdfPromise = null;
+function finLoadHtml2Pdf() {
+  if (window.html2pdf) return Promise.resolve(window.html2pdf);
+  if (!finHtml2PdfPromise) {
+    finHtml2PdfPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+      script.onload = () => resolve(window.html2pdf);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  return finHtml2PdfPromise;
+}
+
+function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
   const [month, setMonth] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState("");
@@ -1088,32 +1103,94 @@ function FinRelatorioMensal({ clientId, clientName }) {
     } catch (e) { setError(e.message); setLoading(false); }
   };
 
-  const download = () => {
-    const bodyHtml = finBlocksToHtml(finParseMarkdown(report));
-    const label = mesLabel();
-    const html = `<!doctype html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Relatório Financeiro — ${finEscapeHtml(clientName)}</title>
-<style>
-  body { font-family: Georgia, 'Times New Roman', serif; max-width: 720px; margin: 40px auto; padding: 0 24px; color: #1a1a2e; line-height: 1.6; }
-  h1 { font-size: 24px; border-bottom: 2px solid #3D6BFF; padding-bottom: 10px; }
-  h2 { font-size: 17px; color: #3D6BFF; margin-top: 26px; }
-  h3 { font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.4px; }
-  .eyebrow { color: #3D6BFF; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .meta { color: #666; font-size: 13px; margin-bottom: 24px; }
-  ul { padding-left: 20px; }
-</style></head>
-<body>
-  <div class="eyebrow">OPERA · Relatório Financeiro Mensal</div>
-  <h1>${finEscapeHtml(clientName)}</h1>
-  <div class="meta">Referente a ${finEscapeHtml(label)}</div>
-  ${bodyHtml}
-</body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Relatorio-${clientName.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const [downloading, setDownloading] = useState(false);
+
+  const download = async () => {
+    setDownloading(true);
+    try {
+      const html2pdf = await finLoadHtml2Pdf();
+      const bodyHtml = finBlocksToHtml(finParseMarkdown(report));
+      const label = mesLabel();
+      const receita = current ? current.receita : 0;
+      const despesa = current ? current.despesa : 0;
+      const margem = receita - despesa;
+      const maxVal = Math.max(receita, despesa, 1);
+      const topRubricas = buckets ? finAggregateField(buckets, "byRubrica").slice(0, 6) : [];
+      const totalRubricas = topRubricas.reduce((s, [, v]) => s + v, 0) || 1;
+      const rubricaRowsHtml = topRubricas.map(([name, amount]) => `
+        <tr>
+          <td style="padding:7px 0; border-bottom:1px solid #eee;">${finEscapeHtml(name)}</td>
+          <td style="padding:7px 0; border-bottom:1px solid #eee; text-align:right;">${fmtEUR(amount)}</td>
+          <td style="padding:7px 0; border-bottom:1px solid #eee; text-align:right; color:#888;">${((amount / totalRubricas) * 100).toFixed(0)}%</td>
+        </tr>`).join("");
+
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed; left:-9999px; top:0; width:760px;";
+      container.innerHTML = `
+        <div style="font-family: Georgia, 'Times New Roman', serif; padding:44px; background:#ffffff; color:#1a1a2e;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid #3D6BFF; padding-bottom:16px; margin-bottom:26px;">
+            <div style="font-family: Arial, Helvetica, sans-serif; font-weight:800; font-size:24px; letter-spacing:-0.5px;">OPERA <span style="color:#3D6BFF;">CRM</span></div>
+            <div style="font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px;">Relatório Financeiro Mensal</div>
+          </div>
+
+          <h1 style="font-size:22px; margin:0 0 4px;">${finEscapeHtml(clientName)}</h1>
+          <div style="color:#666; font-size:13px; margin-bottom:26px;">Referente a ${finEscapeHtml(label)}</div>
+
+          <div style="display:flex; gap:14px; margin-bottom:28px;">
+            <div style="flex:1; background:#EEF2FF; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#5b6b8c; margin-bottom:4px;">Receita</div>
+              <div style="font-size:21px; font-weight:800; color:#3D6BFF; font-family: Arial, sans-serif;">${fmtEUR(receita)}</div>
+            </div>
+            <div style="flex:1; background:#FFF3EA; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#8a6b4f; margin-bottom:4px;">Despesa</div>
+              <div style="font-size:21px; font-weight:800; color:#F2994A; font-family: Arial, sans-serif;">${fmtEUR(despesa)}</div>
+            </div>
+            <div style="flex:1; background:${margem >= 0 ? "#EAFAF3" : "#FDECEF"}; border-radius:10px; padding:16px;">
+              <div style="font-size:11px; color:#666; margin-bottom:4px;">Margem</div>
+              <div style="font-size:21px; font-weight:800; color:${margem >= 0 ? "#1BA97A" : "#E23D5C"}; font-family: Arial, sans-serif;">${fmtEUR(margem)}</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:28px;">
+            <div style="font-size:13px; font-weight:700; margin-bottom:12px; font-family: Arial, sans-serif;">Receita vs. Despesa</div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <div style="width:64px; font-size:11px; color:#666;">Receita</div>
+              <div style="flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden;"><div style="width:${((receita / maxVal) * 100).toFixed(0)}%; background:#3D6BFF; height:100%;"></div></div>
+              <div style="width:80px; text-align:right; font-size:11px;">${fmtEUR(receita)}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:64px; font-size:11px; color:#666;">Despesa</div>
+              <div style="flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden;"><div style="width:${((despesa / maxVal) * 100).toFixed(0)}%; background:#F2994A; height:100%;"></div></div>
+              <div style="width:80px; text-align:right; font-size:11px;">${fmtEUR(despesa)}</div>
+            </div>
+          </div>
+
+          ${topRubricas.length > 0 ? `
+          <div style="margin-bottom:28px;">
+            <div style="font-size:13px; font-weight:700; margin-bottom:10px; font-family: Arial, sans-serif;">Despesas por rubrica</div>
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+              <thead><tr style="text-align:left; color:#888;"><th style="padding-bottom:6px; border-bottom:2px solid #eee;">Rubrica</th><th style="text-align:right; padding-bottom:6px; border-bottom:2px solid #eee;">Valor</th><th style="text-align:right; padding-bottom:6px; border-bottom:2px solid #eee;">%</th></tr></thead>
+              <tbody>${rubricaRowsHtml}</tbody>
+            </table>
+          </div>` : ""}
+
+          <div style="border-top:1px solid #eee; padding-top:20px; line-height:1.6;">${bodyHtml}</div>
+
+          <div style="margin-top:32px; font-size:10px; color:#aaa; text-align:center;">Gerado automaticamente pela OPERA CRM</div>
+        </div>`;
+      document.body.appendChild(container);
+      await html2pdf().from(container).set({
+        margin: 0,
+        filename: `Relatorio-${clientName.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "pt", format: "a4" },
+      }).save();
+      document.body.removeChild(container);
+    } catch (e) {
+      alert("Não foi possível gerar o PDF: " + e.message);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -1125,8 +1202,8 @@ function FinRelatorioMensal({ clientId, clientName }) {
           {loading ? "A gerar…" : "✨ Gerar relatório"}
         </button>
         {report && !loading && (
-          <button onClick={download} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-            ⬇️ Descarregar
+          <button onClick={download} disabled={downloading} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: downloading ? "default" : "pointer", opacity: downloading ? 0.7 : 1 }}>
+            {downloading ? "A preparar PDF…" : "⬇️ Descarregar PDF"}
           </button>
         )}
       </div>
@@ -1194,7 +1271,7 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
         </div>
       </div>
 
-      {isEquipa && <FinRelatorioMensal clientId={clientId} clientName={clientName} />}
+      {isEquipa && <FinRelatorioMensal clientId={clientId} clientName={clientName} buckets={buckets} current={current} />}
     </>
   );
 }
