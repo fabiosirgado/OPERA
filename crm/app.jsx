@@ -1836,12 +1836,14 @@ function useSession() {
 }
 
 function LoginScreen() {
+  const [mode, setMode] = useState("magic"); // magic | password
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const submit = async () => {
+  const submitMagic = async () => {
     if (!email.trim()) return;
     setBusy(true); setError("");
     try {
@@ -1858,22 +1860,63 @@ function LoginScreen() {
     }
   };
 
+  const submitPassword = async () => {
+    if (!email.trim() || !password) return;
+    setBusy(true); setError("");
+    try {
+      const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
+    } catch (e) {
+      setError("Email ou password incorretos.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const switchMode = (m) => { setMode(m); setError(""); setSent(false); };
+
   return (
     <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 360, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 28 }}>
         <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 20, color: C.text, marginBottom: 6 }}>Entrar na OPERA CRM</div>
-        <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Indique o seu email para receber um link de acesso.</div>
-        {sent ? (
-          <div style={{ background: "rgba(46,216,167,0.12)", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 14px", fontSize: 13, color: C.green }}>
-            ✅ Link enviado para {email}. Verifique o seu email.
-          </div>
+
+        <div style={{ display: "flex", gap: 4, background: C.surfaceRaised, borderRadius: 8, padding: 4, marginBottom: 18 }}>
+          <button onClick={() => switchMode("magic")}
+            style={{ flex: 1, border: "none", background: mode === "magic" ? C.accent : "transparent", color: mode === "magic" ? "#fff" : C.muted, fontSize: 12, fontWeight: 600, padding: "8px 0", borderRadius: 6, cursor: "pointer" }}>
+            Link por email
+          </button>
+          <button onClick={() => switchMode("password")}
+            style={{ flex: 1, border: "none", background: mode === "password" ? C.accent : "transparent", color: mode === "password" ? "#fff" : C.muted, fontSize: 12, fontWeight: 600, padding: "8px 0", borderRadius: 6, cursor: "pointer" }}>
+            Password
+          </button>
+        </div>
+
+        {mode === "magic" ? (
+          sent ? (
+            <div style={{ background: "rgba(46,216,167,0.12)", border: `1px solid ${C.green}`, borderRadius: 8, padding: "12px 14px", fontSize: 13, color: C.green }}>
+              ✅ Link enviado para {email}. Verifique o seu email.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>Indique o seu email para receber um link de acesso.</div>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitMagic()} type="email" placeholder="oseu@email.pt"
+                style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, marginBottom: 14, boxSizing: "border-box" }} />
+              {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 12 }}>{error}</div>}
+              <button onClick={submitMagic} disabled={busy} style={{ width: "100%", background: C.accent, border: "none", borderRadius: 6, padding: "10px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.7 : 1 }}>
+                {busy ? "A enviar..." : "Enviar link de acesso"}
+              </button>
+            </>
+          )
         ) : (
           <>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} type="email" placeholder="oseu@email.pt"
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>Entre com o seu email e password. Se ainda não definiu uma, use o "Link por email" e depois defina uma nas definições.</div>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="oseu@email.pt"
+              style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, marginBottom: 10, boxSizing: "border-box" }} />
+            <input value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitPassword()} type="password" placeholder="Password"
               style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px", color: C.text, fontSize: 13, marginBottom: 14, boxSizing: "border-box" }} />
             {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 12 }}>{error}</div>}
-            <button onClick={submit} disabled={busy} style={{ width: "100%", background: C.accent, border: "none", borderRadius: 6, padding: "10px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.7 : 1 }}>
-              {busy ? "A enviar..." : "Enviar link de acesso"}
+            <button onClick={submitPassword} disabled={busy} style={{ width: "100%", background: C.accent, border: "none", borderRadius: 6, padding: "10px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: busy ? 0.7 : 1 }}>
+              {busy ? "A entrar..." : "Entrar"}
             </button>
           </>
         )}
@@ -1887,6 +1930,55 @@ function CenteredMessage({ children }) {
 }
 
 // ================= APP ROOT =================
+function SetPasswordButton() {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const save = async () => {
+    setMsg("");
+    if (password.length < 6) { setMsg("A password precisa de pelo menos 6 caracteres."); return; }
+    if (password !== confirm) { setMsg("As passwords não coincidem."); return; }
+    setBusy(true);
+    try {
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) throw error;
+      setMsg("Password definida com sucesso!");
+      setPassword(""); setConfirm("");
+      setTimeout(() => { setOpen(false); setMsg(""); }, 1500);
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <span onClick={() => setOpen(true)} style={{ cursor: "pointer", fontSize: 12, color: C.muted, textDecoration: "underline" }}>
+        Definir password
+      </span>
+    );
+  }
+
+  return (
+    <div style={{ position: "absolute", top: 50, right: 20, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 16, zIndex: 1100, width: 260, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>Definir password</div>
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Nova password"
+        style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 8, boxSizing: "border-box" }} />
+      <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Confirmar password"
+        style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 10, boxSizing: "border-box" }} />
+      {msg && <div style={{ fontSize: 12, color: msg.includes("sucesso") ? C.green : C.red, marginBottom: 10 }}>{msg}</div>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={save} disabled={busy} style={{ flex: 1, background: C.accent, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+        <button onClick={() => { setOpen(false); setMsg(""); }} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 12px", color: C.muted, fontSize: 12, cursor: "pointer" }}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
 function OperaCRM() {
   const session = useSession();
   const [profile, setProfile] = useState(undefined);
@@ -1914,11 +2006,12 @@ function OperaCRM() {
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", width: "100%", background: C.bg, fontFamily: "Inter, sans-serif" }}>
       <style>{FONT_IMPORT}</style>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexWrap: "wrap", gap: 10, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexWrap: "wrap", gap: 10, flexShrink: 0, position: "relative" }}>
         <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 16, color: C.text }}>OPERA <span style={{ color: C.accent }}>CRM</span></div>
         {session && profile && (
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <span style={{ fontSize: 12, color: C.muted }}>{profile.full_name || session.user.email}</span>
+            <SetPasswordButton />
             <button onClick={signOut} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", color: C.muted, fontSize: 12, cursor: "pointer" }}>Sair</button>
           </div>
         )}
