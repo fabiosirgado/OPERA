@@ -1384,8 +1384,9 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
 }
 
 // ---------- Client detail panel (ficha de cliente, estilo Pipedrive) ----------
-function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onUpdateExtra, onClose, onOpenPedido }) {
-  const [tab, setTab] = useState("geral");
+function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onUpdateExtra, onClose, onOpenPedido, initialTab }) {
+  const [tab, setTab] = useState(initialTab || "geral");
+  useEffect(() => { if (initialTab) setTab(initialTab); }, [initialTab, client.id]);
   const [newNote, setNewNote] = useState("");
   const [newActType, setNewActType] = useState("Tarefa");
   const [newActText, setNewActText] = useState("");
@@ -1748,6 +1749,7 @@ function EquipaApp({ profile }) {
   const [propertySearch, setPropertySearch] = useState("");
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [openClientId, setOpenClientId] = useState(null);
+  const [openClientTab, setOpenClientTab] = useState("geral");
   const [addingDeal, setAddingDeal] = useState(false);
   const [newDeal, setNewDeal] = useState({ name: "", value: "", owner: "Fábio", contact: "", email: "", phone: "" });
   const [addingClient, setAddingClient] = useState(false);
@@ -1778,7 +1780,7 @@ function EquipaApp({ profile }) {
     return () => sb.removeChannel(channel);
   }, []);
 
-  const openClient = (id) => { setOpenClientId(id); reloadClientExtra(id); };
+  const openClient = (id, tab) => { setOpenClientId(id); setOpenClientTab(tab || "geral"); reloadClientExtra(id); };
 
   const periodDays = PERIODS.find((p) => p.key === period).days;
 
@@ -1944,6 +1946,7 @@ function EquipaApp({ profile }) {
     { key: "crm", label: "CRM Comercial", icon: "🧭" },
     { key: "operacional", label: "Operacional", icon: "🗂️", badge: unseenCount },
     { key: "clientes", label: "Clientes", icon: "👥" },
+    { key: "financeiro", label: "Financeiro", icon: "💶" },
   ];
 
   if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
@@ -2269,6 +2272,30 @@ function EquipaApp({ profile }) {
             </div>
           </>
         )}
+
+        {page === "financeiro" && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 10 }}>
+              <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 20, color: C.text }}>Financeiro</div>
+            </div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 18 }}>Escolhe um cliente para ver o P&L, lançamentos e reconciliação bancária dele.</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {clients.map((c) => (
+                <div key={c.id} onClick={() => openClient(c.id, "financeiro")} className="op-card-hover"
+                  style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: stripeFor(c.id), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#0A0F1E", flexShrink: 0 }}>
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.text, fontFamily: "Manrope, sans-serif" }}>{c.name}</div>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>Ver financeiro →</span>
+                </div>
+              ))}
+              {clients.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Ainda não há clientes.</div>}
+            </div>
+          </>
+        )}
       </div>
 
       {openPedido && <PedidoDetailInternal pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />}
@@ -2277,6 +2304,7 @@ function EquipaApp({ profile }) {
           extra={clientExtra[openClientObj.id] || { notes: [], activities: [] }}
           onUpdateExtra={(updated) => setClientExtra((prev) => ({ ...prev, [openClientObj.id]: updated }))}
           onClose={() => setOpenClientId(null)}
+          initialTab={openClientTab}
           onOpenPedido={(id) => { setOpenClientId(null); openPedidoSeen(id); }} />
       )}
     </div>
