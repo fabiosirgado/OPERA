@@ -293,19 +293,32 @@ const db = {
     if (error) throw error;
   },
 
-  // -- portal access linking (profiles <-> clients) --
+  // -- portal access (profiles <-> clients) --
   async listProfilesByClient(clientId) {
     const { data, error } = await sb.from("profiles").select("*").eq("client_id", clientId);
     if (error) throw error;
     return data;
   },
-  async listUnlinkedClienteProfiles() {
-    const { data, error } = await sb.from("profiles").select("*").eq("role", "cliente").is("client_id", null);
+  async listClientInvites(clientId) {
+    const { data, error } = await sb.from("client_invites").select("*").eq("client_id", clientId).order("created_at", { ascending: false });
     if (error) throw error;
     return data;
   },
-  async linkProfileToClient(profileId, clientId) {
-    const { error } = await sb.from("profiles").update({ client_id: clientId }).eq("id", profileId);
+  async inviteClientEmail(clientId, email) {
+    const normalized = email.trim().toLowerCase();
+    const { data: existing, error: findErr } = await sb.from("profiles").select("id, client_id").ilike("email", normalized).maybeSingle();
+    if (findErr) throw findErr;
+    if (existing) {
+      const { error } = await sb.from("profiles").update({ client_id: clientId }).eq("id", existing.id);
+      if (error) throw error;
+      return { linked: true };
+    }
+    const { error } = await sb.from("client_invites").upsert({ client_id: clientId, email: normalized }, { onConflict: "email" });
+    if (error) throw error;
+    return { linked: false };
+  },
+  async removeClientInvite(id) {
+    const { error } = await sb.from("client_invites").delete().eq("id", id);
     if (error) throw error;
   },
 };
@@ -643,23 +656,34 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const [editingContact, setEditingContact] = useState(false);
   const [contactDraft, setContactDraft] = useState({ contact: client.contact, email: client.email, phone: client.phone });
   const [linkedProfiles, setLinkedProfiles] = useState([]);
-  const [unlinkedProfiles, setUnlinkedProfiles] = useState([]);
-  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     db.listProfilesByClient(client.id).then(setLinkedProfiles).catch(() => {});
-    db.listUnlinkedClienteProfiles().then(setUnlinkedProfiles).catch(() => {});
+    db.listClientInvites(client.id).then(setPendingInvites).catch(() => {});
   }, [client.id]);
 
-  const linkProfile = async () => {
-    if (!selectedProfileId) return;
+  const sendInvite = async () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    setInviting(true);
     try {
-      await db.linkProfileToClient(selectedProfileId, client.id);
-      const linked = unlinkedProfiles.find((p) => p.id === selectedProfileId);
-      setLinkedProfiles((prev) => [...prev, linked]);
-      setUnlinkedProfiles((prev) => prev.filter((p) => p.id !== selectedProfileId));
-      setSelectedProfileId("");
+      const result = await db.inviteClientEmail(client.id, email);
+      if (result.linked) {
+        setLinkedProfiles(await db.listProfilesByClient(client.id));
+      } else {
+        setPendingInvites(await db.listClientInvites(client.id));
+      }
+      setInviteEmail("");
     } catch (e) { alert(e.message); }
+    finally { setInviting(false); }
+  };
+
+  const cancelInvite = async (id) => {
+    setPendingInvites((prev) => prev.filter((i) => i.id !== id));
+    try { await db.removeClientInvite(id); } catch (e) { alert(e.message); }
   };
 
   const saveContact = async () => {
@@ -828,17 +852,28 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
 
           <SectionTitle>Acesso ao portal</SectionTitle>
           <div style={{ background: C.surfaceRaised, borderRadius: 8, padding: 12, marginBottom: 18 }}>
-            {linkedProfiles.length === 0 && <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Ainda ninguém tem acesso ao portal para este cliente.</div>}
+            {linkedProfiles.length === 0 && pendingInvites.length === 0 && (
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Ainda ninguém tem acesso ao portal para este cliente.</div>
+            )}
             {linkedProfiles.map((p) => (
               <div key={p.id} style={{ fontSize: 13, color: C.text, marginBottom: 6 }}>👤 {p.full_name || p.email || p.id}</div>
             ))}
-            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-              <select value={selectedProfileId} onChange={(e) => setSelectedProfileId(e.target.value)}
-                style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }}>
-                <option value="">Associar conta registada…</option>
-                {unlinkedProfiles.map((p) => <option key={p.id} value={p.id}>{p.email || p.full_name || p.id}</option>)}
-              </select>
-              <button onClick={linkProfile} disabled={!selectedProfileId} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", opacity: selectedProfileId ? 1 : 0.5 }}>Associar</button>
+            {pendingInvites.map((inv) => (
+              <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, color: C.muted, marginBottom: 6 }}>
+                <span>✉️ {inv.email} — convite pendente</span>
+                <span onClick={() => cancelInvite(inv.id)} style={{ cursor: "pointer", fontSize: 14 }}>×</span>
+              </div>
+            ))}
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 8, marginBottom: 6 }}>
+              Escreve o email do contacto do cliente — quando ele entrar pela primeira vez em /crm/, fica logo ligado a este cliente.
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendInvite()}
+                placeholder="email@cliente.pt"
+                style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }} />
+              <button onClick={sendInvite} disabled={!inviteEmail.trim() || inviting} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", opacity: inviteEmail.trim() && !inviting ? 1 : 0.5 }}>
+                {inviting ? "..." : "Convidar"}
+              </button>
             </div>
           </div>
 
