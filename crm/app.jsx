@@ -1290,7 +1290,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Rubrica</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
-                  {isEquipa && <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>}
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -1328,11 +1328,9 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                         <FinBadge text={it.source === "upload" ? "Lido pela IA" : "Manual"} color={C.green} />
                       )}
                     </td>
-                    {isEquipa && (
-                      <td style={{ padding: "8px" }}>
-                        <span onClick={() => (it.tipo === "custo" ? onDeleteDespesa(it.id) : onDeleteReceita(it.id))} style={{ cursor: "pointer", color: C.muted }} title="Apagar">×</span>
-                      </td>
-                    )}
+                    <td style={{ padding: "8px" }}>
+                      <span onClick={() => (it.tipo === "custo" ? onDeleteDespesa(it.id) : onDeleteReceita(it.id))} style={{ cursor: "pointer", color: C.muted }} title="Apagar">×</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
