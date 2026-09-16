@@ -1482,7 +1482,10 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
         <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa} clientId={clientId}
           onAddDespesa={addDespesa} onAddReceita={addReceita} onChangeRubrica={changeRubrica}
           onDeleteDespesa={deleteDespesa} onDeleteReceita={deleteReceita}
-          onDocUploaded={(tipo, row) => (tipo === "custo" ? setDespesas((prev) => [row, ...prev]) : setReceitas((prev) => [row, ...prev]))} />
+          onDocUploaded={(tipo, row) => {
+            const setter = tipo === "custo" ? setDespesas : setReceitas;
+            setter((prev) => (prev.some((r) => r.id === row.id) ? prev.map((r) => (r.id === row.id ? row : r)) : [row, ...prev]));
+          }} />
       )}
       {subTab === "reconciliacao" && <FinReconciliacao rows={extrato} isEquipa={isEquipa} onImportCsv={importCsv} onConfirm={confirmExtrato} />}
     </div>
