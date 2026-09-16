@@ -374,6 +374,11 @@ const db = {
     const { error } = await sb.from("financeiro_extrato").update({ status: "reconciliado" }).eq("id", id);
     if (error) throw error;
   },
+  async gerarRelatorioFinanceiro(clientId, ano, mes) {
+    const { data, error } = await sb.rpc("gerar_relatorio_financeiro", { p_client_id: clientId, p_ano: ano, p_mes: mes });
+    if (error) throw error;
+    return data;
+  },
 };
 
 // ---------- Shared UI atoms ----------
@@ -860,14 +865,14 @@ function FinTrendChart({ buckets }) {
         return (
           <g key={b.key}>
             <rect x={x - barW - 2} y={h - padB - scaleY(b.receita)} width={barW} height={scaleY(b.receita)} rx="2" fill={C.accent} />
-            <rect x={x + 2} y={h - padB - scaleY(b.despesa)} width={barW} height={scaleY(b.despesa)} rx="2" fill="#F2994A" />
+            <rect x={x + 2} y={h - padB - scaleY(b.despesa)} width={barW} height={scaleY(b.despesa)} rx="2" fill={C.red} />
             <text x={x} y={h - 8} textAnchor="middle" fontSize="10" fill={C.muted}>{b.label}</text>
           </g>
         );
       })}
       <g transform={`translate(${w - 150}, 0)`}>
         <rect x="0" y="0" width="10" height="10" rx="2" fill={C.accent} /><text x="14" y="9" fontSize="11" fill={C.muted}>Receita</text>
-        <rect x="72" y="0" width="10" height="10" rx="2" fill="#F2994A" /><text x="86" y="9" fontSize="11" fill={C.muted}>Despesa</text>
+        <rect x="72" y="0" width="10" height="10" rx="2" fill={C.red} /><text x="86" y="9" fontSize="11" fill={C.muted}>Despesa</text>
       </g>
     </svg>
   );
@@ -938,7 +943,135 @@ function FinRankingPorCampo({ buckets, field, title, icon, colorFor, emptyLabel 
   );
 }
 
-function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous, extrato }) {
+// ---------- Relatório mensal (IA) ----------
+function finParseInline(text) {
+  const parts = String(text).split(/\*\*(.+?)\*\*/g);
+  return parts.map((t, i) => ({ text: t, bold: i % 2 === 1 }));
+}
+function finParseMarkdown(md) {
+  const lines = (md || "").split(/\r?\n/);
+  const blocks = [];
+  let listBuf = [];
+  const flushList = () => { if (listBuf.length) { blocks.push({ type: "ul", items: listBuf }); listBuf = []; } };
+  lines.forEach((line) => {
+    const l = line.trim();
+    if (!l) { flushList(); return; }
+    if (/^###\s+/.test(l)) { flushList(); blocks.push({ type: "h3", text: l.replace(/^###\s+/, "") }); return; }
+    if (/^##\s+/.test(l)) { flushList(); blocks.push({ type: "h2", text: l.replace(/^##\s+/, "") }); return; }
+    if (/^#\s+/.test(l)) { flushList(); blocks.push({ type: "h1", text: l.replace(/^#\s+/, "") }); return; }
+    if (/^[-*]\s+/.test(l)) { listBuf.push(l.replace(/^[-*]\s+/, "")); return; }
+    flushList();
+    blocks.push({ type: "p", text: l });
+  });
+  flushList();
+  return blocks;
+}
+function FinInline({ text }) {
+  return finParseInline(text).map((p, i) => (p.bold ? <strong key={i}>{p.text}</strong> : <React.Fragment key={i}>{p.text}</React.Fragment>));
+}
+function FinMarkdown({ md }) {
+  const blocks = finParseMarkdown(md);
+  return (
+    <div>
+      {blocks.map((b, i) => {
+        if (b.type === "h1") return <div key={i} style={{ fontSize: 15, fontWeight: 800, color: C.text, fontFamily: "Manrope, sans-serif", marginTop: i ? 16 : 0, marginBottom: 8 }}><FinInline text={b.text} /></div>;
+        if (b.type === "h2") return <div key={i} style={{ fontSize: 13, fontWeight: 700, color: C.text, marginTop: 14, marginBottom: 6 }}><FinInline text={b.text} /></div>;
+        if (b.type === "h3") return <div key={i} style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginTop: 10, marginBottom: 4 }}><FinInline text={b.text} /></div>;
+        if (b.type === "ul") return (
+          <ul key={i} style={{ margin: "4px 0 10px", paddingLeft: 18 }}>
+            {b.items.map((it, j) => <li key={j} style={{ fontSize: 12, color: C.text, marginBottom: 4, lineHeight: 1.5 }}><FinInline text={it} /></li>)}
+          </ul>
+        );
+        return <p key={i} style={{ fontSize: 12, color: C.text, marginBottom: 8, lineHeight: 1.5 }}><FinInline text={b.text} /></p>;
+      })}
+    </div>
+  );
+}
+const finEscapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function finInlineToHtml(text) {
+  return finParseInline(text).map((p) => (p.bold ? `<strong>${finEscapeHtml(p.text)}</strong>` : finEscapeHtml(p.text))).join("");
+}
+function finBlocksToHtml(blocks) {
+  return blocks.map((b) => {
+    if (b.type === "h1") return `<h1>${finInlineToHtml(b.text)}</h1>`;
+    if (b.type === "h2") return `<h2>${finInlineToHtml(b.text)}</h2>`;
+    if (b.type === "h3") return `<h3>${finInlineToHtml(b.text)}</h3>`;
+    if (b.type === "ul") return `<ul>${b.items.map((it) => `<li>${finInlineToHtml(it)}</li>`).join("")}</ul>`;
+    return `<p>${finInlineToHtml(b.text)}</p>`;
+  }).join("\n");
+}
+
+function FinRelatorioMensal({ clientId, clientName }) {
+  const [month, setMonth] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState("");
+  const [error, setError] = useState("");
+
+  const mesLabel = () => { const [y, m] = month.split("-").map(Number); return `${finMesesAbrev[m - 1]} de ${y}`; };
+
+  const gerar = async () => {
+    setLoading(true); setError(""); setReport("");
+    try {
+      const [y, m] = month.split("-").map(Number);
+      const text = await db.gerarRelatorioFinanceiro(clientId, y, m);
+      setReport(text);
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
+  };
+
+  const download = () => {
+    const bodyHtml = finBlocksToHtml(finParseMarkdown(report));
+    const label = mesLabel();
+    const html = `<!doctype html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Relatório Financeiro — ${finEscapeHtml(clientName)}</title>
+<style>
+  body { font-family: Georgia, 'Times New Roman', serif; max-width: 720px; margin: 40px auto; padding: 0 24px; color: #1a1a2e; line-height: 1.6; }
+  h1 { font-size: 24px; border-bottom: 2px solid #3D6BFF; padding-bottom: 10px; }
+  h2 { font-size: 17px; color: #3D6BFF; margin-top: 26px; }
+  h3 { font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.4px; }
+  .eyebrow { color: #3D6BFF; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 24px; }
+  ul { padding-left: 20px; }
+</style></head>
+<body>
+  <div class="eyebrow">OPERA · Relatório Financeiro Mensal</div>
+  <h1>${finEscapeHtml(clientName)}</h1>
+  <div class="meta">Referente a ${finEscapeHtml(label)}</div>
+  ${bodyHtml}
+</body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Relatorio-${clientName.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <FinSectionCard title="Relatório mensal (IA)" icon="✨" style={{ marginTop: 20 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+        <input type="month" value={month} onChange={(e) => setMonth(e.target.value)}
+          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "7px 10px", color: C.text, fontSize: 12 }} />
+        <button onClick={gerar} disabled={loading} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1 }}>
+          {loading ? "A gerar…" : "✨ Gerar relatório"}
+        </button>
+        {report && !loading && (
+          <button onClick={download} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            ⬇️ Descarregar
+          </button>
+        )}
+      </div>
+      {loading && <div style={{ fontSize: 12, color: C.muted, marginTop: 10 }}>A IA da OPERA está a analisar os dados financeiros deste mês — pode demorar até 20 segundos…</div>}
+      {error && <div style={{ fontSize: 12, color: C.red, marginTop: 10 }}>{error}</div>}
+      {report && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 18, marginTop: 14 }}>
+          <FinMarkdown md={report} />
+        </div>
+      )}
+    </FinSectionCard>
+  );
+}
+
+function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous, extrato, isEquipa, clientId, clientName }) {
   const margem = current.receita - current.despesa;
   const margemPrev = previous.receita - previous.despesa;
   const delta = (now, prev) => (prev === 0 ? null : ((now - prev) / Math.abs(prev)) * 100);
@@ -966,13 +1099,13 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
 
       <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
         <MetricCard label="Receita" value={fmtEUR(current.receita)} color={C.accent} sub={fmtDelta(dReceita)} />
-        <MetricCard label="Despesa" value={fmtEUR(current.despesa)} color="#F2994A" sub={fmtDelta(dDespesa)} />
+        <MetricCard label="Despesa" value={fmtEUR(current.despesa)} color={C.red} sub={fmtDelta(dDespesa)} />
         <MetricCard label="Margem" value={fmtEUR(margem)} color={margem >= 0 ? C.green : C.red} sub={fmtDelta(dMargem)} />
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
         <FinMiniStat icon="📐" label="Margem sobre receita" value={margemPct === null ? "—" : `${margemPct.toFixed(0)}%`} color={margemPct >= 0 ? C.green : C.red} />
-        <FinMiniStat icon="🏷️" label={`Maior despesa · ${topRubricaNome}`} value={fmtEUR(topRubricaValor)} color="#F2994A" />
+        <FinMiniStat icon="🏷️" label={`Maior despesa · ${topRubricaNome}`} value={fmtEUR(topRubricaValor)} color={C.red} />
         <FinMiniStat icon="🏦" label="Extrato reconciliado" value={taxaReconciliacao === null ? "—" : `${taxaReconciliacao.toFixed(0)}%`} color={taxaReconciliacao >= 90 ? C.green : C.amber} />
       </div>
 
@@ -990,6 +1123,8 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
             colorFor={(name, i) => FIN_VENDOR_PALETTE[i % FIN_VENDOR_PALETTE.length]} emptyLabel="Ainda sem despesas neste período." />
         </div>
       </div>
+
+      {isEquipa && <FinRelatorioMensal clientId={clientId} clientName={clientName} />}
     </>
   );
 }
@@ -1035,7 +1170,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, onAddDespesa, onAddRecei
                 {FIN_RUBRICAS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
               </select>
               <input type="number" step="0.01" placeholder="Valor (€)" value={novaDespesa.amount} onChange={(e) => setNovaDespesa({ ...novaDespesa, amount: e.target.value })} style={inputStyle} />
-              <button onClick={submitDespesa} disabled={saving} style={{ background: "#F2994A", border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar despesa</button>
+              <button onClick={submitDespesa} disabled={saving} style={{ background: C.red, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar despesa</button>
             </div>
           </FinSectionCard>
           <FinSectionCard title="+ Nova receita" icon="📤" style={{ flex: "1 1 320px" }}>
@@ -1070,7 +1205,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, onAddDespesa, onAddRecei
                   <tr key={`${it.tipo}-${it.id}`} style={{ borderTop: `1px solid ${C.border}` }}>
                     <td style={{ padding: "8px", color: C.muted, whiteSpace: "nowrap" }}>{fmtDate(finParseDate(it.date))}</td>
                     <td style={{ padding: "8px", color: C.text }}>{it.tipo === "custo" ? it.vendor : it.description}</td>
-                    <td style={{ padding: "8px" }}><FinBadge text={it.tipo === "custo" ? "Custo" : "Emitida"} color={it.tipo === "custo" ? "#F2994A" : C.accent} /></td>
+                    <td style={{ padding: "8px" }}><FinBadge text={it.tipo === "custo" ? "Custo" : "Emitida"} color={it.tipo === "custo" ? C.red : C.accent} /></td>
                     <td style={{ padding: "8px" }}>
                       {it.tipo === "emitida" ? (
                         <span style={{ color: C.muted }}>—</span>
@@ -1173,7 +1308,7 @@ function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm }) {
   );
 }
 
-function FinanceiroPanel({ clientId, isEquipa }) {
+function FinanceiroPanel({ clientId, clientName, isEquipa }) {
   const [subTab, setSubTab] = useState("visao");
   const [granularity, setGranularity] = useState("mes");
   const [despesas, setDespesas] = useState([]);
@@ -1237,7 +1372,7 @@ function FinanceiroPanel({ clientId, isEquipa }) {
         ))}
       </div>
 
-      {subTab === "visao" && <FinVisaoGeral granularity={granularity} setGranularity={setGranularity} buckets={buckets} current={current} previous={previous} extrato={extrato} />}
+      {subTab === "visao" && <FinVisaoGeral granularity={granularity} setGranularity={setGranularity} buckets={buckets} current={current} previous={previous} extrato={extrato} isEquipa={isEquipa} clientId={clientId} clientName={clientName} />}
       {subTab === "lancamentos" && (
         <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa}
           onAddDespesa={addDespesa} onAddReceita={addReceita} onChangeRubrica={changeRubrica}
@@ -1578,7 +1713,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
         </div>
       )}
 
-      {tab === "financeiro" && <FinanceiroPanel clientId={client.id} isEquipa={true} />}
+      {tab === "financeiro" && <FinanceiroPanel clientId={client.id} clientName={client.name} isEquipa={true} />}
 
       {tab === "alertas" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -2276,7 +2411,7 @@ function ClientPortal({ profile }) {
         ))}
       </div>
 
-      {section === "financeiro" && <FinanceiroPanel clientId={profile.client_id} isEquipa={false} />}
+      {section === "financeiro" && <FinanceiroPanel clientId={profile.client_id} clientName={clientName} isEquipa={false} />}
 
       {section === "pedidos" && <>
       {justSubmitted && (
