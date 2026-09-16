@@ -379,6 +379,17 @@ const db = {
     if (error) throw error;
     return data;
   },
+  async uploadFinanceiroDoc(clientId, tipo, file) {
+    const path = `${clientId}/${Date.now()}_${file.name}`;
+    const { error: upErr } = await sb.storage.from("financeiro-docs").upload(path, file);
+    if (upErr) throw upErr;
+    const base64 = await finFileToBase64(file);
+    const { data, error } = await sb.rpc("processar_documento_financeiro", {
+      p_client_id: clientId, p_tipo: tipo, p_storage_path: path, p_mime_type: file.type || "application/pdf", p_file_base64: base64,
+    });
+    if (error) throw error;
+    return data;
+  },
 };
 
 // ---------- Shared UI atoms ----------
@@ -730,6 +741,14 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
 
 // ---------- Financeiro (P&L do cliente, gerido pela equipa OPERA) ----------
 const fmtEURDec = (n) => Number(n || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function finFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 const FIN_RUBRICAS = [
   { name: "Comissões OPERA", color: "#3D6BFF", icon: "🤝" },
   { name: "Manutenção", color: "#8B7CF6", icon: "🔧" },
@@ -1129,7 +1148,31 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
   );
 }
 
-function FinLancamentos({ despesas, receitas, isEquipa, onAddDespesa, onAddReceita, onChangeRubrica, onDeleteDespesa, onDeleteReceita }) {
+function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
+  const [busy, setBusy] = useState(false);
+  const handle = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const row = await db.uploadFinanceiroDoc(clientId, tipo, file);
+      onUploaded(tipo, row);
+    } catch (err) { alert(err.message); } finally { setBusy(false); }
+  };
+  return (
+    <label className="op-type-btn" style={{
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+      padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, flex: "1 1 260px", textAlign: "center",
+    }}>
+      <span style={{ fontSize: 20 }}>{busy ? "⏳" : icon}</span>
+      {busy ? "A ler documento com IA…" : label}
+      <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handle} disabled={busy} />
+    </label>
+  );
+}
+
+function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, onAddReceita, onChangeRubrica, onDeleteDespesa, onDeleteReceita, onDocUploaded }) {
   const [novaDespesa, setNovaDespesa] = useState({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "" });
   const [novaReceita, setNovaReceita] = useState({ date: finDateStr(new Date()), description: "", amount: "" });
   const [saving, setSaving] = useState(false);
@@ -1160,6 +1203,11 @@ function FinLancamentos({ despesas, receitas, isEquipa, onAddDespesa, onAddRecei
 
   return (
     <>
+      <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+        <FinUploadZone tipo="custo" icon="🧾" label="Anexar fatura de custo — lida automaticamente pela IA" clientId={clientId} onUploaded={onDocUploaded} />
+        <FinUploadZone tipo="emitida" icon="📤" label="Anexar fatura emitida — lida automaticamente pela IA" clientId={clientId} onUploaded={onDocUploaded} />
+      </div>
+
       {isEquipa && (
         <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
           <FinSectionCard title="+ Nova despesa" icon="🧾" style={{ flex: "1 1 320px" }}>
@@ -1374,9 +1422,10 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
 
       {subTab === "visao" && <FinVisaoGeral granularity={granularity} setGranularity={setGranularity} buckets={buckets} current={current} previous={previous} extrato={extrato} isEquipa={isEquipa} clientId={clientId} clientName={clientName} />}
       {subTab === "lancamentos" && (
-        <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa}
+        <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa} clientId={clientId}
           onAddDespesa={addDespesa} onAddReceita={addReceita} onChangeRubrica={changeRubrica}
-          onDeleteDespesa={deleteDespesa} onDeleteReceita={deleteReceita} />
+          onDeleteDespesa={deleteDespesa} onDeleteReceita={deleteReceita}
+          onDocUploaded={(tipo, row) => (tipo === "custo" ? setDespesas((prev) => [row, ...prev]) : setReceitas((prev) => [row, ...prev]))} />
       )}
       {subTab === "reconciliacao" && <FinReconciliacao rows={extrato} isEquipa={isEquipa} onImportCsv={importCsv} onConfirm={confirmExtrato} />}
     </div>
