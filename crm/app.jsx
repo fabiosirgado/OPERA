@@ -2477,6 +2477,7 @@ function ClientPortal({ profile }) {
   const [formError, setFormError] = useState("");
   const [filter, setFilter] = useState("todos");
   const [tipoFilter, setTipoFilter] = useState("todos");
+  const [sortBy, setSortBy] = useState("recente");
   const [searchQuery, setSearchQuery] = useState("");
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -2512,7 +2513,18 @@ function ClientPortal({ profile }) {
   if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
   if (loadError) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, fontSize: 13, padding: 24, textAlign: "center" }}>Erro ao carregar dados: {loadError}</div>;
 
-  const allMyPedidos = pedidos.slice().sort((a, b) => b.createdAt - a.createdAt);
+  const lastActivity = (p) => {
+    const times = [p.createdAt.getTime()];
+    if (p.completedAt) times.push(p.completedAt.getTime());
+    p.messages.forEach((m) => times.push(m.date.getTime()));
+    return Math.max(...times);
+  };
+  const allMyPedidos = pedidos.slice().sort((a, b) => {
+    if (sortBy === "data") return b.createdAt - a.createdAt;
+    if (sortBy === "prazo") return a.due - b.due;
+    if (sortBy === "estado") return OP_STAGES.indexOf(a.stage) - OP_STAGES.indexOf(b.stage);
+    return lastActivity(b) - lastActivity(a);
+  });
   const myPedidos = allMyPedidos.filter((p) => {
     if (filter === "curso" && p.stage === "Concluído") return false;
     if (filter === "concluidos" && p.stage !== "Concluído") return false;
@@ -2717,6 +2729,13 @@ function ClientPortal({ profile }) {
           style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13 }}>
           <option value="todos">Todos os tipos</option>
           {[...PRESET_TYPES, "Pedido Aberto"].map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13 }}>
+          <option value="recente">Ordenar: Mais recente</option>
+          <option value="data">Ordenar: Data de criação</option>
+          <option value="prazo">Ordenar: Prazo mais próximo</option>
+          <option value="estado">Ordenar: Estado do processo</option>
         </select>
       </div>
 
