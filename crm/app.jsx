@@ -28,7 +28,9 @@ const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Manro
 .op-type-btn { transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease; }
 .op-type-btn:hover { transform: translateY(-2px); border-color: #3D6BFF !important; }
 @keyframes opFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-.op-fade-in { animation: opFadeIn 0.3s ease; }`;
+.op-fade-in { animation: opFadeIn 0.3s ease; }
+@keyframes opSpin { to { transform: rotate(360deg); } }
+.op-spin { animation: opSpin 0.9s linear infinite; }`;
 
 // ---------- Static business data (not stored in DB) ----------
 const STAGE_ORDER = ["Lead", "Follow up", "R1", "R2", "Em Decisão", "Closed", "Em Onboarding", "Entrega de Serviço"];
@@ -384,10 +386,34 @@ const db = {
     const path = `${clientId}/${Date.now()}_${safeStorageName(file.name)}`;
     const { error: upErr } = await sb.storage.from("financeiro-docs").upload(path, file);
     if (upErr) throw upErr;
-    const base64 = await finFileToBase64(file);
-    const { data, error } = await sb.rpc("processar_documento_financeiro", {
-      p_client_id: clientId, p_tipo: tipo, p_storage_path: path, p_mime_type: file.type || "application/pdf", p_file_base64: base64,
+    const { data: signedData, error: signErr } = await sb.storage.from("financeiro-docs").createSignedUrl(path, 900);
+    if (signErr) throw signErr;
+    const mimeType = file.type || "application/pdf";
+    let row;
+    if (tipo === "custo") {
+      const { data, error } = await sb.from("financeiro_despesas").insert({
+        client_id: clientId, date: finDateStr(new Date()), vendor: "A processar…", rubrica: "Outros",
+        amount: 0.01, source: "upload", storage_path: path, status: "processando",
+      }).select().single();
+      if (error) throw error;
+      row = data;
+    } else {
+      const { data, error } = await sb.from("financeiro_receitas").insert({
+        client_id: clientId, date: finDateStr(new Date()), description: "A processar…",
+        amount: 0.01, source: "upload", storage_path: path, status: "processando",
+      }).select().single();
+      if (error) throw error;
+      row = data;
+    }
+    const { error: rpcErr } = await sb.rpc("iniciar_leitura_documento", {
+      p_row_id: row.id, p_tipo: tipo, p_mime_type: mimeType, p_file_url: signedData.signedUrl,
     });
+    if (rpcErr) throw rpcErr;
+    return row;
+  },
+  async checkDocStatus(tipo, id) {
+    const table = tipo === "custo" ? "financeiro_despesas" : "financeiro_receitas";
+    const { data, error } = await sb.from(table).select("*").eq("id", id).single();
     if (error) throw error;
     return data;
   },
@@ -1151,6 +1177,22 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
 
 function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
   const [busy, setBusy] = useState(false);
+  const pollStatus = (id) => {
+    let tries = 0;
+    const interval = setInterval(async () => {
+      tries++;
+      try {
+        const row = await db.checkDocStatus(tipo, id);
+        if (row.status !== "processando" || tries > 20) {
+          clearInterval(interval);
+          setBusy(false);
+          onUploaded(tipo, row);
+          if (row.status === "erro") alert("Erro ao ler o documento: " + (row.ai_error || "desconhecido"));
+          if (row.status === "processando") alert("A IA está a demorar mais do que o normal. O lançamento fica marcado como \"a processar\" e atualiza-se sozinho assim que estiver pronto.");
+        }
+      } catch (e2) { clearInterval(interval); setBusy(false); }
+    }, 3000);
+  };
   const handle = async (e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
@@ -1159,7 +1201,8 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
     try {
       const row = await db.uploadFinanceiroDoc(clientId, tipo, file);
       onUploaded(tipo, row);
-    } catch (err) { alert(err.message); } finally { setBusy(false); }
+      pollStatus(row.id);
+    } catch (err) { alert(err.message); setBusy(false); }
   };
   return (
     <label className="op-type-btn" style={{
@@ -1167,7 +1210,7 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
       padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, flex: "1 1 260px", textAlign: "center",
     }}>
       <span style={{ fontSize: 20 }}>{busy ? "⏳" : icon}</span>
-      {busy ? "A ler documento com IA…" : label}
+      {busy ? "A carregar e a pedir à IA para ler…" : label}
       <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handle} disabled={busy} />
     </label>
   );
@@ -1246,6 +1289,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Tipo</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Rubrica</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
                   {isEquipa && <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>}
                 </tr>
               </thead>
@@ -1256,7 +1300,9 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                     <td style={{ padding: "8px", color: C.text }}>{it.tipo === "custo" ? it.vendor : it.description}</td>
                     <td style={{ padding: "8px" }}><FinBadge text={it.tipo === "custo" ? "Custo" : "Emitida"} color={it.tipo === "custo" ? C.red : C.accent} /></td>
                     <td style={{ padding: "8px" }}>
-                      {it.tipo === "emitida" ? (
+                      {it.status === "processando" ? (
+                        <span style={{ color: C.muted }}>—</span>
+                      ) : it.tipo === "emitida" ? (
                         <span style={{ color: C.muted }}>—</span>
                       ) : isEquipa ? (
                         <select className="op-select" value={it.rubrica} onChange={(e) => onChangeRubrica(it.id, e.target.value)}
@@ -1268,7 +1314,19 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                       )}
                     </td>
                     <td style={{ padding: "8px", textAlign: "right", color: it.tipo === "emitida" ? C.accent : C.text, fontVariantNumeric: "tabular-nums" }}>
-                      {it.tipo === "emitida" ? "+" : "-"}{fmtEURDec(it.amount)}
+                      {it.status === "processando" ? <span style={{ color: C.muted }}>—</span> : <>{it.tipo === "emitida" ? "+" : "-"}{fmtEURDec(it.amount)}</>}
+                    </td>
+                    <td style={{ padding: "8px" }}>
+                      {it.status === "processando" ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.accent, fontSize: 11, fontWeight: 700 }}>
+                          <span className="op-spin" style={{ display: "inline-block", width: 10, height: 10, border: `2px solid ${C.accent}55`, borderTopColor: C.accent, borderRadius: "50%" }} />
+                          A processar…
+                        </span>
+                      ) : it.status === "erro" ? (
+                        <span title={it.ai_error || ""}><FinBadge text="Erro na leitura" color={C.red} /></span>
+                      ) : (
+                        <FinBadge text={it.source === "upload" ? "Lido pela IA" : "Manual"} color={C.green} />
+                      )}
                     </td>
                     {isEquipa && (
                       <td style={{ padding: "8px" }}>
