@@ -1891,7 +1891,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                   <button onClick={() => markDealStage("Closed")} style={{ flex: 1, background: C.green, border: "none", borderRadius: 6, padding: "8px 0", color: "#06281c", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Ganho</button>
                   <button onClick={() => markDealStage(LOST_STAGE)} style={{ flex: 1, background: "transparent", border: `1px solid ${C.red}`, borderRadius: 6, padding: "8px 0", color: C.red, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Perdido</button>
                 </div>
-                {pipelineDeal.stage === "Entrega de Serviço" && (
+                {["Closed", "Em Onboarding", "Entrega de Serviço"].includes(pipelineDeal.stage) && (
                   <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
                     <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Início da entrega de serviço (MRR conta a partir daqui)</div>
                     <input type="date" value={toDateInputValue(pipelineDeal.serviceStartDate)} onChange={(e) => updateServiceStart(e.target.value)}
@@ -2102,7 +2102,11 @@ function EquipaApp({ profile }) {
     const inPeriod = (d) => withinPeriod(d.date, periodDays);
     const countStage = (stage) => deals.filter((d) => d.stage === stage && inPeriod(d)).length;
     const activeClients = deals.filter((d) => ACTIVE_STAGES.includes(d.stage));
-    const mrr = activeClients.reduce((sum, d) => sum + d.value, 0);
+    // MRR só conta negócios já em "Entrega de Serviço" cuja data de início já passou —
+    // "Em Onboarding" ainda não gera receita recorrente, e uma data futura ainda não começou a faturar.
+    const mrr = deals
+      .filter((d) => d.stage === "Entrega de Serviço" && (!d.serviceStartDate || d.serviceStartDate <= today))
+      .reduce((sum, d) => sum + d.value, 0);
     const arr = mrr * 12;
     const closedInPeriod = deals.filter((d) => WON_STAGES.includes(d.stage) && d.closedAt && withinPeriod(d.closedAt, periodDays));
     const faturacao = closedInPeriod.reduce((sum, d) => sum + d.value, 0);
@@ -2319,7 +2323,7 @@ function EquipaApp({ profile }) {
               <MetricCard label="R1" value={metrics.r1} icon="☎️" />
               <MetricCard label="R2" value={metrics.r2} icon="🤝" />
               <MetricCard label="Closed" value={metrics.closed} color={C.green} icon="✅" />
-              <MetricCard label="MRR" value={fmtEUR(metrics.mrr)} color={C.accent} sub="clientes ativos" icon="💰" />
+              <MetricCard label="MRR" value={fmtEUR(metrics.mrr)} color={C.accent} sub="entrega de serviço iniciada" icon="💰" />
               <MetricCard label="ARR" value={fmtEUR(metrics.arr)} color={C.accent} icon="📆" />
               <MetricCard label="Faturação" value={fmtEUR(metrics.faturacao)} color={C.amber} sub="deals fechados no período" icon="🧾" />
             </div>
