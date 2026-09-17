@@ -302,6 +302,9 @@ const db = {
     if (upErr) throw upErr;
     const { error } = await sb.from("pedido_attachments").insert({ pedido_id: pedidoId, name: file.name, storage_path: path, uploaded_by: uploadedBy });
     if (error) throw error;
+    if (uploadedBy === "cliente") {
+      await sb.from("pedidos").update({ seen: false }).eq("id", pedidoId);
+    }
   },
   async removeAttachment(id, storagePath) {
     const { error: rmErr } = await sb.storage.from("attachments").remove([storagePath]);
