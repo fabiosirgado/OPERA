@@ -735,7 +735,7 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
   const currentIndex = OP_STAGES.indexOf(pedido.stage);
 
   return (
-    <SidePanel onClose={onClose} eyebrow={pedido.client}>
+    <PageBack onClose={onClose} eyebrow={pedido.client} maxWidth={820}>
       <PedidoHeader pedido={pedido} onUpdateHeader={(patch) => run(() => db.updatePedidoFields(pedido.id, patch))} />
 
       <SectionTitle>Estado do pedido</SectionTitle>
@@ -798,7 +798,7 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
 
       <SectionTitle>Conversa com a OPERA</SectionTitle>
       <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="cliente" />
-    </SidePanel>
+    </PageBack>
   );
 }
 
@@ -2739,6 +2739,10 @@ function ClientPortal({ profile }) {
 
   return (
     <div style={{ flex: 1, padding: "24px 28px", overflowY: "auto" }}>
+      {openPedido ? (
+        <PedidoDetailClient pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />
+      ) : (
+      <>
       <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 22, color: C.text, marginBottom: 4 }}>Olá, {clientName} 👋</div>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
 
@@ -2929,8 +2933,9 @@ function ClientPortal({ profile }) {
         )}
       </div>
 
-      {openPedido && <PedidoDetailClient pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />}
       </>}
+      </>
+      )}
     </div>
   );
 }
