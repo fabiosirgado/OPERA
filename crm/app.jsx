@@ -377,6 +377,10 @@ const db = {
     const { error } = await sb.from("financeiro_extrato").update({ status: "reconciliado" }).eq("id", id);
     if (error) throw error;
   },
+  async removeExtrato(id) {
+    const { error } = await sb.from("financeiro_extrato").delete().eq("id", id);
+    if (error) throw error;
+  },
   async iniciarRelatorioFinanceiro(clientId, ano, mes) {
     const { data, error } = await sb.rpc("iniciar_relatorio_financeiro", { p_client_id: clientId, p_ano: ano, p_mes: mes });
     if (error) throw error;
@@ -1472,7 +1476,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
   );
 }
 
-function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm }) {
+function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm, onDelete }) {
   const fileRef = useRef(null);
   const counts = rows.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {});
   const handlePick = async (e) => {
@@ -1514,6 +1518,7 @@ function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm }) {
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Descrição</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -1530,6 +1535,9 @@ function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm }) {
                       ) : (
                         <FinBadge text={r.status === "reconciliado" ? "Reconciliado" : r.status === "pendente" ? "Por confirmar" : "Sem correspondência"} color={r.status === "reconciliado" ? C.green : r.status === "pendente" ? C.amber : C.red} />
                       )}
+                    </td>
+                    <td style={{ padding: "8px" }}>
+                      <span onClick={() => onDelete(r.id)} style={{ cursor: "pointer", color: C.muted }} title="Apagar">×</span>
                     </td>
                   </tr>
                 ))}
@@ -1589,6 +1597,7 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
     } catch (e) { alert(e.message); }
   };
   const confirmExtrato = (id) => { setExtrato((prev) => prev.map((r) => (r.id === id ? { ...r, status: "reconciliado" } : r))); db.confirmExtrato(id).catch((e) => alert(e.message)); };
+  const deleteExtrato = (id) => { setExtrato((prev) => prev.filter((r) => r.id !== id)); db.removeExtrato(id).catch((e) => alert(e.message)); };
 
   const TABS = [
     { key: "visao", label: "Visão Geral", icon: "📊" },
@@ -1617,7 +1626,7 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
             setter((prev) => (prev.some((r) => r.id === row.id) ? prev.map((r) => (r.id === row.id ? row : r)) : [row, ...prev]));
           }} />
       )}
-      {subTab === "reconciliacao" && <FinReconciliacao rows={extrato} isEquipa={isEquipa} onImportCsv={importCsv} onConfirm={confirmExtrato} />}
+      {subTab === "reconciliacao" && <FinReconciliacao rows={extrato} isEquipa={isEquipa} onImportCsv={importCsv} onConfirm={confirmExtrato} onDelete={deleteExtrato} />}
     </div>
   );
 }
