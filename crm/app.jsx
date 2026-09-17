@@ -1226,7 +1226,7 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
 
   <div class="page">
     <div class="banner">
-      <div class="logo">OPERA <span>CRM</span></div>
+      <div class="logo">OPERA <span>OS</span></div>
       <div class="eyebrow">Relatório Financeiro Mensal</div>
     </div>
 
@@ -1265,7 +1265,7 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
         ${bodyHtml}
       </div>
 
-      <div class="footer">Gerado automaticamente pela OPERA CRM · opera-os.com</div>
+      <div class="footer">Gerado automaticamente pelo OPERA OS · opera-os.com</div>
     </div>
   </div>
 </body></html>`;
@@ -3018,7 +3018,7 @@ function LoginScreen() {
   return (
     <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 360, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 28 }}>
-        <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 20, color: C.text, marginBottom: 6 }}>Entrar na OPERA CRM</div>
+        <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 20, color: C.text, marginBottom: 6 }}>Entrar no OPERA OS</div>
 
         <div style={{ display: "flex", gap: 4, background: C.surfaceRaised, borderRadius: 8, padding: 4, marginBottom: 18 }}>
           <button onClick={() => switchMode("magic")}
@@ -3153,7 +3153,7 @@ function OperaCRM() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", width: "100%", background: C.bg, fontFamily: "Inter, sans-serif" }}>
       <style>{FONT_IMPORT}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexWrap: "wrap", gap: 10, flexShrink: 0, position: "relative" }}>
-        <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 16, color: C.text }}>OPERA <span style={{ color: C.accent }}>CRM</span></div>
+        <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 16, color: C.text }}>OPERA <span style={{ color: C.accent }}>OS</span></div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={toggleTheme} title={theme === "dark" ? "Ativar ecrã branco" : "Ativar modo escuro"}
             style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", color: C.muted, fontSize: 14, cursor: "pointer", lineHeight: 1 }}>
