@@ -312,6 +312,10 @@ const db = {
     const { error } = await sb.from("pedido_attachments").delete().eq("id", id);
     if (error) throw error;
   },
+  async renameAttachment(id, name) {
+    const { error } = await sb.from("pedido_attachments").update({ name }).eq("id", id);
+    if (error) throw error;
+  },
   async getAttachmentUrl(path) {
     const { data, error } = await sb.storage.from("attachments").createSignedUrl(path, 600, { download: true });
     if (error) throw error;
@@ -761,6 +765,8 @@ function PedidoHeader({ pedido, onUpdateHeader }) {
 function PedidoDetailInternal({ pedido, onClose, onReload }) {
   const [newTask, setNewTask] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameDraft, setRenameDraft] = useState("");
 
   const run = async (fn) => { try { await fn(); await onReload(); } catch (e) { alert(e.message); } };
 
@@ -777,6 +783,13 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
   };
   const removeAttachment = (a) => { if (window.confirm(`Apagar "${a.name}"?`)) run(() => db.removeAttachment(a.id, a.storagePath)); };
   const removeMessage = (m) => { if (window.confirm("Apagar esta mensagem?")) run(() => db.removeMessage(m.id)); };
+  const startRename = (a) => { setRenamingId(a.id); setRenameDraft(a.name); };
+  const saveRename = (a) => {
+    const name = renameDraft.trim();
+    setRenamingId(null);
+    if (!name || name === a.name) return;
+    run(() => db.renameAttachment(a.id, name));
+  };
 
   return (
     <PageBack onClose={onClose} eyebrow={pedido.client} maxWidth={820}>
@@ -800,8 +813,21 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
           {pedido.attachments.map((a) => (
             <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px" }}>
-              <span onClick={() => openAttachment(a)} style={{ flex: 1, cursor: "pointer" }}>📎 {a.name}</span>
-              <span onClick={() => removeAttachment(a)} title="Apagar ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+              {renamingId === a.id ? (
+                <>
+                  <input autoFocus value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveRename(a); if (e.key === "Escape") setRenamingId(null); }}
+                    style={{ flex: 1, background: C.surface, border: `1px solid ${C.accent}`, borderRadius: 6, padding: "4px 6px", color: C.text, fontSize: 13 }} />
+                  <span onClick={() => saveRename(a)} title="Guardar" style={{ cursor: "pointer", color: C.green, fontSize: 14 }}>✓</span>
+                  <span onClick={() => setRenamingId(null)} title="Cancelar" style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>✕</span>
+                </>
+              ) : (
+                <>
+                  <span onClick={() => openAttachment(a)} style={{ flex: 1, cursor: "pointer" }}>📎 {a.name}</span>
+                  <span onClick={() => startRename(a)} title="Renomear ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 13 }}>✎</span>
+                  <span onClick={() => removeAttachment(a)} title="Apagar ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
+                </>
+              )}
             </div>
           ))}
         </div>
