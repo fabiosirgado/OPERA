@@ -119,13 +119,16 @@ function mapDeal(row) {
     value: Number(row.value) || 0, stage: row.stage, owner: row.owner,
     date: new Date(row.created_at), stageEnteredAt: new Date(row.stage_entered_at),
     closedAt: row.closed_at ? new Date(row.closed_at) : null,
+    serviceStartDate: row.service_start_date ? new Date(row.service_start_date + "T00:00:00") : null,
   };
 }
-function dealStagePatch(stage) {
+function dealStagePatch(stage, existingServiceStartDate) {
   const patch = { stage, stage_entered_at: new Date().toISOString() };
   if (stage === "Closed") patch.closed_at = new Date().toISOString();
+  if (stage === "Entrega de Serviço" && !existingServiceStartDate) patch.service_start_date = new Date().toISOString().slice(0, 10);
   return patch;
 }
+const toDateInputValue = (d) => (d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "");
 function mapClientNote(row) {
   return { id: row.id, text: row.text, pinned: row.pinned, date: new Date(row.created_at) };
 }
@@ -1735,7 +1738,11 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const dealDaysInStage = pipelineDeal ? Math.floor((today - pipelineDeal.stageEnteredAt) / (1000 * 60 * 60 * 24)) : null;
   const markDealStage = async (stage) => {
     setDeals((prev) => prev.map((d) => (d.id === pipelineDeal.id ? { ...d, stage, stageEnteredAt: new Date(), closedAt: stage === "Closed" ? new Date() : d.closedAt } : d)));
-    try { await db.updateDeal(pipelineDeal.id, dealStagePatch(stage)); } catch (e) { alert(e.message); }
+    try { await db.updateDeal(pipelineDeal.id, dealStagePatch(stage, pipelineDeal.serviceStartDate)); } catch (e) { alert(e.message); }
+  };
+  const updateServiceStart = async (dateStr) => {
+    setDeals((prev) => prev.map((d) => (d.id === pipelineDeal.id ? { ...d, serviceStartDate: dateStr ? new Date(dateStr + "T00:00:00") : null } : d)));
+    try { await db.updateDeal(pipelineDeal.id, { service_start_date: dateStr || null }); } catch (e) { alert(e.message); }
   };
   const clientPedidos = pedidos.filter((p) => p.client === client.name).sort((a, b) => b.createdAt - a.createdAt);
   const notes = extra.notes || [];
@@ -1884,6 +1891,13 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                   <button onClick={() => markDealStage("Closed")} style={{ flex: 1, background: C.green, border: "none", borderRadius: 6, padding: "8px 0", color: "#06281c", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Ganho</button>
                   <button onClick={() => markDealStage(LOST_STAGE)} style={{ flex: 1, background: "transparent", border: `1px solid ${C.red}`, borderRadius: 6, padding: "8px 0", color: C.red, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Perdido</button>
                 </div>
+                {pipelineDeal.stage === "Entrega de Serviço" && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Início da entrega de serviço (MRR conta a partir daqui)</div>
+                    <input type="date" value={toDateInputValue(pipelineDeal.serviceStartDate)} onChange={(e) => updateServiceStart(e.target.value)}
+                      style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }} />
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -2130,16 +2144,19 @@ function EquipaApp({ profile }) {
   const onDragStart = (e, id) => e.dataTransfer.setData("id", id);
   const onDropDeal = (e, stage) => {
     const id = e.dataTransfer.getData("id");
-    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage, stageEnteredAt: new Date(), closedAt: stage === "Closed" ? new Date() : d.closedAt } : d)));
-    db.updateDeal(id, dealStagePatch(stage)).catch((e) => { alert(e.message); reloadDeals(); });
+    const deal = deals.find((d) => d.id === id);
+    const newServiceStart = stage === "Entrega de Serviço" && deal && !deal.serviceStartDate ? new Date() : deal && deal.serviceStartDate;
+    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage, stageEnteredAt: new Date(), closedAt: stage === "Closed" ? new Date() : d.closedAt, serviceStartDate: newServiceStart || d.serviceStartDate } : d)));
+    db.updateDeal(id, dealStagePatch(stage, deal && deal.serviceStartDate)).catch((e) => { alert(e.message); reloadDeals(); });
   };
   const onAdvanceDeal = (id) => {
     const deal = deals.find((d) => d.id === id);
     if (!deal) return;
     const idx = STAGE_ORDER.indexOf(deal.stage);
     const next = idx >= 0 && idx < STAGE_ORDER.length - 1 ? STAGE_ORDER[idx + 1] : deal.stage;
-    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: next, stageEnteredAt: new Date(), closedAt: next === "Closed" ? new Date() : d.closedAt } : d)));
-    db.updateDeal(id, dealStagePatch(next)).catch((e) => { alert(e.message); reloadDeals(); });
+    const newServiceStart = next === "Entrega de Serviço" && !deal.serviceStartDate ? new Date() : deal.serviceStartDate;
+    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage: next, stageEnteredAt: new Date(), closedAt: next === "Closed" ? new Date() : d.closedAt, serviceStartDate: newServiceStart } : d)));
+    db.updateDeal(id, dealStagePatch(next, deal.serviceStartDate)).catch((e) => { alert(e.message); reloadDeals(); });
   };
   const onDropPedido = (e, stage) => {
     const id = e.dataTransfer.getData("id");
