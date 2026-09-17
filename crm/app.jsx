@@ -245,6 +245,10 @@ const db = {
     const { error } = await sb.from("pedido_mensagens").insert({ pedido_id: pedidoId, sender, text });
     if (error) throw error;
   },
+  async removeMessage(id) {
+    const { error } = await sb.from("pedido_mensagens").delete().eq("id", id);
+    if (error) throw error;
+  },
   async uploadAttachment(pedidoId, file, uploadedBy) {
     const path = `${pedidoId}/${Date.now()}_${safeStorageName(file.name)}`;
     const { error: upErr } = await sb.storage.from("attachments").upload(path, file);
@@ -506,7 +510,7 @@ function PedidoCard({ pedido, onDragStart, onOpen }) {
   );
 }
 
-function ChatThread({ messages, onSend, senderRole }) {
+function ChatThread({ messages, onSend, senderRole, onDelete }) {
   const [text, setText] = useState("");
   const send = () => { if (!text.trim()) return; onSend(text.trim()); setText(""); };
   return (
@@ -517,13 +521,17 @@ function ChatThread({ messages, onSend, senderRole }) {
           const mine = m.sender === senderRole;
           const avatar = m.sender === "cliente" ? "🧑" : "🏢";
           return (
-            <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", gap: 8, flexDirection: mine ? "row-reverse" : "row" }}>
+            <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", gap: 8, flexDirection: mine ? "row-reverse" : "row", alignItems: "flex-start" }}>
               <div style={{ width: 24, height: 24, borderRadius: "50%", background: mine ? C.accent : C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>{avatar}</div>
-              <div style={{ maxWidth: "75%", background: mine ? C.accent : C.surfaceRaised, color: mine ? "#fff" : C.text, borderRadius: 10, padding: "8px 11px" }}>
+              <div style={{ maxWidth: "75%", background: mine ? C.accent : C.surfaceRaised, color: mine ? "#fff" : C.text, borderRadius: 10, padding: "8px 11px", position: "relative" }}>
                 <div style={{ fontSize: 10, opacity: 0.75, marginBottom: 3 }}>{m.sender === "cliente" ? "Cliente" : "Equipa OPERA"}</div>
                 <div style={{ fontSize: 13 }}>{m.text}</div>
                 <div style={{ fontSize: 9, opacity: 0.6, marginTop: 3 }}>{fmtDateTime(m.date)}</div>
               </div>
+              {onDelete && (
+                <span onClick={() => onDelete(m)} title="Apagar mensagem"
+                  style={{ cursor: "pointer", color: C.muted, fontSize: 13, flexShrink: 0, marginTop: 4 }}>×</span>
+              )}
             </div>
           );
         })}
@@ -623,6 +631,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
     chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, file, "equipa")));
   };
   const removeAttachment = (a) => { if (window.confirm(`Apagar "${a.name}"?`)) run(() => db.removeAttachment(a.id, a.storagePath)); };
+  const removeMessage = (m) => { if (window.confirm("Apagar esta mensagem?")) run(() => db.removeMessage(m.id)); };
 
   return (
     <SidePanel onClose={onClose} eyebrow={pedido.client}>
@@ -690,7 +699,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
       ))}
 
       <SectionTitle>Conversa com o cliente</SectionTitle>
-      <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="equipa" />
+      <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="equipa" onDelete={removeMessage} />
     </SidePanel>
   );
 }
