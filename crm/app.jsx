@@ -2055,7 +2055,7 @@ function EquipaApp({ profile }) {
   const [pedidos, setPedidos] = useState([]);
   const [clientExtra, setClientExtra] = useState({});
 
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(profile.is_admin ? "dashboard" : "operacional");
   const [period, setPeriod] = useState("mes");
   const [clientFilter, setClientFilter] = useState("Todos");
   const [typeFilter, setTypeFilter] = useState("Todos");
@@ -2263,12 +2263,12 @@ function EquipaApp({ profile }) {
   const unseenCount = pedidos.filter((p) => p.seen === false).length;
 
   const NAV = [
-    { key: "dashboard", label: "Dashboard", icon: "📊" },
-    { key: "crm", label: "CRM Comercial", icon: "🧭" },
+    { key: "dashboard", label: "Dashboard", icon: "📊", adminOnly: true },
+    { key: "crm", label: "CRM Comercial", icon: "🧭", adminOnly: true },
     { key: "operacional", label: "Operacional", icon: "🗂️", badge: unseenCount },
-    { key: "clientes", label: "Clientes", icon: "👥" },
-    { key: "financeiro", label: "Financeiro", icon: "💶" },
-  ];
+    { key: "clientes", label: "Clientes", icon: "👥", adminOnly: true },
+    { key: "financeiro", label: "Financeiro", icon: "💶", adminOnly: true },
+  ].filter((n) => !n.adminOnly || profile.is_admin);
 
   if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
   if (loadError) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, fontSize: 13, padding: 24, textAlign: "center" }}>Erro ao carregar dados: {loadError}</div>;
