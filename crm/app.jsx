@@ -3,23 +3,47 @@ const { createClient } = window.supabase;
 const sb = createClient(window.OPERA_CONFIG.SUPABASE_URL, window.OPERA_CONFIG.SUPABASE_ANON_KEY);
 
 // ---------- Design tokens ----------
-const C = {
-  bg: "#0A0F1E",
-  surface: "#121A2E",
-  surfaceRaised: "#182444",
-  border: "#26325A",
-  text: "#EDEFF7",
-  muted: "#8B93B5",
-  accent: "#3D6BFF",
-  accentSoft: "#1C2B5E",
-  green: "#2ED8A7",
-  amber: "#F5B942",
-  red: "#F2617A",
+const THEMES = {
+  dark: {
+    bg: "#0A0F1E",
+    surface: "#121A2E",
+    surfaceRaised: "#182444",
+    border: "#26325A",
+    text: "#EDEFF7",
+    muted: "#8B93B5",
+    accent: "#3D6BFF",
+    accentSoft: "#1C2B5E",
+    green: "#2ED8A7",
+    amber: "#F5B942",
+    red: "#F2617A",
+  },
+  light: {
+    bg: "#F3F5FB",
+    surface: "#FFFFFF",
+    surfaceRaised: "#EEF1F9",
+    border: "#DEE2EF",
+    text: "#161B2E",
+    muted: "#6B7290",
+    accent: "#3D6BFF",
+    accentSoft: "#E8EDFF",
+    green: "#159A72",
+    amber: "#B0740A",
+    red: "#D93A56",
+  },
 };
+let initialTheme = "dark";
+try { initialTheme = localStorage.getItem("opera-theme") === "light" ? "light" : "dark"; } catch (e) {}
+// C's keys are looked up fresh on every render, so mutating it in place + re-rendering the
+// root is enough to re-theme the whole tree without touching every component.
+const C = { ...THEMES[initialTheme] };
+function applyTheme(name) {
+  Object.assign(C, THEMES[name]);
+  try { localStorage.setItem("opera-theme", name); } catch (e) {}
+}
 
 const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap');
 .op-scroll::-webkit-scrollbar { height: 8px; }
-.op-scroll::-webkit-scrollbar-thumb { background: #26325A; border-radius: 4px; }
+.op-scroll::-webkit-scrollbar-thumb { background: #8C94B8; border-radius: 4px; }
 .op-scroll::-webkit-scrollbar-track { background: transparent; }
 @keyframes opPulse { 0% { box-shadow: 0 0 0 0 rgba(245,185,66,0.55); } 70% { box-shadow: 0 0 0 8px rgba(245,185,66,0); } 100% { box-shadow: 0 0 0 0 rgba(245,185,66,0); } }
 .op-new-pulse { animation: opPulse 1.8s infinite; }
@@ -3099,6 +3123,12 @@ function OperaCRM() {
   const session = useSession();
   const [profile, setProfile] = useState(undefined);
   const [profileError, setProfileError] = useState("");
+  const [theme, setThemeState] = useState(initialTheme);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    setThemeState(next);
+  };
 
   useEffect(() => {
     if (session) {
@@ -3124,13 +3154,19 @@ function OperaCRM() {
       <style>{FONT_IMPORT}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: `1px solid ${C.border}`, background: C.surface, flexWrap: "wrap", gap: 10, flexShrink: 0, position: "relative" }}>
         <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 16, color: C.text }}>OPERA <span style={{ color: C.accent }}>CRM</span></div>
-        {session && profile && (
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: C.muted }}>{profile.full_name || session.user.email}</span>
-            <SetPasswordButton />
-            <button onClick={signOut} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", color: C.muted, fontSize: 12, cursor: "pointer" }}>Sair</button>
-          </div>
-        )}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={toggleTheme} title={theme === "dark" ? "Ativar ecrã branco" : "Ativar modo escuro"}
+            style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", color: C.muted, fontSize: 14, cursor: "pointer", lineHeight: 1 }}>
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          {session && profile && (
+            <>
+              <span style={{ fontSize: 12, color: C.muted }}>{profile.full_name || session.user.email}</span>
+              <SetPasswordButton />
+              <button onClick={signOut} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", color: C.muted, fontSize: 12, cursor: "pointer" }}>Sair</button>
+            </>
+          )}
+        </div>
       </div>
       <div style={{ display: "flex", flex: 1, position: "relative", minHeight: 0, minWidth: 0, overflow: "hidden" }}>
         {body}

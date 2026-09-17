@@ -8,6 +8,9 @@
   html, body { margin: 0; padding: 0; background: #0A0F1E; min-height: 100vh; }
   #root { min-height: 100vh; display: flex; }
 </style>
+<script>
+  try { if (localStorage.getItem("opera-theme") === "light") document.write("<style>html,body{background:#F3F5FB}</style>"); } catch (e) {}
+</script>
 </head>
 <body>
 <div id="root"></div>
