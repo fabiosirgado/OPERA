@@ -1094,69 +1094,125 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
     const receita = current ? current.receita : 0;
     const despesa = current ? current.despesa : 0;
     const margem = receita - despesa;
+    const margemPositiva = margem >= 0;
     const maxVal = Math.max(receita, despesa, 1);
     const topRubricas = buckets ? finAggregateField(buckets, "byRubrica").slice(0, 6) : [];
     const totalRubricas = topRubricas.reduce((s, [, v]) => s + v, 0) || 1;
-    const rubricaRowsHtml = topRubricas.map(([name, amount]) => `
-      <tr><td>${finEscapeHtml(name)}</td><td style="text-align:right">${fmtEUR(amount)}</td><td style="text-align:right; color:#888;">${((amount / totalRubricas) * 100).toFixed(0)}%</td></tr>`).join("");
+
+    let accDeg = 0;
+    const donutStops = topRubricas.map(([name, amount]) => {
+      const start = (accDeg / totalRubricas) * 360;
+      accDeg += amount;
+      const end = (accDeg / totalRubricas) * 360;
+      return `${finRubricaFor(name).color} ${start.toFixed(1)}deg ${end.toFixed(1)}deg`;
+    }).join(", ") || "#E4E9F8 0deg 360deg";
+
+    const rubricaRowsHtml = topRubricas.map(([name, amount]) => {
+      const pct = (amount / totalRubricas) * 100;
+      const color = finRubricaFor(name).color;
+      return `<div class="rubrica-row"><span class="rubrica-name"><span class="dot" style="background:${color}"></span>${finEscapeHtml(name)}</span><span class="rubrica-val">${fmtEUR(amount)} <b>${pct.toFixed(0)}%</b></span></div>`;
+    }).join("");
 
     const html = `<!doctype html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Relatório Financeiro — ${finEscapeHtml(clientName)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @page { margin: 22mm 18mm; }
-  body { font-family: Georgia, 'Times New Roman', serif; max-width: 720px; margin: 40px auto; padding: 0 24px; color: #1a1a2e; line-height: 1.6; }
-  .header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:3px solid #3D6BFF; padding-bottom:16px; margin-bottom:26px; }
-  .logo { font-family: Arial, Helvetica, sans-serif; font-weight:800; font-size:24px; }
-  .logo span { color:#3D6BFF; }
-  .eyebrow { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:1px; }
-  h1 { font-size:22px; margin:0 0 4px; }
-  .meta { color:#666; font-size:13px; margin-bottom:26px; }
-  .kpis { display:flex; gap:14px; margin-bottom:28px; }
-  .kpi { flex:1; border-radius:10px; padding:16px; }
-  .kpi-label { font-size:11px; margin-bottom:4px; }
-  .kpi-value { font-size:21px; font-weight:800; font-family: Arial, sans-serif; }
-  .chart-title, .table-title { font-size:13px; font-weight:700; margin-bottom:12px; font-family: Arial, sans-serif; }
-  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .bar-label { width:64px; font-size:11px; color:#666; }
-  .bar-track { flex:1; background:#f0f0f0; border-radius:4px; height:14px; overflow:hidden; }
-  .bar-fill { height:100%; }
-  .bar-value { width:80px; text-align:right; font-size:11px; }
-  table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:28px; }
-  th { text-align:left; color:#888; padding-bottom:6px; border-bottom:2px solid #eee; }
-  td { padding:7px 0; border-bottom:1px solid #eee; }
-  h2 { font-size:17px; color:#3D6BFF; margin-top:26px; }
-  h3 { font-size:13px; color:#666; text-transform:uppercase; letter-spacing:0.4px; }
-  ul { padding-left:20px; }
-  .footer { margin-top:32px; font-size:10px; color:#aaa; text-align:center; }
-  .noprint { text-align:center; margin:18px 0 30px; }
-  .noprint button { background:#3D6BFF; color:#fff; border:none; border-radius:8px; padding:12px 22px; font-size:14px; font-weight:700; cursor:pointer; font-family: Arial, sans-serif; }
-  @media print { .noprint { display:none; } body { margin: 0 auto; } }
+  * { box-sizing: border-box; }
+  @page { margin: 14mm 16mm; }
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: 'Inter', Arial, sans-serif; background:#F5F7FC; color:#1A2233; margin:0; line-height:1.55; }
+  .page { max-width: 760px; margin: 0 auto; }
+  .banner { background: linear-gradient(135deg, #3D6BFF 0%, #7B93FF 100%); padding: 34px 40px 56px; color:#fff; }
+  .logo { font-family:'Manrope',sans-serif; font-weight:800; font-size:24px; letter-spacing:-0.3px; }
+  .logo span { font-weight:500; opacity:.85; }
+  .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:1.5px; opacity:.85; margin-top:6px; }
+  .content { padding: 0 40px 40px; margin-top:-38px; }
+  .title-card { background:#fff; border-radius:16px; padding:24px 28px; box-shadow:0 14px 30px rgba(30,50,110,0.10); margin-bottom:22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .title-card h1 { font-family:'Manrope',sans-serif; font-size:22px; margin:0 0 4px; }
+  .title-card .meta { color:#7C8AA5; font-size:13px; }
+  .period-pill { background:#EEF2FF; color:#3D6BFF; font-family:'Manrope',sans-serif; font-weight:700; font-size:12px; padding:8px 14px; border-radius:100px; white-space:nowrap; }
+  .kpis { display:flex; gap:16px; margin-bottom:22px; }
+  .kpi { flex:1; background:#fff; border-radius:14px; padding:18px 18px 16px; box-shadow:0 8px 20px rgba(30,50,110,0.06); border-top:4px solid var(--kc); }
+  .kpi .icon { font-size:18px; margin-bottom:10px; }
+  .kpi .label { font-size:10.5px; color:#8A93AD; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; font-weight:600; }
+  .kpi .value { font-family:'Manrope',sans-serif; font-weight:800; font-size:23px; color:var(--kc); }
+  .card { background:#fff; border-radius:14px; padding:22px 24px; margin-bottom:22px; box-shadow:0 8px 20px rgba(30,50,110,0.06); }
+  .card-title { font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .bar-label { width:66px; font-size:12px; color:#7C8AA5; font-weight:600; }
+  .bar-track { flex:1; background:#EEF1F8; border-radius:8px; height:16px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:8px; }
+  .bar-value { width:82px; text-align:right; font-size:12px; font-weight:700; font-family:'Manrope',sans-serif; }
+  .rubrica-flex { display:flex; gap:26px; align-items:center; flex-wrap:wrap; }
+  .donut { width:128px; height:128px; border-radius:50%; flex-shrink:0; position:relative; background: conic-gradient(${donutStops}); }
+  .donut-hole { position:absolute; inset:22px; background:#fff; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .donut-hole .t { font-size:9px; color:#8A93AD; }
+  .donut-hole .v { font-family:'Manrope',sans-serif; font-weight:800; font-size:13px; }
+  .rubrica-list { flex:1; min-width:220px; }
+  .rubrica-row { display:flex; justify-content:space-between; align-items:center; font-size:12.5px; padding:6px 0; border-bottom:1px solid #F1F3F9; }
+  .rubrica-row:last-child { border-bottom:none; }
+  .rubrica-name { display:flex; align-items:center; font-weight:600; }
+  .rubrica-val { color:#8A93AD; }
+  .rubrica-val b { color:#1A2233; font-weight:700; }
+  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:8px; flex-shrink:0; }
+  .insight-card { background:linear-gradient(180deg,#F5F8FF 0%,#ffffff 55%); border:1px solid #E7ECFA; border-radius:16px; padding:26px 28px; }
+  .insight-card .card-title { color:#3D6BFF; }
+  .insight-card h2 { font-family:'Manrope',sans-serif; font-size:16px; color:#1A2233; margin-top:0; }
+  .insight-card h3 { font-size:12px; color:#8A93AD; text-transform:uppercase; letter-spacing:.4px; }
+  .insight-card p, .insight-card li { font-size:13px; }
+  .insight-card ul { padding-left:20px; }
+  .footer { text-align:center; font-size:10px; color:#B0B8CC; margin-top:26px; }
+  .noprint { text-align:center; padding:18px 0; background:#EDF1FA; }
+  .noprint button { background:#1A2233; color:#fff; border:none; border-radius:10px; padding:13px 26px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Manrope',sans-serif; box-shadow:0 8px 20px rgba(0,0,0,0.18); }
+  @media print { .noprint { display:none; } }
 </style></head>
 <body>
   <div class="noprint"><button onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button></div>
 
-  <div class="header">
-    <div class="logo">OPERA <span>CRM</span></div>
-    <div class="eyebrow">Relatório Financeiro Mensal</div>
+  <div class="page">
+    <div class="banner">
+      <div class="logo">OPERA <span>CRM</span></div>
+      <div class="eyebrow">Relatório Financeiro Mensal</div>
+    </div>
+
+    <div class="content">
+      <div class="title-card">
+        <div>
+          <h1>${finEscapeHtml(clientName)}</h1>
+          <div class="meta">Gestão financeira do portefólio</div>
+        </div>
+        <div class="period-pill">${finEscapeHtml(label)}</div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi" style="--kc:#3D6BFF;"><div class="icon">📈</div><div class="label">Receita</div><div class="value">${fmtEUR(receita)}</div></div>
+        <div class="kpi" style="--kc:#F2994A;"><div class="icon">🧾</div><div class="label">Despesa</div><div class="value">${fmtEUR(despesa)}</div></div>
+        <div class="kpi" style="--kc:${margemPositiva ? "#1BA97A" : "#E23D5C"};"><div class="icon">${margemPositiva ? "⚖️" : "⚠️"}</div><div class="label">Margem</div><div class="value">${fmtEUR(margem)}</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Receita vs. Despesa</div>
+        <div class="bar-row"><div class="bar-label">Receita</div><div class="bar-track"><div class="bar-fill" style="width:${((receita / maxVal) * 100).toFixed(0)}%; background:#3D6BFF;"></div></div><div class="bar-value">${fmtEUR(receita)}</div></div>
+        <div class="bar-row" style="margin-bottom:0;"><div class="bar-label">Despesa</div><div class="bar-track"><div class="bar-fill" style="width:${((despesa / maxVal) * 100).toFixed(0)}%; background:#F2994A;"></div></div><div class="bar-value">${fmtEUR(despesa)}</div></div>
+      </div>
+
+      ${topRubricas.length > 0 ? `
+      <div class="card">
+        <div class="card-title">🏷️ Despesas por rubrica</div>
+        <div class="rubrica-flex">
+          <div class="donut"><div class="donut-hole"><div class="t">Total</div><div class="v">${fmtEUR(totalRubricas)}</div></div></div>
+          <div class="rubrica-list">${rubricaRowsHtml}</div>
+        </div>
+      </div>` : ""}
+
+      <div class="insight-card">
+        <div class="card-title">✨ Análise da OPERA</div>
+        ${bodyHtml}
+      </div>
+
+      <div class="footer">Gerado automaticamente pela OPERA CRM · opera-os.com</div>
+    </div>
   </div>
-  <h1>${finEscapeHtml(clientName)}</h1>
-  <div class="meta">Referente a ${finEscapeHtml(label)}</div>
-
-  <div class="kpis">
-    <div class="kpi" style="background:#EEF2FF;"><div class="kpi-label" style="color:#5b6b8c;">Receita</div><div class="kpi-value" style="color:#3D6BFF;">${fmtEUR(receita)}</div></div>
-    <div class="kpi" style="background:#FFF3EA;"><div class="kpi-label" style="color:#8a6b4f;">Despesa</div><div class="kpi-value" style="color:#F2994A;">${fmtEUR(despesa)}</div></div>
-    <div class="kpi" style="background:${margem >= 0 ? "#EAFAF3" : "#FDECEF"};"><div class="kpi-label" style="color:#666;">Margem</div><div class="kpi-value" style="color:${margem >= 0 ? "#1BA97A" : "#E23D5C"};">${fmtEUR(margem)}</div></div>
-  </div>
-
-  <div class="chart-title">Receita vs. Despesa</div>
-  <div class="bar-row"><div class="bar-label">Receita</div><div class="bar-track"><div class="bar-fill" style="width:${((receita / maxVal) * 100).toFixed(0)}%; background:#3D6BFF;"></div></div><div class="bar-value">${fmtEUR(receita)}</div></div>
-  <div class="bar-row" style="margin-bottom:28px;"><div class="bar-label">Despesa</div><div class="bar-track"><div class="bar-fill" style="width:${((despesa / maxVal) * 100).toFixed(0)}%; background:#F2994A;"></div></div><div class="bar-value">${fmtEUR(despesa)}</div></div>
-
-  ${topRubricas.length > 0 ? `
-  <div class="table-title">Despesas por rubrica</div>
-  <table><thead><tr><th>Rubrica</th><th style="text-align:right;">Valor</th><th style="text-align:right;">%</th></tr></thead><tbody>${rubricaRowsHtml}</tbody></table>` : ""}
-
-  <div style="border-top:1px solid #eee; padding-top:20px;">${bodyHtml}</div>
-  <div class="footer">Gerado automaticamente pela OPERA CRM</div>
 </body></html>`;
 
     const win = window.open("", "_blank");
