@@ -564,6 +564,24 @@ function SidePanel({ onClose, eyebrow, width = 380, children }) {
   );
 }
 
+// Full-page detail view (replaces the current nav page's content, with a breadcrumb back link)
+function PageBack({ onClose, eyebrow, maxWidth = 760, children }) {
+  return (
+    <div className="op-fade-in" style={{ maxWidth, fontFamily: "Inter, sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <span onClick={onClose} style={{ cursor: "pointer", color: C.accent, fontSize: 13, fontWeight: 600 }}>← Voltar</span>
+        {eyebrow && (
+          <>
+            <span style={{ color: C.border }}>/</span>
+            <span style={{ fontSize: 13, color: C.muted }}>{eyebrow}</span>
+          </>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 // Title (editable for "Pedido Aberto") + optional property-id editor
 function PedidoHeader({ pedido, onUpdateHeader }) {
   const [editingTitle, setEditingTitle] = useState(false);
@@ -634,7 +652,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
   const removeMessage = (m) => { if (window.confirm("Apagar esta mensagem?")) run(() => db.removeMessage(m.id)); };
 
   return (
-    <SidePanel onClose={onClose} eyebrow={pedido.client}>
+    <PageBack onClose={onClose} eyebrow={pedido.client} maxWidth={820}>
       <PedidoHeader pedido={pedido} onUpdateHeader={(patch) => run(() => db.updatePedidoFields(pedido.id, patch))} />
 
       <div style={{ display: "flex", gap: 16, marginBottom: 20, fontSize: 12, color: C.muted, flexWrap: "wrap" }}>
@@ -700,7 +718,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
 
       <SectionTitle>Conversa com o cliente</SectionTitle>
       <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="equipa" onDelete={removeMessage} />
-    </SidePanel>
+    </PageBack>
   );
 }
 
@@ -1769,7 +1787,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   ];
 
   return (
-    <SidePanel onClose={onClose} eyebrow="Ficha de Cliente" width={tab === "financeiro" ? 920 : 460}>
+    <PageBack onClose={onClose} eyebrow="Ficha de Cliente" maxWidth={tab === "financeiro" ? 1100 : 760}>
       <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 18, color: C.text, marginBottom: 10 }}>{client.name}</div>
 
       <div style={{ background: C.surfaceRaised, borderRadius: 8, padding: 12, marginBottom: 14 }}>
@@ -1986,7 +2004,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
           {alerts.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Sem alertas para este cliente.</div>}
         </div>
       )}
-    </SidePanel>
+    </PageBack>
   );
 }
 
@@ -2228,7 +2246,18 @@ function EquipaApp({ profile }) {
         ))}
       </div>
 
-      <div key={page} className="op-fade-in" style={{ flex: 1, padding: "24px 28px", overflowX: "hidden", minWidth: 0, overflowY: "auto" }}>
+      <div key={openPedido ? `pedido-${openPedido.id}` : openClientObj ? `client-${openClientObj.id}` : page} className="op-fade-in" style={{ flex: 1, padding: "24px 28px", overflowX: "hidden", minWidth: 0, overflowY: "auto" }}>
+        {openPedido ? (
+          <PedidoDetailInternal pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />
+        ) : openClientObj ? (
+          <ClientDetail client={openClientObj} deals={deals} setDeals={setDeals} setClients={setClients} pedidos={pedidos}
+            extra={clientExtra[openClientObj.id] || { notes: [], activities: [] }}
+            onUpdateExtra={(updated) => setClientExtra((prev) => ({ ...prev, [openClientObj.id]: updated }))}
+            onClose={() => setOpenClientId(null)}
+            initialTab={openClientTab}
+            onOpenPedido={(id) => { setOpenClientId(null); openPedidoSeen(id); }} />
+        ) : (
+        <>
         {page === "dashboard" && (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
@@ -2567,17 +2596,9 @@ function EquipaApp({ profile }) {
             <FinanceiroPanel clientId={financeiroClientId} clientName={(clients.find((c) => c.id === financeiroClientId) || {}).name} isEquipa={true} />
           </>
         )}
+        </>
+        )}
       </div>
-
-      {openPedido && <PedidoDetailInternal pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />}
-      {openClientObj && (
-        <ClientDetail client={openClientObj} deals={deals} setDeals={setDeals} setClients={setClients} pedidos={pedidos}
-          extra={clientExtra[openClientObj.id] || { notes: [], activities: [] }}
-          onUpdateExtra={(updated) => setClientExtra((prev) => ({ ...prev, [openClientObj.id]: updated }))}
-          onClose={() => setOpenClientId(null)}
-          initialTab={openClientTab}
-          onOpenPedido={(id) => { setOpenClientId(null); openPedidoSeen(id); }} />
-      )}
     </div>
   );
 }
