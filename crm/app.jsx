@@ -83,6 +83,17 @@ const TYPE_ICONS = {
   "Suporte Técnico": "🛠️", "Pedido Aberto": "💬",
 };
 const ACTIVE_STAGES = ["Em Onboarding", "Entrega de Serviço"];
+const GATED_TABS = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "crm", label: "CRM Comercial" },
+  { key: "clientes", label: "Clientes" },
+  { key: "financeiro", label: "Financeiro" },
+];
+function canAccessTab(profile, key) {
+  if (key === "operacional") return true;
+  if (profile.is_admin) return true;
+  return !!(profile.permissions && profile.permissions[key]);
+}
 const WON_STAGES = ["Closed", "Em Onboarding", "Entrega de Serviço"];
 const ACTIVITY_TYPES = ["Chamada", "Reunião", "Email", "Tarefa"];
 
@@ -168,6 +179,15 @@ const db = {
     const { data, error } = await sb.from("profiles").select("*").eq("id", userId).single();
     if (error) throw error;
     return data;
+  },
+  async listEquipaProfiles() {
+    const { data, error } = await sb.from("profiles").select("*").eq("role", "equipa").order("full_name");
+    if (error) throw error;
+    return data;
+  },
+  async updateProfilePermissions(id, permissions) {
+    const { error } = await sb.from("profiles").update({ permissions }).eq("id", id);
+    if (error) throw error;
   },
 
   // -- clients --
@@ -574,6 +594,83 @@ function ChatThread({ messages, onSend, senderRole, onDelete }) {
 
 function SectionTitle({ children }) {
   return <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10, marginTop: 4 }}>{children}</div>;
+}
+
+function Toggle({ on, onChange, disabled }) {
+  return (
+    <span onClick={() => !disabled && onChange(!on)}
+      style={{
+        display: "inline-flex", alignItems: "center", width: 38, height: 22, borderRadius: 999,
+        background: on ? C.accent : C.border, padding: 2, cursor: disabled ? "default" : "pointer",
+        transition: "background 0.15s ease", opacity: disabled ? 0.5 : 1, flexShrink: 0,
+      }}>
+      <span style={{
+        width: 18, height: 18, borderRadius: "50%", background: "#fff",
+        transform: on ? "translateX(16px)" : "translateX(0)", transition: "transform 0.15s ease",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+      }} />
+    </span>
+  );
+}
+
+function EquipaPermissionsPanel({ currentProfileId }) {
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const reload = () => db.listEquipaProfiles().then(setProfiles).catch((e) => setLoadError(e.message)).finally(() => setLoading(false));
+  useEffect(() => { reload(); }, []);
+
+  const togglePermission = (p, key, value) => {
+    const nextPermissions = { ...(p.permissions || {}), [key]: value };
+    setProfiles((prev) => prev.map((row) => (row.id === p.id ? { ...row, permissions: nextPermissions } : row)));
+    db.updateProfilePermissions(p.id, nextPermissions).catch((e) => { alert(e.message); reload(); });
+  };
+
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 20, color: C.text }}>Equipa</div>
+      </div>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Escolhe a quais separadores cada pessoa da equipa tem acesso. Operacional está sempre disponível para todos.</div>
+
+      {loading && <div style={{ fontSize: 13, color: C.muted }}>A carregar…</div>}
+      {loadError && <div style={{ fontSize: 13, color: C.red }}>Erro: {loadError}</div>}
+
+      {!loading && !loadError && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {profiles.map((p) => (
+            <div key={p.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 18px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: "Manrope, sans-serif" }}>
+                    {p.full_name || p.email || p.id}{p.id === currentProfileId ? " (tu)" : ""}
+                  </div>
+                  {p.full_name && <div style={{ fontSize: 11, color: C.muted }}>{p.email}</div>}
+                </div>
+                {p.is_admin && (
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.green, background: "rgba(46,216,167,0.15)", padding: "4px 10px", borderRadius: 6 }}>
+                    🔑 Admin — acesso total
+                  </span>
+                )}
+              </div>
+              {!p.is_admin && (
+                <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginTop: 10 }}>
+                  {GATED_TABS.map((t) => (
+                    <label key={t.key} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.text, cursor: "pointer" }}>
+                      <Toggle on={!!(p.permissions && p.permissions[t.key])} onChange={(v) => togglePermission(p, t.key, v)} />
+                      {t.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {profiles.length === 0 && <div style={{ fontSize: 13, color: C.muted }}>Ainda não há ninguém registado como equipa.</div>}
+        </div>
+      )}
+    </>
+  );
 }
 
 function SidePanel({ onClose, eyebrow, width = 380, children }) {
@@ -2263,12 +2360,13 @@ function EquipaApp({ profile }) {
   const unseenCount = pedidos.filter((p) => p.seen === false).length;
 
   const NAV = [
-    { key: "dashboard", label: "Dashboard", icon: "📊", adminOnly: true },
-    { key: "crm", label: "CRM Comercial", icon: "🧭", adminOnly: true },
+    { key: "dashboard", label: "Dashboard", icon: "📊" },
+    { key: "crm", label: "CRM Comercial", icon: "🧭" },
     { key: "operacional", label: "Operacional", icon: "🗂️", badge: unseenCount },
-    { key: "clientes", label: "Clientes", icon: "👥", adminOnly: true },
-    { key: "financeiro", label: "Financeiro", icon: "💶", adminOnly: true },
-  ].filter((n) => !n.adminOnly || profile.is_admin);
+    { key: "clientes", label: "Clientes", icon: "👥" },
+    { key: "financeiro", label: "Financeiro", icon: "💶" },
+  ].filter((n) => canAccessTab(profile, n.key));
+  if (profile.is_admin) NAV.push({ key: "equipa", label: "Equipa", icon: "🔑" });
 
   if (loading) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted, fontSize: 13 }}>A carregar…</div>;
   if (loadError) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.red, fontSize: 13, padding: 24, textAlign: "center" }}>Erro ao carregar dados: {loadError}</div>;
@@ -2641,6 +2739,8 @@ function EquipaApp({ profile }) {
             <FinanceiroPanel clientId={financeiroClientId} clientName={(clients.find((c) => c.id === financeiroClientId) || {}).name} isEquipa={true} />
           </>
         )}
+
+        {page === "equipa" && profile.is_admin && <EquipaPermissionsPanel currentProfileId={profile.id} />}
         </>
         )}
       </div>
