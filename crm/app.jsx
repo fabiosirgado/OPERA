@@ -1478,7 +1478,7 @@ function FinRelatorioMensal({ clientId, clientName, buckets, current }) {
   );
 }
 
-function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous, extrato, isEquipa, clientId, clientName }) {
+function FinVisaoGeral({ granularity, setGranularity, selectedBucketKey, setSelectedBucketKey, buckets, current, previous, extrato, isEquipa, clientId, clientName }) {
   const margem = current.receita - current.despesa;
   const margemPrev = previous.receita - previous.despesa;
   const delta = (now, prev) => (prev === 0 ? null : ((now - prev) / Math.abs(prev)) * 100);
@@ -1487,13 +1487,13 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
   const dMargem = delta(margem, margemPrev);
   const fmtDelta = (d) => (d === null ? "Sem período anterior" : `${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs período anterior`);
   const margemPct = current.receita ? (margem / current.receita) * 100 : null;
-  const [topRubricaNome, topRubricaValor] = finAggregateField(buckets, "byRubrica")[0] || ["—", 0];
+  const [topRubricaNome, topRubricaValor] = finAggregateField([current], "byRubrica")[0] || ["—", 0];
   const reconciliados = extrato.filter((b) => b.status === "reconciliado").length;
   const taxaReconciliacao = extrato.length ? (reconciliados / extrato.length) * 100 : null;
 
   return (
     <>
-      <div style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: 18, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", flexWrap: "wrap" }}>
           {FIN_PERIODS.map((p) => (
             <span key={p.key} onClick={() => setGranularity(p.key)}
@@ -1502,6 +1502,13 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
             </span>
           ))}
         </div>
+        {granularity === "mes" && (
+          <select value={selectedBucketKey || ""} onChange={(e) => setSelectedBucketKey(e.target.value || null)}
+            style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 12.5, fontWeight: 600 }}>
+            <option value="">📅 Mês mais recente</option>
+            {buckets.slice().reverse().map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+          </select>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap" }}>
@@ -1522,11 +1529,11 @@ function FinVisaoGeral({ granularity, setGranularity, buckets, current, previous
 
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 380px" }}>
-          <FinRankingPorCampo buckets={buckets} field="byRubrica" title="Despesas por rubrica" icon="🏷️"
+          <FinRankingPorCampo buckets={[current]} field="byRubrica" title="Despesas por rubrica" icon="🏷️"
             colorFor={(name) => finRubricaFor(name).color} emptyLabel="Ainda sem despesas neste período." />
         </div>
         <div style={{ flex: "1 1 380px" }}>
-          <FinRankingPorCampo buckets={buckets} field="byFornecedor" title="Despesas por fornecedor" icon="🧑‍💼"
+          <FinRankingPorCampo buckets={[current]} field="byFornecedor" title="Despesas por fornecedor" icon="🧑‍💼"
             colorFor={(name, i) => FIN_VENDOR_PALETTE[i % FIN_VENDOR_PALETTE.length]} emptyLabel="Ainda sem despesas neste período." />
         </div>
       </div>
@@ -1781,6 +1788,7 @@ function FinReconciliacao({ rows, isEquipa, onImportCsv, onConfirm, onDelete }) 
 function FinanceiroPanel({ clientId, clientName, isEquipa }) {
   const [subTab, setSubTab] = useState("visao");
   const [granularity, setGranularity] = useState("mes");
+  const [selectedBucketKey, setSelectedBucketKey] = useState(null);
   const [despesas, setDespesas] = useState([]);
   const [receitas, setReceitas] = useState([]);
   const [extrato, setExtrato] = useState([]);
@@ -1799,8 +1807,10 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
   if (loadError) return <div style={{ fontSize: 13, color: C.red, padding: 20 }}>Erro ao carregar dados financeiros: {loadError}</div>;
 
   const buckets = finBuildBuckets(despesas, receitas, granularity);
-  const current = buckets[buckets.length - 1] || { receita: 0, despesa: 0 };
-  const previous = buckets[buckets.length - 2] || { receita: 0, despesa: 0 };
+  const selectedIndex = selectedBucketKey ? buckets.findIndex((b) => b.key === selectedBucketKey) : -1;
+  const currentIndex = selectedIndex >= 0 ? selectedIndex : buckets.length - 1;
+  const current = buckets[currentIndex] || { receita: 0, despesa: 0 };
+  const previous = buckets[currentIndex - 1] || { receita: 0, despesa: 0 };
 
   const addDespesa = async (payload) => { const row = await db.addDespesa({ client_id: clientId, source: "manual", ...payload }); setDespesas((prev) => [row, ...prev]); };
   const addReceita = async (payload) => { const row = await db.addReceita({ client_id: clientId, source: "manual", ...payload }); setReceitas((prev) => [row, ...prev]); };
@@ -1843,7 +1853,11 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
         ))}
       </div>
 
-      {subTab === "visao" && <FinVisaoGeral granularity={granularity} setGranularity={setGranularity} buckets={buckets} current={current} previous={previous} extrato={extrato} isEquipa={isEquipa} clientId={clientId} clientName={clientName} />}
+      {subTab === "visao" && (
+        <FinVisaoGeral granularity={granularity} setGranularity={(g) => { setGranularity(g); setSelectedBucketKey(null); }}
+          selectedBucketKey={selectedBucketKey} setSelectedBucketKey={setSelectedBucketKey}
+          buckets={buckets} current={current} previous={previous} extrato={extrato} isEquipa={isEquipa} clientId={clientId} clientName={clientName} />
+      )}
       {subTab === "lancamentos" && (
         <FinLancamentos despesas={despesas} receitas={receitas} isEquipa={isEquipa} clientId={clientId}
           onAddDespesa={addDespesa} onAddReceita={addReceita} onChangeRubrica={changeRubrica}
