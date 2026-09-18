@@ -164,11 +164,12 @@ function mapPedido(row) {
     due: row.due ? new Date(row.due) : today,
     seen: row.seen,
     clientSeen: row.client_seen !== false,
+    lastEquipaViewAt: row.last_equipa_view_at ? new Date(row.last_equipa_view_at) : null,
     createdAt: row.created_at ? new Date(row.created_at) : today,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
     tasks: tasks.map((t) => ({ id: t.id, text: t.text, done: t.done })),
     notes: notes.map((n) => ({ id: n.id, text: n.text, date: new Date(n.created_at) })),
-    attachments: attachments.map((a) => ({ id: a.id, name: a.name, storagePath: a.storage_path, uploadedBy: a.uploaded_by })),
+    attachments: attachments.map((a) => ({ id: a.id, name: a.name, storagePath: a.storage_path, uploadedBy: a.uploaded_by, createdAt: new Date(a.created_at) })),
     messages: messages.map((m) => ({ id: m.id, sender: m.sender, text: m.text, date: new Date(m.created_at) })),
   };
 }
@@ -263,7 +264,7 @@ const db = {
     if (error) throw error;
   },
   async markPedidoSeen(id) {
-    const { error } = await sb.from("pedidos").update({ seen: true }).eq("id", id);
+    const { error } = await sb.from("pedidos").update({ seen: true, last_equipa_view_at: new Date().toISOString() }).eq("id", id);
     if (error) throw error;
   },
   async markPedidoClientSeen(id) {
@@ -765,6 +766,8 @@ function PedidoHeader({ pedido, onUpdateHeader }) {
 function PedidoDetailInternal({ pedido, onClose, onReload }) {
   const [newTask, setNewTask] = useState("");
   const [newNote, setNewNote] = useState("");
+  const previousViewAtRef = useRef(pedido.lastEquipaViewAt);
+  const isNewAttachment = (a) => a.uploadedBy === "cliente" && (!previousViewAtRef.current || a.createdAt > previousViewAtRef.current);
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
 
@@ -812,7 +815,11 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
       {pedido.attachments.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
           {pedido.attachments.map((a) => (
-            <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px" }}>
+            <div key={a.id} className={isNewAttachment(a) ? "op-new-pulse" : ""}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px",
+                border: isNewAttachment(a) ? `1.5px solid ${C.amber}` : "1px solid transparent",
+              }}>
               {renamingId === a.id ? (
                 <>
                   <input autoFocus value={renameDraft} onChange={(e) => setRenameDraft(e.target.value)}
@@ -823,7 +830,12 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
                 </>
               ) : (
                 <>
-                  <span onClick={() => openAttachment(a)} style={{ flex: 1, cursor: "pointer" }}>📎 {a.name}</span>
+                  <span onClick={() => openAttachment(a)} style={{ flex: 1, cursor: "pointer" }}>
+                    📎 {a.name}
+                    {isNewAttachment(a) && (
+                      <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 800, color: "#1a1400", background: C.amber, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>NOVO</span>
+                    )}
+                  </span>
                   <span onClick={() => startRename(a)} title="Renomear ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 13 }}>✎</span>
                   <span onClick={() => removeAttachment(a)} title="Apagar ficheiro" style={{ cursor: "pointer", color: C.muted, fontSize: 14 }}>×</span>
                 </>
