@@ -165,6 +165,7 @@ function mapPedido(row) {
     seen: row.seen,
     clientSeen: row.client_seen !== false,
     lastEquipaViewAt: row.last_equipa_view_at ? new Date(row.last_equipa_view_at) : null,
+    lastClientViewAt: row.last_client_view_at ? new Date(row.last_client_view_at) : null,
     archivedAt: row.archived_at ? new Date(row.archived_at) : null,
     createdAt: row.created_at ? new Date(row.created_at) : today,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
@@ -269,7 +270,7 @@ const db = {
     if (error) throw error;
   },
   async markPedidoClientSeen(id) {
-    const { error } = await sb.from("pedidos").update({ client_seen: true }).eq("id", id);
+    const { error } = await sb.from("pedidos").update({ client_seen: true, last_client_view_at: new Date().toISOString() }).eq("id", id);
     if (error) throw error;
   },
   async archivePedido(id) {
@@ -314,6 +315,8 @@ const db = {
     if (error) throw error;
     if (uploadedBy === "cliente") {
       await sb.from("pedidos").update({ seen: false }).eq("id", pedidoId);
+    } else if (uploadedBy === "equipa") {
+      await sb.from("pedidos").update({ client_seen: false }).eq("id", pedidoId);
     }
   },
   async removeAttachment(id, storagePath) {
@@ -772,11 +775,10 @@ function PedidoHeader({ pedido, onUpdateHeader }) {
 }
 
 // ---------- Internal pedido detail (tasks + notes + chat) ----------
-function PedidoDetailInternal({ pedido, onClose, onReload }) {
+function PedidoDetailInternal({ pedido, onClose, onReload, previousViewAt }) {
   const [newTask, setNewTask] = useState("");
   const [newNote, setNewNote] = useState("");
-  const previousViewAtRef = useRef(pedido.lastEquipaViewAt);
-  const isNewAttachment = (a) => a.uploadedBy === "cliente" && (!previousViewAtRef.current || a.createdAt > previousViewAtRef.current);
+  const isNewAttachment = (a) => a.uploadedBy === "cliente" && (!previousViewAt || a.createdAt > previousViewAt);
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
 
@@ -910,10 +912,11 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
 }
 
 // ---------- Client-facing pedido detail (stage tracker + chat only) ----------
-function PedidoDetailClient({ pedido, onClose, onReload }) {
+function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
   const run = async (fn) => { try { await fn(); await onReload(); } catch (e) { alert(e.message); } };
   const sendMessage = (text) => run(() => db.sendMessage(pedido.id, "cliente", text));
   const openAttachment = (a) => db.getAttachmentUrl(a.storagePath).then((url) => window.open(url, "_blank")).catch((e) => alert(e.message));
+  const isNewAttachment = (a) => a.uploadedBy === "equipa" && (!previousViewAt || a.createdAt > previousViewAt);
   const uploadFiles = (e) => {
     const chosen = Array.from(e.target.files || []);
     e.target.value = "";
@@ -984,7 +987,16 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
       {pedido.attachments.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
           {pedido.attachments.map((a) => (
-            <div key={a.id} onClick={() => openAttachment(a)} style={{ fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer" }}>📎 {a.name}</div>
+            <div key={a.id} onClick={() => openAttachment(a)} className={isNewAttachment(a) ? "op-new-pulse" : ""}
+              style={{
+                fontSize: 13, color: C.text, background: C.surfaceRaised, borderRadius: 8, padding: "8px 10px", cursor: "pointer",
+                border: isNewAttachment(a) ? `1.5px solid ${C.amber}` : "1px solid transparent",
+              }}>
+              📎 {a.name}
+              {isNewAttachment(a) && (
+                <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 800, color: "#1a1400", background: C.amber, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>NOVO</span>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -2249,6 +2261,7 @@ function EquipaApp({ profile }) {
   const [propertySearch, setPropertySearch] = useState("");
   const [showArchive, setShowArchive] = useState(false);
   const [openPedidoId, setOpenPedidoId] = useState(null);
+  const [openPedidoPrevViewAt, setOpenPedidoPrevViewAt] = useState(null);
   const [openClientId, setOpenClientId] = useState(null);
   const [openClientTab, setOpenClientTab] = useState("geral");
   const [financeiroClientId, setFinanceiroClientId] = useState(null);
@@ -2356,7 +2369,10 @@ function EquipaApp({ profile }) {
     db.updatePedidoStage(id, stage).catch((e) => { alert(e.message); reloadPedidos(); });
   };
   const openPedidoSeen = (id) => {
-    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, seen: true } : p)));
+    const target = pedidos.find((p) => p.id === id);
+    setOpenPedidoPrevViewAt(target ? target.lastEquipaViewAt : null);
+    const viewedAt = new Date();
+    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, seen: true, lastEquipaViewAt: viewedAt } : p)));
     db.markPedidoSeen(id).catch(() => {});
     setOpenPedidoId(id);
   };
@@ -2488,7 +2504,7 @@ function EquipaApp({ profile }) {
 
       <div key={openPedido ? `pedido-${openPedido.id}` : openClientObj ? `client-${openClientObj.id}` : page} className="op-fade-in" style={{ flex: 1, padding: "24px 28px", overflowX: "hidden", minWidth: 0, overflowY: "auto" }}>
         {openPedido ? (
-          <PedidoDetailInternal pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />
+          <PedidoDetailInternal pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} previousViewAt={openPedidoPrevViewAt} />
         ) : openClientObj ? (
           <ClientDetail client={openClientObj} deals={deals} setDeals={setDeals} setClients={setClients} pedidos={pedidos}
             extra={clientExtra[openClientObj.id] || { notes: [], activities: [] }}
@@ -2878,6 +2894,7 @@ function ClientPortal({ profile }) {
   const [section, setSection] = useState("pedidos");
   const [pedidos, setPedidos] = useState([]);
   const [openPedidoId, setOpenPedidoId] = useState(null);
+  const [openPedidoPrevViewAt, setOpenPedidoPrevViewAt] = useState(null);
   const [step, setStep] = useState("idle");
   const [creatingType, setCreatingType] = useState(null);
   const [customTitle, setCustomTitle] = useState("");
@@ -2952,7 +2969,10 @@ function ClientPortal({ profile }) {
   const openPedido = pedidos.find((p) => p.id === openPedidoId);
 
   const openPedidoSeen = (id) => {
-    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, clientSeen: true } : p)));
+    const target = pedidos.find((p) => p.id === id);
+    setOpenPedidoPrevViewAt(target ? target.lastClientViewAt : null);
+    const viewedAt = new Date();
+    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, clientSeen: true, lastClientViewAt: viewedAt } : p)));
     db.markPedidoClientSeen(id).catch(() => {});
     setOpenPedidoId(id);
   };
@@ -3008,7 +3028,7 @@ function ClientPortal({ profile }) {
   return (
     <div style={{ flex: 1, padding: "24px 28px", overflowY: "auto" }}>
       {openPedido ? (
-        <PedidoDetailClient pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} />
+        <PedidoDetailClient pedido={openPedido} onClose={() => setOpenPedidoId(null)} onReload={reloadPedidos} previousViewAt={openPedidoPrevViewAt} />
       ) : (
       <>
       <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 22, color: C.text, marginBottom: 4 }}>Olá, {clientName} 👋</div>
