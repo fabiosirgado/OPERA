@@ -1831,6 +1831,15 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
     reload().catch((e) => setLoadError(e.message)).finally(() => setLoading(false));
   }, [clientId]);
 
+  useEffect(() => {
+    const channel = sb.channel("financeiro-realtime-" + clientId)
+      .on("postgres_changes", { event: "*", schema: "public", table: "financeiro_despesas", filter: `client_id=eq.${clientId}` }, () => reload())
+      .on("postgres_changes", { event: "*", schema: "public", table: "financeiro_receitas", filter: `client_id=eq.${clientId}` }, () => reload())
+      .on("postgres_changes", { event: "*", schema: "public", table: "financeiro_extrato", filter: `client_id=eq.${clientId}` }, () => reload())
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  }, [clientId]);
+
   if (loading) return <div style={{ fontSize: 13, color: C.muted, padding: 20 }}>A carregar…</div>;
   if (loadError) return <div style={{ fontSize: 13, color: C.red, padding: 20 }}>Erro ao carregar dados financeiros: {loadError}</div>;
 
