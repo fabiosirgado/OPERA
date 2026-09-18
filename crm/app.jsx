@@ -1933,9 +1933,18 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
 
-  useEffect(() => {
+  const reloadPortalAccess = () => {
     db.listProfilesByClient(client.id).then(setLinkedProfiles).catch(() => {});
     db.listClientInvites(client.id).then(setPendingInvites).catch(() => {});
+  };
+  useEffect(() => { reloadPortalAccess(); }, [client.id]);
+
+  useEffect(() => {
+    const channel = sb.channel("client-access-realtime-" + client.id)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `client_id=eq.${client.id}` }, () => reloadPortalAccess())
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_invites", filter: `client_id=eq.${client.id}` }, () => reloadPortalAccess())
+      .subscribe();
+    return () => sb.removeChannel(channel);
   }, [client.id]);
 
   const sendInvite = async () => {
@@ -2969,6 +2978,7 @@ function ClientPortal({ profile }) {
     const channel = sb.channel("cliente-realtime-" + profile.client_id)
       .on("postgres_changes", { event: "*", schema: "public", table: "pedidos", filter: `client_id=eq.${profile.client_id}` }, () => reloadPedidos())
       .on("postgres_changes", { event: "*", schema: "public", table: "pedido_mensagens" }, () => reloadPedidos())
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: `id=eq.${profile.client_id}` }, () => db.getClient(profile.client_id).then((c) => setClientName(c.name)).catch(() => {}))
       .subscribe();
     return () => sb.removeChannel(channel);
   }, [profile.client_id]);
