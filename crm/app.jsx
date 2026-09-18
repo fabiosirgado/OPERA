@@ -165,6 +165,7 @@ function mapPedido(row) {
     seen: row.seen,
     clientSeen: row.client_seen !== false,
     lastEquipaViewAt: row.last_equipa_view_at ? new Date(row.last_equipa_view_at) : null,
+    archivedAt: row.archived_at ? new Date(row.archived_at) : null,
     createdAt: row.created_at ? new Date(row.created_at) : today,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
     tasks: tasks.map((t) => ({ id: t.id, text: t.text, done: t.done })),
@@ -269,6 +270,14 @@ const db = {
   },
   async markPedidoClientSeen(id) {
     const { error } = await sb.from("pedidos").update({ client_seen: true }).eq("id", id);
+    if (error) throw error;
+  },
+  async archivePedido(id) {
+    const { error } = await sb.from("pedidos").update({ archived_at: new Date().toISOString() }).eq("id", id);
+    if (error) throw error;
+  },
+  async unarchivePedido(id) {
+    const { error } = await sb.from("pedidos").update({ archived_at: null }).eq("id", id);
     if (error) throw error;
   },
 
@@ -793,6 +802,8 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
     if (!name || name === a.name) return;
     run(() => db.renameAttachment(a.id, name));
   };
+  const archivePedido = () => { if (window.confirm("Arquivar este pedido?")) run(() => db.archivePedido(pedido.id)); };
+  const unarchivePedido = () => run(() => db.unarchivePedido(pedido.id));
 
   return (
     <PageBack onClose={onClose} eyebrow={pedido.client} maxWidth={820}>
@@ -803,6 +814,17 @@ function PedidoDetailInternal({ pedido, onClose, onReload }) {
         <div><div style={{ marginBottom: 2 }}>Responsável</div><div style={{ color: C.text }}>{pedido.owner}</div></div>
         <div><div style={{ marginBottom: 2 }}>Prazo</div><div style={{ color: C.text }}>{fmtDateTime(pedido.due)}</div></div>
       </div>
+
+      {pedido.archivedAt ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", marginBottom: 18 }}>
+          <span style={{ fontSize: 12, color: C.muted }}>🗄️ Pedido arquivado em {fmtDate(pedido.archivedAt)}</span>
+          <button onClick={unarchivePedido} style={{ background: C.accentSoft, border: `1px solid ${C.accent}`, borderRadius: 6, padding: "6px 12px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>↩️ Reativar</button>
+        </div>
+      ) : pedido.stage === "Concluído" && (
+        <div style={{ marginBottom: 18 }}>
+          <button onClick={archivePedido} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", color: C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗄️ Arquivar processo</button>
+        </div>
+      )}
 
       {pedido.description && (
         <>
@@ -2198,6 +2220,7 @@ function EquipaApp({ profile }) {
   const [clientFilter, setClientFilter] = useState("Todos");
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [propertySearch, setPropertySearch] = useState("");
+  const [showArchive, setShowArchive] = useState(false);
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [openClientId, setOpenClientId] = useState(null);
   const [openClientTab, setOpenClientTab] = useState("geral");
@@ -2310,6 +2333,10 @@ function EquipaApp({ profile }) {
     db.markPedidoSeen(id).catch(() => {});
     setOpenPedidoId(id);
   };
+  const reactivatePedido = (id) => {
+    setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, archivedAt: null } : p)));
+    db.unarchivePedido(id).catch((e) => { alert(e.message); reloadPedidos(); });
+  };
 
   const openClientByDeal = async (deal) => {
     let client = deal.clientId ? clients.find((c) => c.id === deal.clientId) : null;
@@ -2391,14 +2418,16 @@ function EquipaApp({ profile }) {
   };
 
   const filteredPedidos = pedidos.filter((p) => {
+    if (p.archivedAt) return false;
     if (clientFilter !== "Todos" && p.client !== clientFilter) return false;
     if (typeFilter !== "Todos" && pedidoTitle(p) !== typeFilter) return false;
     if (propertySearch.trim() && !p.propertyId.toLowerCase().includes(propertySearch.trim().toLowerCase())) return false;
     return true;
   });
+  const archivedPedidos = pedidos.filter((p) => p.archivedAt).sort((a, b) => b.archivedAt - a.archivedAt);
   const openPedido = pedidos.find((p) => p.id === openPedidoId);
   const openClientObj = clients.find((c) => c.id === openClientId);
-  const unseenCount = pedidos.filter((p) => p.seen === false).length;
+  const unseenCount = pedidos.filter((p) => p.seen === false && !p.archivedAt).length;
 
   const NAV = [
     { key: "dashboard", label: "Dashboard", icon: "📊" },
@@ -2599,6 +2628,10 @@ function EquipaApp({ profile }) {
                   <option value="Todos">Todos os clientes</option>
                   {[...new Set(pedidos.map((p) => p.client))].map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+                <button onClick={() => setShowArchive((v) => !v)}
+                  style={{ background: showArchive ? C.accentSoft : C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 14px", color: C.text, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  🗄️ Arquivo{archivedPedidos.length > 0 ? ` (${archivedPedidos.length})` : ""}
+                </button>
                 <button onClick={() => setAddingPedido(true)}
                   style={{ background: C.accent, border: "none", borderRadius: 8, padding: "9px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   + Novo Pedido
@@ -2664,23 +2697,44 @@ function EquipaApp({ profile }) {
               </div>
             )}
 
-            <div className="op-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}>
-              {OP_STAGES.map((stage) => {
-                const stagePedidos = filteredPedidos.filter((p) => p.stage === stage);
-                return (
-                  <div key={stage} onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDropPedido(e, stage)}
-                    style={{ minWidth: 210, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, flexShrink: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: STAGE_META[stage].color, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>{STAGE_META[stage].icon} {stage}</span><span style={{ color: C.muted, fontWeight: 600 }}>{stagePedidos.length}</span>
+            {!showArchive ? (
+              <div className="op-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}>
+                {OP_STAGES.map((stage) => {
+                  const stagePedidos = filteredPedidos.filter((p) => p.stage === stage);
+                  return (
+                    <div key={stage} onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDropPedido(e, stage)}
+                      style={{ minWidth: 210, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 10, flexShrink: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: STAGE_META[stage].color, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>{STAGE_META[stage].icon} {stage}</span><span style={{ color: C.muted, fontWeight: 600 }}>{stagePedidos.length}</span>
+                      </div>
+                      {stagePedidos.map((p) => <PedidoCard key={p.id} pedido={p} onDragStart={onDragStart} onOpen={openPedidoSeen} />)}
+                      {stagePedidos.length === 0 && (
+                        <div style={{ fontSize: 11, color: C.muted, textAlign: "center", padding: "18px 4px", opacity: 0.6 }}>Sem pedidos aqui</div>
+                      )}
                     </div>
-                    {stagePedidos.map((p) => <PedidoCard key={p.id} pedido={p} onDragStart={onDragStart} onOpen={openPedidoSeen} />)}
-                    {stagePedidos.length === 0 && (
-                      <div style={{ fontSize: 11, color: C.muted, textAlign: "center", padding: "18px 4px", opacity: 0.6 }}>Sem pedidos aqui</div>
-                    )}
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {archivedPedidos.map((p) => (
+                  <div key={p.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div onClick={() => openPedidoSeen(p.id)} style={{ cursor: "pointer", flex: 1, minWidth: 200 }}>
+                      <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>{p.client}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{TYPE_ICONS[p.type] || "📄"} {pedidoTitle(p)}</div>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Arquivado em {fmtDate(p.archivedAt)}</div>
+                    </div>
+                    <button onClick={() => reactivatePedido(p.id)}
+                      style={{ background: C.accentSoft, border: `1px solid ${C.accent}`, borderRadius: 6, padding: "6px 12px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                      ↩️ Reativar
+                    </button>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+                {archivedPedidos.length === 0 && (
+                  <div style={{ fontSize: 13, color: C.muted, textAlign: "center", padding: "30px 0" }}>Sem pedidos arquivados.</div>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -2850,12 +2904,13 @@ function ClientPortal({ profile }) {
     p.messages.forEach((m) => times.push(m.date.getTime()));
     return Math.max(...times);
   };
-  const allMyPedidos = pedidos.slice().sort((a, b) => {
+  const allMyPedidos = pedidos.filter((p) => !p.archivedAt).slice().sort((a, b) => {
     if (sortBy === "data") return b.createdAt - a.createdAt;
     if (sortBy === "prazo") return a.due - b.due;
     if (sortBy === "estado") return OP_STAGES.indexOf(a.stage) - OP_STAGES.indexOf(b.stage);
     return lastActivity(b) - lastActivity(a);
   });
+  const archivedPedidos = pedidos.filter((p) => p.archivedAt).sort((a, b) => b.archivedAt - a.archivedAt);
   const myPedidos = allMyPedidos.filter((p) => {
     if (filter === "curso" && p.stage === "Concluído") return false;
     if (filter === "concluidos" && p.stage !== "Concluído") return false;
@@ -2933,7 +2988,7 @@ function ClientPortal({ profile }) {
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
 
       <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 24 }}>
-        {[{ key: "pedidos", label: "Pedidos", icon: "📋" }, { key: "financeiro", label: "Financeiro", icon: "📊" }].map((s) => (
+        {[{ key: "pedidos", label: "Pedidos", icon: "📋" }, { key: "financeiro", label: "Financeiro", icon: "📊" }, { key: "arquivo", label: "Arquivo", icon: "🗄️" }].map((s) => (
           <span key={s.key} onClick={() => setSection(s.key)}
             style={{ padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: section === s.key ? "#fff" : C.muted, background: section === s.key ? C.accent : "transparent", display: "flex", alignItems: "center", gap: 6 }}>
             <span>{s.icon}</span>{s.label}
@@ -2942,6 +2997,32 @@ function ClientPortal({ profile }) {
       </div>
 
       {section === "financeiro" && <FinanceiroPanel clientId={profile.client_id} clientName={clientName} isEquipa={false} />}
+
+      {section === "arquivo" && (
+        <>
+          <SectionTitle>Processos arquivados</SectionTitle>
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 16 }}>Pedidos já concluídos que a equipa OPERA arquivou. Continuam aqui para consulta.</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {archivedPedidos.map((p) => (
+              <div key={p.id} onClick={() => openPedidoSeen(p.id)} className="op-card-hover"
+                style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: "14px 16px", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 8, background: C.surfaceRaised, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+                    {TYPE_ICONS[p.type] || "📄"}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{pedidoTitle(p)}</div>
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Arquivado em {fmtDate(p.archivedAt)}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {archivedPedidos.length === 0 && (
+              <div style={{ fontSize: 13, color: C.muted, textAlign: "center", padding: "30px 0" }}>Ainda não há pedidos arquivados.</div>
+            )}
+          </div>
+        </>
+      )}
 
       {section === "pedidos" && <>
       {justSubmitted && (
