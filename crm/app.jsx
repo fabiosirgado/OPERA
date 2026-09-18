@@ -919,6 +919,8 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
     e.target.value = "";
     chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, file, "cliente")));
   };
+  const archivePedido = () => { if (window.confirm("Arquivar este pedido?")) run(() => db.archivePedido(pedido.id)); };
+  const unarchivePedido = () => run(() => db.unarchivePedido(pedido.id));
   const currentIndex = OP_STAGES.indexOf(pedido.stage);
 
   return (
@@ -959,6 +961,17 @@ function PedidoDetailClient({ pedido, onClose, onReload }) {
           <div style={{ fontSize: 11, color: C.muted }}>Prazo previsto: {fmtDateTime(pedido.due)}</div>
         </div>
       </div>
+
+      {pedido.archivedAt ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "10px 14px", marginBottom: 18 }}>
+          <span style={{ fontSize: 12, color: C.muted }}>🗄️ Pedido arquivado em {fmtDate(pedido.archivedAt)}</span>
+          <button onClick={unarchivePedido} style={{ background: C.accentSoft, border: `1px solid ${C.accent}`, borderRadius: 6, padding: "6px 12px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>↩️ Reativar</button>
+        </div>
+      ) : pedido.stage === "Concluído" && (
+        <div style={{ marginBottom: 18 }}>
+          <button onClick={archivePedido} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", color: C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🗄️ Arquivar pedido</button>
+        </div>
+      )}
 
       {pedido.description && (
         <>
