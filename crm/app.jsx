@@ -1046,6 +1046,16 @@ const FIN_PERIODS = [
   { key: "trimestre", label: "Trimestre" }, { key: "semestre", label: "Semestre" }, { key: "ano", label: "Ano" },
 ];
 const FIN_BUCKET_COUNT = { dia: 14, semana: 10, mes: 12, trimestre: 8, semestre: 6, ano: 3 };
+const finBucketKeyToMonthInput = (key) => {
+  if (!key) return "";
+  const [y, m] = key.split("-").map(Number);
+  return `${y}-${String(m + 1).padStart(2, "0")}`;
+};
+const finMonthInputToBucketKey = (val) => {
+  if (!val) return null;
+  const [y, m] = val.split("-").map(Number);
+  return `${y}-${m - 1}`;
+};
 function finIsoWeek(d) {
   const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const dayNum = dt.getUTCDay() || 7;
@@ -1515,11 +1525,17 @@ function FinVisaoGeral({ granularity, setGranularity, selectedBucketKey, setSele
           ))}
         </div>
         {granularity === "mes" && (
-          <select value={selectedBucketKey || ""} onChange={(e) => setSelectedBucketKey(e.target.value || null)}
-            style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 12.5, fontWeight: 600 }}>
-            <option value="">📅 Mês mais recente</option>
-            {buckets.slice().reverse().map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
-          </select>
+          <input type="month" value={finBucketKeyToMonthInput(selectedBucketKey || (buckets.length ? buckets[buckets.length - 1].key : ""))}
+            min={buckets.length ? finBucketKeyToMonthInput(buckets[0].key) : undefined}
+            max={finBucketKeyToMonthInput(finBucketInfo(new Date(), "mes").key)}
+            onChange={(e) => setSelectedBucketKey(finMonthInputToBucketKey(e.target.value))}
+            style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", color: C.text, fontSize: 12.5, fontWeight: 600, colorScheme: C.text === THEMES.dark.text ? "dark" : "light" }} />
+        )}
+        {granularity === "ano" && (
+          <input type="number" value={selectedBucketKey || (buckets.length ? buckets[buckets.length - 1].key : new Date().getFullYear())}
+            min={buckets.length ? buckets[0].key : undefined} max={new Date().getFullYear()}
+            onChange={(e) => setSelectedBucketKey(e.target.value || null)}
+            style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", color: C.text, fontSize: 12.5, fontWeight: 600, width: 90 }} />
         )}
       </div>
 
@@ -1821,8 +1837,10 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
   const buckets = finBuildBuckets(despesas, receitas, granularity);
   const selectedIndex = selectedBucketKey ? buckets.findIndex((b) => b.key === selectedBucketKey) : -1;
   const currentIndex = selectedIndex >= 0 ? selectedIndex : buckets.length - 1;
-  const current = buckets[currentIndex] || { receita: 0, despesa: 0 };
-  const previous = buckets[currentIndex - 1] || { receita: 0, despesa: 0 };
+  const current = selectedIndex === -1 && selectedBucketKey
+    ? { key: selectedBucketKey, label: "", receita: 0, despesa: 0, byRubrica: {}, byFornecedor: {} }
+    : (buckets[currentIndex] || { receita: 0, despesa: 0 });
+  const previous = selectedIndex >= 0 ? (buckets[selectedIndex - 1] || { receita: 0, despesa: 0 }) : (buckets[buckets.length - 2] || { receita: 0, despesa: 0 });
 
   const addDespesa = async (payload) => { const row = await db.addDespesa({ client_id: clientId, source: "manual", ...payload }); setDespesas((prev) => [row, ...prev]); };
   const addReceita = async (payload) => { const row = await db.addReceita({ client_id: clientId, source: "manual", ...payload }); setReceitas((prev) => [row, ...prev]); };
