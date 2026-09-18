@@ -641,6 +641,13 @@ function EquipaPermissionsPanel({ currentProfileId }) {
   const reload = () => db.listEquipaProfiles().then(setProfiles).catch((e) => setLoadError(e.message)).finally(() => setLoading(false));
   useEffect(() => { reload(); }, []);
 
+  useEffect(() => {
+    const channel = sb.channel("equipa-permissoes-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => reload())
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  }, []);
+
   const togglePermission = (p, key, value) => {
     const nextPermissions = { ...(p.permissions || {}), [key]: value };
     setProfiles((prev) => prev.map((row) => (row.id === p.id ? { ...row, permissions: nextPermissions } : row)));
@@ -2313,11 +2320,20 @@ function EquipaApp({ profile }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const openClientIdRef = useRef(openClientId);
+  useEffect(() => { openClientIdRef.current = openClientId; }, [openClientId]);
+
   useEffect(() => {
     const channel = sb.channel("equipa-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, () => reloadPedidos())
       .on("postgres_changes", { event: "*", schema: "public", table: "pedido_mensagens" }, () => reloadPedidos())
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedido_tasks" }, () => reloadPedidos())
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedido_notes" }, () => reloadPedidos())
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedido_attachments" }, () => reloadPedidos())
       .on("postgres_changes", { event: "*", schema: "public", table: "deals" }, () => reloadDeals())
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => reloadClients())
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_notes" }, () => { if (openClientIdRef.current) reloadClientExtra(openClientIdRef.current); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_activities" }, () => { if (openClientIdRef.current) reloadClientExtra(openClientIdRef.current); })
       .subscribe();
     return () => sb.removeChannel(channel);
   }, []);
