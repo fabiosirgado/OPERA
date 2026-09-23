@@ -73,6 +73,10 @@
     border-radius:12px;color:#fff;font-family:inherit;font-weight:400;font-size:16px;line-height:1.5;padding:14px 16px}
   textarea::placeholder{color:#6F82AE}
   textarea:focus{outline:none;border-color:var(--blue)}
+  input.field{width:100%;max-width:420px;height:52px;background:var(--navy-2);border:1px solid var(--line);
+    border-radius:12px;color:#fff;font-family:inherit;font-weight:400;font-size:16px;padding:0 16px}
+  input.field::placeholder{color:#6F82AE}
+  input.field:focus{outline:none;border-color:var(--blue)}
   :focus-visible{outline:2px solid var(--blue-soft);outline-offset:2px}
 
   .send{margin-top:40px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
@@ -106,14 +110,20 @@
 </header>
 
 <div class="progress" aria-hidden="true">
-  <div class="wrap"><span id="pcount">0 de 8 respondidas</span><div class="track"><div class="fill" id="pfill"></div></div></div>
+  <div class="wrap"><span id="pcount">0 de 9 respondidas</span><div class="track"><div class="fill" id="pfill"></div></div></div>
 </div>
 
 <main class="wrap">
 <form id="f" novalidate>
   <input type="hidden" name="ciclo" id="ciclo">
-  <input type="hidden" name="cliente" id="cliente">
   <p hidden><label>Não preencher <input name="bot-field"></label></p>
+
+  <section class="q" data-req="email">
+    <h2>O teu email</h2>
+    <p class="ask"><label for="email">Para sabermos quem respondeu</label></p>
+    <input class="field" type="email" id="email" name="email" maxlength="190" placeholder="nome@exemplo.com" autocomplete="email">
+    <div class="hint">Escreve um email válido.</div>
+  </section>
 
   <section class="q" data-req="satisfacao_geral">
     <h2>Satisfação geral</h2>
@@ -239,9 +249,11 @@ const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
   const now = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit'}).format(new Date());
   const cicloParam = params.get('ciclo');
   form.ciclo.value = /^\d{4}-\d{2}$/.test(cicloParam||'') ? cicloParam : now.slice(0,7);
-  form.cliente.value = (params.get('c') || '').slice(0,120);
 
-  const REQUIRED = ['satisfacao_geral','legal','financeiro','processual','usa_sa','opera_os','eficiencia','nps'];
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const REQUIRED = ['email','satisfacao_geral','legal','financeiro','processual','usa_sa','opera_os','eficiencia','nps'];
+
+  document.getElementById('email').addEventListener('input', ()=>{ clearInvalid('email'); update(); });
 
   // Construir escalas
   document.querySelectorAll('.scale').forEach(scale=>{
@@ -305,6 +317,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
   function answered(){
     return REQUIRED.filter(n=>{
       if(n==='usa_sa') return form.usa_sa.value==='nao' || (form.usa_sa.value==='sim' && form.sa.value!=='');
+      if(n==='email') return EMAIL_RE.test(form.elements.email.value.trim());
       return form.elements[n].value!=='';
     }).length;
   }
@@ -325,6 +338,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
     REQUIRED.forEach(n=>{
       let ok = form.elements[n].value!=='';
       if(n==='usa_sa') ok = form.usa_sa.value==='nao' || (form.usa_sa.value==='sim' && form.sa.value!=='');
+      if(n==='email') ok = EMAIL_RE.test(form.elements.email.value.trim());
       if(!ok){ const q=document.querySelector('.q[data-req="'+n+'"]'); q.classList.add('invalid'); firstBad = firstBad||q; }
     });
     if(firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'start'}); msg.textContent='Faltam respostas obrigatórias.'; msg.className='msg err'; return; }
@@ -334,7 +348,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
     const fd = new FormData(form);
     const row = {
       ciclo: form.ciclo.value,
-      cliente: form.cliente.value || null,
+      cliente: (fd.get('email')||'').trim() || null,
       satisfacao_geral: toInt(fd.get('satisfacao_geral')),
       legal: toInt(fd.get('legal')),
       financeiro: toInt(fd.get('financeiro')),
