@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feedback OPERA</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --abyss:#070F26; --navy:#0D1B40; --navy-2:#15285A; --line:#223A73;
+    --blue:#2F7BFF; --blue-soft:#8DB4FF; --ice:#EAF1FF; --muted:#9AADD6; --error:#FF8A8A;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  html{background:#070F26}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px)}
+  body{margin:0;min-height:100vh;color:var(--ice);
+    font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:radial-gradient(1200px 600px at 85% -10%,#1B3A86 0%,transparent 60%),linear-gradient(180deg,var(--navy) 0%,var(--abyss) 100%) fixed;
+    -webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px}
+
+  header.hero{padding:56px 0 36px}
+  .brand{font-weight:800;letter-spacing:.14em;font-size:15px;color:#fff}
+  .brand small{display:block;letter-spacing:.02em;font-weight:500;color:var(--muted);font-size:13px;margin-top:2px}
+  h1{font-size:clamp(34px,6vw,52px);line-height:1.05;margin:40px 0 16px;font-weight:800;letter-spacing:-.02em;color:#fff}
+  .lead{color:var(--muted);font-size:18px;max-width:36em;margin:0}
+  .lead strong{color:var(--ice);font-weight:600}
+
+  .progress{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(7,15,38,.86);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .progress .wrap{display:flex;align-items:center;gap:14px;height:52px;font-size:14px;color:var(--muted)}
+  .track{flex:1;height:4px;background:var(--line);border-radius:4px;overflow:hidden}
+  .fill{height:100%;width:0;background:var(--blue);transition:width .35s ease}
+
+  form{padding:12px 0 80px}
+  .q{padding:34px 0;border-bottom:1px solid var(--line)}
+  .q:last-of-type{border-bottom:0}
+  .q h2{font-size:14px;font-weight:600;color:var(--blue-soft);margin:0 0 6px}
+  .q p.ask{font-size:21px;font-weight:600;margin:0 0 20px;color:#fff;line-height:1.3}
+  .q.invalid p.ask{color:var(--error)}
+  .q .hint{display:none;color:var(--error);font-size:14px;margin-top:10px}
+  .q.invalid .hint{display:block}
+
+  /* Escala: a barra enche até ao valor escolhido */
+  .scale{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px}
+  .scale button{appearance:none;border:1px solid var(--line);background:var(--navy-2);color:var(--ice);
+    font-family:inherit;font-weight:600;font-size:16px;line-height:1;height:52px;cursor:pointer;border-radius:0;transition:background .15s,border-color .15s}
+  .scale button:first-child{border-radius:10px 0 0 10px}
+  .scale button:last-child{border-radius:0 10px 10px 0}
+  .scale button:hover{border-color:var(--blue-soft)}
+  .scale button.on{background:rgba(47,123,255,.35);border-color:rgba(47,123,255,.55)}
+  .scale button.picked{background:var(--blue);border-color:var(--blue);color:#fff}
+  .ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
+  .na{margin-top:14px;appearance:none;background:none;border:1px dashed var(--line);color:var(--muted);
+    font-family:inherit;font-weight:500;font-size:14px;padding:8px 14px;border-radius:999px;cursor:pointer}
+  .na[aria-pressed="true"]{border-style:solid;border-color:var(--blue-soft);color:#fff;background:var(--navy-2)}
+  .scale.muted button{opacity:.35}
+
+  .choice{display:flex;gap:10px}
+  .choice button{flex:0 0 120px;appearance:none;height:52px;border-radius:10px;border:1px solid var(--line);
+    background:var(--navy-2);color:var(--ice);font-family:inherit;font-weight:600;font-size:16px;cursor:pointer}
+  .choice button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+  .sub{margin-top:26px;display:none}
+  .sub.show{display:block}
+  .sub p.ask{font-size:18px}
+
+  textarea{width:100%;min-height:120px;resize:vertical;background:var(--navy-2);border:1px solid var(--line);
+    border-radius:12px;color:#fff;font-family:inherit;font-weight:400;font-size:16px;line-height:1.5;padding:14px 16px}
+  textarea::placeholder{color:#6F82AE}
+  textarea:focus{outline:none;border-color:var(--blue)}
+  :focus-visible{outline:2px solid var(--blue-soft);outline-offset:2px}
+
+  .send{margin-top:40px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .send button{appearance:none;border:0;background:#fff;color:var(--navy);font-family:inherit;font-weight:700;font-size:17px;
+    padding:18px 34px;border-radius:12px;cursor:pointer}
+  .send button:disabled{opacity:.6;cursor:wait}
+  .send .msg{color:var(--muted);font-size:14px}
+  .send .msg.err{color:var(--error)}
+
+  .done{display:none;padding:40px 0 120px}
+  .done.show{display:block}
+  .done h2{font-size:clamp(30px,5vw,44px);line-height:1.1;margin:0 0 14px;color:#fff;font-weight:800;letter-spacing:-.02em}
+  .done p{color:var(--muted);font-size:18px;max-width:34em}
+  .tick{width:56px;height:56px;border-radius:50%;background:var(--blue);display:grid;place-items:center;margin-bottom:28px}
+
+  footer{color:#5F72A0;font-size:13px;padding:0 0 40px}
+  @media (max-width:560px){
+    .scale{grid-template-columns:repeat(var(--half),1fr)}
+    .scale button,.scale button:first-child,.scale button:last-child{border-radius:8px}
+    .choice button{flex:1}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero wrap">
+  <div class="brand">OPERA<small>You sell. We operate.</small></div>
+  <h1>Como está a correr a tua experiência com a OPERA?</h1>
+  <p class="lead">São <strong>menos de 2 minutos</strong>. As tuas respostas mostram-nos onde melhorar e garantem que continuamos a acrescentar valor ao teu negócio.</p>
+</header>
+
+<div class="progress" aria-hidden="true">
+  <div class="wrap"><span id="pcount">0 de 8 respondidas</span><div class="track"><div class="fill" id="pfill"></div></div></div>
+</div>
+
+<main class="wrap">
+<form id="f" novalidate>
+  <input type="hidden" name="ciclo" id="ciclo">
+  <input type="hidden" name="cliente" id="cliente">
+  <p hidden><label>Não preencher <input name="bot-field"></label></p>
+
+  <section class="q" data-req="satisfacao_geral">
+    <h2>Satisfação geral</h2>
+    <p class="ask" id="l-sat">De 1 a 10, quão satisfeito estás com a OPERA?</p>
+    <div class="scale" data-for="satisfacao_geral" data-min="1" data-max="10" aria-labelledby="l-sat"></div>
+    <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+    <input type="hidden" name="satisfacao_geral">
+    <div class="hint">Escolhe um valor de 1 a 10.</div>
+  </section>
+
+  <section class="q" data-req="legal">
+    <h2>Legal</h2>
+    <p class="ask" id="l-legal">Como avalias o serviço de Legal da OPERA?</p>
+    <div class="scale" data-for="legal" data-min="1" data-max="10" aria-labelledby="l-legal"></div>
+    <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+    <button type="button" class="na" data-for="legal" aria-pressed="false">Não utilizo este serviço</button>
+    <input type="hidden" name="legal">
+    <div class="hint">Escolhe um valor ou indica que não utilizas.</div>
+  </section>
+
+  <section class="q" data-req="financeiro">
+    <h2>Financeiro</h2>
+    <p class="ask" id="l-fin">Como avalias o serviço de Financeiro da OPERA?</p>
+    <div class="scale" data-for="financeiro" data-min="1" data-max="10" aria-labelledby="l-fin"></div>
+    <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+    <button type="button" class="na" data-for="financeiro" aria-pressed="false">Não utilizo este serviço</button>
+    <input type="hidden" name="financeiro">
+    <div class="hint">Escolhe um valor ou indica que não utilizas.</div>
+  </section>
+
+  <section class="q" data-req="processual">
+    <h2>Processual e Administrativo</h2>
+    <p class="ask" id="l-proc">Como avalias o serviço Processual e Administrativo da OPERA?</p>
+    <div class="scale" data-for="processual" data-min="1" data-max="10" aria-labelledby="l-proc"></div>
+    <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+    <button type="button" class="na" data-for="processual" aria-pressed="false">Não utilizo este serviço</button>
+    <input type="hidden" name="processual">
+    <div class="hint">Escolhe um valor ou indica que não utilizas.</div>
+  </section>
+
+  <section class="q" data-req="usa_sa">
+    <h2>OPERA SA, gestão de leads</h2>
+    <p class="ask">Utilizas atualmente o OPERA SA?</p>
+    <div class="choice" role="group">
+      <button type="button" data-sa="sim" aria-pressed="false">Sim</button>
+      <button type="button" data-sa="nao" aria-pressed="false">Não</button>
+    </div>
+    <input type="hidden" name="usa_sa">
+    <div class="hint">Indica se utilizas o OPERA SA.</div>
+    <div class="sub" id="sa-sub">
+      <p class="ask" id="l-sa">De 1 a 10, como avalias o serviço OPERA SA?</p>
+      <div class="scale" data-for="sa" data-min="1" data-max="10" aria-labelledby="l-sa"></div>
+      <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+      <input type="hidden" name="sa">
+    </div>
+  </section>
+
+  <section class="q" data-req="opera_os">
+    <h2>OPERA OS, a plataforma da OPERA</h2>
+    <p class="ask" id="l-os">Como avalias a tua experiência com o OPERA OS?</p>
+    <div class="scale" data-for="opera_os" data-min="1" data-max="10" aria-labelledby="l-os"></div>
+    <div class="ends"><span>Muito insatisfeito</span><span>Muito satisfeito</span></div>
+    <button type="button" class="na" data-for="opera_os" aria-pressed="false">Ainda não utilizei</button>
+    <input type="hidden" name="opera_os">
+    <div class="hint">Escolhe um valor ou indica que ainda não utilizaste.</div>
+  </section>
+
+  <section class="q" data-req="eficiencia">
+    <h2>Eficiência</h2>
+    <p class="ask" id="l-ef">Quanto sentes que a OPERA te ajuda a ganhar tempo e eficiência no teu negócio?</p>
+    <div class="scale" data-for="eficiencia" data-min="1" data-max="10" aria-labelledby="l-ef"></div>
+    <div class="ends"><span>Não ajuda</span><span>Ajuda muito</span></div>
+    <input type="hidden" name="eficiencia">
+    <div class="hint">Escolhe um valor de 1 a 10.</div>
+  </section>
+
+  <section class="q" data-req="nps">
+    <h2>Recomendação</h2>
+    <p class="ask" id="l-nps">De 0 a 10, qual a probabilidade de recomendares a OPERA a outro profissional do setor imobiliário?</p>
+    <div class="scale" data-for="nps" data-min="0" data-max="10" aria-labelledby="l-nps"></div>
+    <div class="ends"><span>Nada provável</span><span>Extremamente provável</span></div>
+    <input type="hidden" name="nps">
+    <div class="hint">Escolhe um valor de 0 a 10.</div>
+  </section>
+
+  <section class="q">
+    <h2>Sugestões</h2>
+    <p class="ask"><label for="sugestoes">Que serviços, tarefas ou áreas gostarias que a OPERA passasse a assegurar no futuro?</label></p>
+    <textarea id="sugestoes" name="sugestoes" maxlength="3000" placeholder="Escreve à vontade (opcional)"></textarea>
+  </section>
+
+  <section class="q">
+    <h2>Feedback</h2>
+    <p class="ask"><label for="melhoria">Se pudesses mudar ou melhorar uma coisa na OPERA, o que seria?</label></p>
+    <textarea id="melhoria" name="melhoria" maxlength="3000" placeholder="Escreve à vontade (opcional)"></textarea>
+
+    <div class="send">
+      <button type="submit" id="btn">Enviar feedback</button>
+      <span class="msg" id="msg" role="status"></span>
+    </div>
+  </section>
+</form>
+
+<section class="done" id="done" aria-live="polite">
+  <div class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+  <h2>Feedback enviado. Obrigado.</h2>
+  <p>Lemos todas as respostas. Se deixaste uma sugestão ou algo a melhorar, vais ouvir falar de nós em breve.</p>
+</section>
+</main>
+
+<footer class="wrap">OPERA, opera-os.com</footer>
+
+<script>
+/* === Configuração Supabase (obrigatória: é aqui que as respostas ficam guardadas) === */
+const SUPABASE_URL = "https://tdxooskqhpncylwmakvv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
+
+(function(){
+  const form = document.getElementById('f');
+  const params = new URLSearchParams(location.search);
+
+  // Ciclo mensal: vem do link (?ciclo=2026-10) ou assume o mês atual em Lisboa
+  const now = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit'}).format(new Date());
+  const cicloParam = params.get('ciclo');
+  form.ciclo.value = /^\d{4}-\d{2}$/.test(cicloParam||'') ? cicloParam : now.slice(0,7);
+  form.cliente.value = (params.get('c') || '').slice(0,120);
+
+  const REQUIRED = ['satisfacao_geral','legal','financeiro','processual','usa_sa','opera_os','eficiencia','nps'];
+
+  // Construir escalas
+  document.querySelectorAll('.scale').forEach(scale=>{
+    const name = scale.dataset.for, min=+scale.dataset.min, max=+scale.dataset.max, n=max-min+1;
+    scale.style.setProperty('--n', n);
+    scale.style.setProperty('--half', Math.ceil(n/2));
+    scale.setAttribute('role','radiogroup');
+    for(let v=min; v<=max; v++){
+      const b=document.createElement('button');
+      b.type='button'; b.textContent=v; b.dataset.v=v;
+      b.setAttribute('role','radio'); b.setAttribute('aria-checked','false');
+      b.setAttribute('aria-label', v+' de '+max);
+      b.addEventListener('click',()=>pick(name,v));
+      scale.appendChild(b);
+    }
+  });
+
+  function pick(name, v){
+    const input = form.elements[name];
+    input.value = v;
+    const scale = document.querySelector('.scale[data-for="'+name+'"]');
+    scale.classList.remove('muted');
+    scale.querySelectorAll('button').forEach(b=>{
+      const bv=+b.dataset.v;
+      b.classList.toggle('on', bv < v);
+      b.classList.toggle('picked', bv === v);
+      b.setAttribute('aria-checked', bv===v ? 'true':'false');
+    });
+    const na = document.querySelector('.na[data-for="'+name+'"]');
+    if(na) na.setAttribute('aria-pressed','false');
+    clearInvalid(name); update();
+  }
+
+  document.querySelectorAll('.na').forEach(na=>{
+    na.addEventListener('click',()=>{
+      const name=na.dataset.for, on = na.getAttribute('aria-pressed')!=='true';
+      na.setAttribute('aria-pressed', on);
+      const scale = document.querySelector('.scale[data-for="'+name+'"]');
+      scale.querySelectorAll('button').forEach(b=>{b.classList.remove('on','picked');b.setAttribute('aria-checked','false')});
+      scale.classList.toggle('muted', on);
+      form.elements[name].value = on ? 'na' : '';
+      clearInvalid(name); update();
+    });
+  });
+
+  document.querySelectorAll('[data-sa]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('[data-sa]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+      form.usa_sa.value = b.dataset.sa;
+      document.getElementById('sa-sub').classList.toggle('show', b.dataset.sa==='sim');
+      if(b.dataset.sa==='nao'){ form.sa.value=''; document.querySelectorAll('.scale[data-for="sa"] button').forEach(x=>x.classList.remove('on','picked')); }
+      clearInvalid('usa_sa'); update();
+    });
+  });
+
+  function clearInvalid(name){
+    const q=document.querySelector('.q[data-req="'+name+'"]'); if(q) q.classList.remove('invalid');
+    if(name==='sa'){ const q2=document.querySelector('.q[data-req="usa_sa"]'); q2 && q2.classList.remove('invalid'); }
+  }
+
+  function answered(){
+    return REQUIRED.filter(n=>{
+      if(n==='usa_sa') return form.usa_sa.value==='nao' || (form.usa_sa.value==='sim' && form.sa.value!=='');
+      return form.elements[n].value!=='';
+    }).length;
+  }
+  function update(){
+    const a=answered();
+    document.getElementById('pcount').textContent = a+' de '+REQUIRED.length+' respondidas';
+    document.getElementById('pfill').style.width = (a/REQUIRED.length*100)+'%';
+  }
+
+  const toInt = v => (v===''||v==='na'||v==null) ? null : parseInt(v,10);
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const msg=document.getElementById('msg'), btn=document.getElementById('btn');
+    msg.textContent=''; msg.className='msg';
+
+    let firstBad=null;
+    REQUIRED.forEach(n=>{
+      let ok = form.elements[n].value!=='';
+      if(n==='usa_sa') ok = form.usa_sa.value==='nao' || (form.usa_sa.value==='sim' && form.sa.value!=='');
+      if(!ok){ const q=document.querySelector('.q[data-req="'+n+'"]'); q.classList.add('invalid'); firstBad = firstBad||q; }
+    });
+    if(firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'start'}); msg.textContent='Faltam respostas obrigatórias.'; msg.className='msg err'; return; }
+
+    btn.disabled=true; btn.textContent='A enviar…';
+
+    const fd = new FormData(form);
+    const row = {
+      ciclo: form.ciclo.value,
+      cliente: form.cliente.value || null,
+      satisfacao_geral: toInt(fd.get('satisfacao_geral')),
+      legal: toInt(fd.get('legal')),
+      financeiro: toInt(fd.get('financeiro')),
+      processual: toInt(fd.get('processual')),
+      usa_sa: fd.get('usa_sa')==='sim',
+      sa: fd.get('usa_sa')==='sim' ? toInt(fd.get('sa')) : null,
+      opera_os: toInt(fd.get('opera_os')),
+      eficiencia: toInt(fd.get('eficiencia')),
+      nps: toInt(fd.get('nps')),
+      sugestoes: (fd.get('sugestoes')||'').trim() || null,
+      melhoria: (fd.get('melhoria')||'').trim() || null
+    };
+
+    // Anti-spam: se o campo escondido vier preenchido, finge sucesso e não grava
+    const isBot = (fd.get('bot-field')||'') !== '';
+    let ok = isBot;
+    if(!isBot && SUPABASE_URL && SUPABASE_ANON_KEY){
+      try{
+        const r = await fetch(SUPABASE_URL+'/rest/v1/feedback_respostas', {
+          method:'POST',
+          headers:{apikey:SUPABASE_ANON_KEY, Authorization:'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json', Prefer:'return=minimal'},
+          body: JSON.stringify(row)
+        });
+        ok = r.ok;
+      }catch(_){ ok = false; }
+    }
+    if(ok){
+      form.style.display='none';
+      document.querySelector('.progress').style.display='none';
+      document.querySelector('.hero').style.display='none';
+      document.getElementById('done').classList.add('show');
+      window.scrollTo({top:0});
+    } else {
+      btn.disabled=false; btn.textContent='Enviar feedback';
+      msg.textContent='Não foi possível enviar. Verifica a ligação à internet e tenta outra vez.'; msg.className='msg err';
+    }
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
