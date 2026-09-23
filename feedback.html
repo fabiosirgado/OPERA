@@ -230,7 +230,7 @@
 <section class="done" id="done" aria-live="polite">
   <div class="tick"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
   <h2>Feedback enviado. Obrigado.</h2>
-  <p>Lemos todas as respostas. Se deixaste uma sugestão ou algo a melhorar, vais ouvir falar de nós em breve.</p>
+  <p>Lemos todas as respostas. Se deixaste uma sugestão ou algo a melhorar, a equipa entra em contacto contigo em breve.</p>
 </section>
 </main>
 
@@ -245,10 +245,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq";
   const form = document.getElementById('f');
   const params = new URLSearchParams(location.search);
 
-  // Ciclo mensal: vem do link (?ciclo=2026-10) ou assume o mês atual em Lisboa
-  const now = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit'}).format(new Date());
+  // Ciclo mensal: vem do link (?ciclo=2026-10) ou é calculado a partir da data em Lisboa.
+  // Até ao dia 15, assume-se que a resposta ainda é sobre o mês anterior (dá tempo aos
+  // clientes de responderem ao inquérito enviado no início do mês); a partir do dia 16,
+  // passa a assumir o mês corrente.
+  const [hojeAno, hojeMes, hojeDia] = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).split('-').map(Number);
+  let cicloAno = hojeAno, cicloMes = hojeMes;
+  if(hojeDia <= 15){ cicloMes -= 1; if(cicloMes === 0){ cicloMes = 12; cicloAno -= 1; } }
+  const cicloAuto = cicloAno + '-' + String(cicloMes).padStart(2,'0');
   const cicloParam = params.get('ciclo');
-  form.ciclo.value = /^\d{4}-\d{2}$/.test(cicloParam||'') ? cicloParam : now.slice(0,7);
+  form.ciclo.value = /^\d{4}-\d{2}$/.test(cicloParam||'') ? cicloParam : cicloAuto;
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const REQUIRED = ['email','satisfacao_geral','legal','financeiro','processual','usa_sa','opera_os','eficiencia','nps'];
