@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A1538">
+<title>A Equipa Imobiliária que Não Depende de Ti | OPERA</title>
+<meta name="description" content="Guia prático para montar uma equipa imobiliária por funções: 3 pilares, 7 funções e a ordem certa para contratar.">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="OPERA">
+<meta property="og:title" content="A equipa imobiliária que não depende de ti">
+<meta property="og:description" content="Guia prático: 3 pilares, 7 funções e a ordem certa para contratar.">
+<meta property="og:url" content="https://opera-os.com/guia-equipa">
+<meta property="og:image" content="https://opera-os.com/guia-equipa-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="pt_PT">
+<meta name="twitter:card" content="summary_large_image">
+<!-- META PIXEL: cola aqui o código base do teu Pixel (Gestor de Eventos do Meta) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#0A1538; --bg2:#0E1D4D; --surface:#132657; --line:#24397A;
+  --ink:#F2F5FF; --muted:#9AA8D6; --blue:#3B82FF; --blue-soft:#1B3A8C;
+  --acq:#3DDC97; --ops:#FF5C7A; --del:#B98CFF;
+  --s1:8px; --s2:16px; --s3:24px; --s4:40px; --s5:64px; --s6:96px;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0A1538; --bg2:#0E1D4D; --surface:#132657; --line:#24397A; --ink:#F2F5FF; --muted:#9AA8D6; }
+}
+:root[data-theme="dark"]{ --bg:#0A1538; --bg2:#0E1D4D; --surface:#132657; --line:#24397A; --ink:#F2F5FF; --muted:#9AA8D6; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);background-image:radial-gradient(120% 60% at 80% 0%, #1A3480 0%, transparent 60%);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:6px}
+.wrap{max-width:980px;margin:0 auto;padding:0 22px}
+section{padding:var(--s6) 0}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.02em}
+h2{font-size:clamp(30px,6vw,46px);line-height:1.05;font-weight:800;max-width:18ch}
+.lead{color:var(--muted);max-width:56ch;margin:var(--s2) 0 0;font-size:18px}
+
+/* HERO */
+.hero{padding:var(--s5) 0 var(--s5)}
+.brand{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:.08em}
+.brand span{color:var(--blue)}
+.hero h1{font-size:clamp(44px,11vw,104px);line-height:.92;font-weight:800;margin-top:var(--s5);max-width:11ch}
+.hero p{font-size:clamp(18px,2.6vw,21px);color:var(--muted);max-width:44ch;margin:24px 0 0}
+.hero-stack{display:flex;gap:var(--s1);margin-top:var(--s4);flex-wrap:wrap}
+.hero-stack span{font-family:var(--display);font-weight:700;font-size:15px;padding:10px 16px;border-radius:999px;border:1.5px solid currentColor}
+.c-acq{color:var(--acq)} .c-ops{color:var(--ops)} .c-del{color:var(--del)}
+
+/* ORG MAP */
+.toggle{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:4px;margin-top:var(--s4)}
+.toggle button{font:600 15px var(--body);color:var(--muted);background:none;border:0;padding:10px 16px;border-radius:999px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.map{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s3);margin-top:var(--s4)}
+.pillar{border-top:4px solid var(--pc);padding-top:16px}
+.pillar h3{font-size:22px;font-weight:700}
+.pillar .goal{color:var(--muted);font-size:15px;margin:6px 0 16px;min-height:3.1em}
+.role{display:block;width:100%;text-align:left;background:var(--surface);color:var(--ink);border:1.5px solid transparent;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;font:600 16px var(--body);transition:border-color .2s, transform .2s}
+.role small{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
+.role[aria-expanded="true"]{border-color:var(--pc)}
+.role.opera{background:linear-gradient(135deg,var(--blue-soft),var(--surface));border-color:var(--blue)}
+.opera-list{list-style:none;padding:0;margin:10px 0 0;font-weight:400;font-size:14px;color:var(--muted)}
+.opera-list li::before{content:"✓ ";color:var(--blue);font-weight:700}
+.detail{margin-top:var(--s3);background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--pc,var(--blue));border-radius:16px;padding:var(--s3);display:none}
+.detail.show{display:block;animation:rise .25s ease}
+.detail h4{font-family:var(--display);font-size:24px;margin:0 0 6px}
+.detail .mission{font-size:18px;margin:0 0 14px}
+.detail ul{margin:0 0 14px;padding-left:20px}
+.detail li{margin:4px 0}
+.detail .kpi{font-size:15px;color:var(--muted);margin:0}
+.detail .kpi b{color:var(--ink)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* CALCULATOR */
+.calc{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--s4);margin-top:var(--s4);align-items:start}
+.field{margin-bottom:var(--s3)}
+.field label{display:flex;justify-content:space-between;gap:12px;font-weight:600;font-size:15px}
+.field output{font-family:var(--display);font-weight:700;color:var(--del)}
+input[type=range]{width:100%;margin-top:10px;accent-color:var(--del);height:28px}
+.result{background:var(--surface);border-radius:20px;padding:var(--s3);border:1px solid var(--line)}
+.result .big{font-family:var(--display);font-weight:800;font-size:clamp(48px,9vw,72px);line-height:1;color:var(--del)}
+.result .row{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:12px 0 0;margin-top:12px;font-size:15px;color:var(--muted)}
+.result .row b{color:var(--ink);font-family:var(--display);font-size:18px}
+.funnel{display:flex;gap:4px;margin:18px 0 6px;flex-wrap:wrap}
+.funnel i{width:14px;height:22px;border-radius:4px;background:var(--line)}
+.funnel i.sold{background:var(--acq)} .funnel i.rec{background:var(--del)}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* PHASES */
+.phases{margin-top:var(--s4);border-left:2px solid var(--line);padding-left:0}
+.phase{position:relative;padding:0 0 8px 34px}
+.phase::before{content:attr(data-n);position:absolute;left:-17px;top:2px;width:32px;height:32px;border-radius:50%;background:var(--bg);border:2px solid var(--line);display:grid;place-items:center;font:700 14px var(--display);color:var(--muted)}
+.phase.open::before{background:var(--blue);border-color:var(--blue);color:#fff}
+.phase button{all:unset;cursor:pointer;display:block;width:100%;padding:4px 0 14px}
+.phase button:focus-visible{outline:3px solid var(--blue);outline-offset:4px;border-radius:6px}
+.phase h3{font-size:22px;font-weight:700}
+.phase .sig{color:var(--muted);font-size:15px}
+.phase .body{display:none;padding:0 0 22px}
+.phase.open .body{display:block;animation:rise .25s ease}
+.who{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.who span{font-size:14px;padding:6px 12px;border-radius:999px;background:var(--surface)}
+.who .new{background:var(--blue);color:#fff;font-weight:600}
+
+/* DIAGNOSTIC */
+.checks{margin-top:var(--s4);display:grid;gap:var(--s1)}
+.check{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border-radius:14px;padding:16px 18px;cursor:pointer;border:1.5px solid transparent}
+.check:has(input:checked){border-color:var(--ops)}
+.check input{appearance:none;flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--muted);margin:1px 0 0;display:grid;place-items:center;cursor:pointer}
+.check input:checked{background:var(--ops);border-color:var(--ops)}
+.check input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.verdict{margin-top:var(--s3);padding:var(--s3);border-radius:16px;background:var(--bg2);border:1px solid var(--line)}
+.verdict b{font-family:var(--display);font-size:22px;display:block;margin-bottom:4px}
+.meter{height:8px;background:var(--line);border-radius:99px;margin:14px 0 0;overflow:hidden}
+.meter div{height:100%;width:0;background:var(--ops);transition:width .3s}
+
+/* MISTAKES */
+.mistakes{counter-reset:m;list-style:none;padding:0;margin:var(--s4) 0 0;display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.mistakes li{counter-increment:m}
+.mistakes li::before{content:counter(m);font:800 44px/1 var(--display);color:var(--ops);display:block;margin-bottom:8px}
+.mistakes b{display:block;font-family:var(--display);font-size:20px;margin-bottom:4px}
+.mistakes span{color:var(--muted)}
+
+/* GUIA */
+.jump{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(10,21,56,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.jump .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
+.jump a{flex:none;text-decoration:none;font:600 14px var(--body);padding:8px 14px;border-radius:999px;color:var(--muted);border:1px solid var(--line)}
+.jump a:hover{color:var(--ink)}
+.intro-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--s1);margin:var(--s4) 0 0;padding:0;list-style:none}
+.intro-list li{padding:14px 16px;border-radius:12px;background:var(--surface);font-weight:600}
+.intro-list li small{display:block;color:var(--muted);font-weight:400;font-size:14px}
+.chapter{border-top:1px solid var(--line)}
+.ch-head{display:grid;grid-template-columns:auto 1fr;gap:var(--s1) var(--s3);align-items:start}
+.ch-num{font:800 clamp(80px,16vw,150px)/.8 var(--display);color:var(--pc);grid-row:span 2}
+.ch-head h2{max-width:none}
+.ch-head .lead{margin-top:0}
+.prose{max-width:64ch;margin-top:var(--s4)}
+.prose p{margin:0 0 var(--s2)}.prose p:last-child{margin-bottom:0}
+.signs{margin:var(--s4) 0 0;padding:var(--s3);border-left:4px solid var(--pc);background:var(--bg2);border-radius:0 14px 14px 0;max-width:64ch}
+.signs b{font-family:var(--display);font-size:18px;display:block;margin-bottom:6px}
+.signs ul{margin:0;padding-left:20px;color:var(--muted)}
+.fn{margin-top:var(--s5);padding-top:var(--s5);border-top:1px dashed var(--line)}
+.fn h3{font-size:clamp(28px,5vw,38px);font-weight:800;color:var(--ink)}
+.fn h3 span{display:block;font:500 17px var(--body);color:var(--pc);margin-top:6px;letter-spacing:0}
+.fn .what{font-size:19px;max-width:60ch;margin:var(--s2) 0 0}
+.fn dl{display:grid;grid-template-columns:180px 1fr;gap:0;margin:var(--s3) 0 0;border-top:1px solid var(--line)}
+.fn dt,.fn dd{padding:var(--s2) 0;border-bottom:1px solid var(--line);margin:0}
+.fn dt{font-family:var(--display);font-weight:700;color:var(--pc);padding-right:18px}
+.fn dd ul{margin:0;padding-left:20px}
+.fn dd li{margin:3px 0}
+.fn dd.warn{color:#FFC2CD}
+.ext{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);margin-top:var(--s4)}
+.ext div{padding:var(--s3);border-radius:18px;background:var(--surface)}
+.ext h3{font-size:24px;margin-bottom:8px}
+.ext p{margin:0;color:var(--muted)}
+.bridge{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);max-width:24ch;margin:0}
+@media (max-width:760px){
+  .fn dl{grid-template-columns:1fr}
+  .fn dt{padding-bottom:4px;border-bottom:0}
+  .fn dd{padding-top:0}
+  .ext{grid-template-columns:1fr}
+  .ch-head{grid-template-columns:1fr}
+  .ch-num{grid-row:auto}
+}
+
+/* COMO USAR */
+.how{display:flex;gap:var(--s2);align-items:flex-start;margin-top:var(--s4);padding:var(--s2) var(--s3);border:1px dashed var(--line);border-radius:14px;color:var(--muted);font-size:15px;max-width:64ch}
+.how ol{margin:0;padding-left:18px}
+.how li{margin:2px 0}
+.how b{color:var(--ink);font-family:var(--display);flex:none}
+.hint{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
+.explain{margin:var(--s2) 0 0;font-size:15px;color:var(--ink);line-height:1.5}
+.legend{display:flex;gap:var(--s2);flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:var(--s3)}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;background:var(--surface)}
+.legend .l-new::before{background:var(--blue)}
+@media (max-width:760px){.how{flex-direction:column;gap:var(--s1)}}
+
+/* CTA */
+.cta{background:linear-gradient(160deg,#1C3FA8 0%,#0E1D4D 70%);border-radius:28px;padding:var(--s5) var(--s4);margin:0 0 var(--s6)}
+.cta .tag{font-family:var(--display);font-weight:800;font-size:clamp(40px,9vw,76px);line-height:.95;letter-spacing:-.03em}
+.cta p{max-width:48ch;color:#C9D5FF;font-size:18px;margin:20px 0 28px}
+.btn{display:inline-block;background:var(--ink);color:var(--bg);font:700 17px var(--body);padding:16px 26px;border-radius:999px;text-decoration:none}
+.btn:hover{background:#fff}
+footer{color:var(--muted);font-size:13px;padding-bottom:32px}
+
+@media (max-width:760px){
+  section{padding:var(--s5) 0}
+  .map{grid-template-columns:1fr;gap:28px}
+  .pillar .goal{min-height:0}
+  .calc{grid-template-columns:1fr}
+  .mistakes{grid-template-columns:1fr}
+  .cta{padding:36px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+/* RESPIRAÇÃO TIPOGRÁFICA */
+body{line-height:1.65}
+h1,h2,h3{letter-spacing:-.01em}
+h2{line-height:1.15}
+.hero h1{line-height:1.04;letter-spacing:-.02em}
+.lead{line-height:1.6}
+.ch-head{row-gap:var(--s2)}
+.ch-head .lead{margin-top:var(--s1)}
+.ch-num{line-height:.85}
+.fn h3{line-height:1.15}
+.fn h3 span{margin-top:var(--s1);line-height:1.4}
+.fn dd{line-height:1.6}
+.fn dd li,.detail li,.signs li{margin:var(--s1) 0}
+.detail h4{margin-bottom:var(--s1);line-height:1.2}
+.detail .mission{line-height:1.5;margin-bottom:var(--s2)}
+.pillar .goal{margin:var(--s1) 0 var(--s3);line-height:1.5}
+.role{position:relative;overflow:hidden;padding:var(--s2) 18px;margin-bottom:12px;line-height:1.35}
+.role small{margin-top:6px;line-height:1.4}
+.intro-list li{padding:var(--s2) 18px;line-height:1.35}
+.intro-list li small{margin-top:6px}
+.mistakes b{margin-bottom:var(--s1);line-height:1.25}
+.mistakes li::before{margin-bottom:var(--s2)}
+.cta .tag{line-height:1.02}
+.cta p{line-height:1.6}
+.ext h3{margin-bottom:var(--s1);line-height:1.2}
+.phase h3{line-height:1.2;margin-bottom:6px}
+.phase .sig{line-height:1.5}
+.phase{padding-bottom:var(--s2)}
+.result .row{padding-top:var(--s2);margin-top:var(--s2)}
+.signs b{margin-bottom:var(--s1)}
+.field label{line-height:1.35}
+.hint{margin-top:6px;line-height:1.45}
+.how li{margin:4px 0}
+.check{line-height:1.45}
+
+/* MOVIMENTO */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+.ch-num.rv{transform:translateY(28px) scale(.85)}
+.ch-num.rv.in{transform:none}
+.hero h1 .w{display:inline-block;opacity:0;transform:translateY(.45em);animation:wordin .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d)}
+.hero .fade{opacity:0;animation:wordin .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d);transform:translateY(12px)}
+@keyframes wordin{to{opacity:1;transform:none}}
+.role .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--pc)}
+.role.opera .bar{background:var(--blue)}
+.role.auto .bar{animation:fill 4.5s linear forwards}
+@keyframes fill{to{width:100%}}
+.autonote{display:inline-flex;align-items:center;gap:var(--s1);margin:var(--s2) 0 0 var(--s2);font-size:14px;color:var(--muted);vertical-align:middle}
+.autonote i{width:8px;height:8px;border-radius:50%;background:var(--acq);animation:pulse 1.4s ease-in-out infinite}
+.autonote.off{display:none}
+@keyframes pulse{50%{opacity:.25}}
+.funnel i{animation:pop .45s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:var(--d,0s)}
+@keyframes pop{from{opacity:0;transform:scale(.3)}}
+.phases{position:relative}
+.phases::after{content:"";position:absolute;left:-2px;top:0;width:2px;height:var(--p,0%);background:var(--blue);transition:height .15s linear}
+.phase::before{transition:background .4s,border-color .4s,color .4s}
+.check{transition:border-color .25s,transform .25s}
+.check:active{transform:scale(.98)}
+@media (prefers-reduced-motion:reduce){
+  .rv,.hero h1 .w,.hero .fade{opacity:1!important;transform:none!important}
+}
+
+/* ===== V4: WEBSITE COM ORGANOGRAMA VIVO ===== */
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 84px)}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+a.brand{text-decoration:none}
+/* navegação */
+.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+.topnav.scrolled{background:rgba(10,21,56,.88);backdrop-filter:blur(12px);border-bottom-color:var(--line)}
+.navin{display:flex;align-items:center;gap:var(--s4);height:68px}
+.navlinks{display:flex;gap:var(--s3);margin-left:auto}
+.navlinks a{text-decoration:none;color:var(--muted);font-weight:500;font-size:15px;transition:color .2s}
+.navlinks a:hover{color:var(--ink)}
+.navcta{text-decoration:none;background:var(--ink);color:var(--bg);font-weight:600;font-size:15px;padding:11px 20px;border-radius:999px;white-space:nowrap}
+/* hero */
+.herowrap{padding:var(--s5) 0 var(--s6)}
+.herogrid{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--s5);align-items:center}
+.herowrap .hero{padding:0}
+.herowrap .hero h1{margin-top:0;font-size:clamp(42px,5.6vw,76px);line-height:1.04;max-width:none}
+.heroactions{display:flex;gap:12px;margin-top:var(--s4);flex-wrap:wrap}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ink);background:transparent}
+/* organograma animado */
+.orgviz{position:relative;aspect-ratio:1;width:100%;max-width:520px;margin:0 auto;border:1px solid var(--line);border-radius:28px;background:radial-gradient(circle at 50% 50%,rgba(59,130,255,.14),transparent 62%),var(--bg2);overflow:hidden}
+.links{position:absolute;inset:0;width:100%;height:100%}
+.links line{stroke:var(--ops);stroke-width:.35;stroke-dasharray:1.4 1.2;opacity:.75;transition:opacity .5s;animation:dash 1.1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-2.6}}
+.node{position:absolute;left:var(--ax);top:var(--ay);transform:translate(-50%,-50%);width:28%;padding:9px 6px;text-align:center;font:600 13px/1.25 var(--body);color:var(--ink);background:var(--surface);border:1.5px solid color-mix(in srgb,var(--ops) 55%,var(--line));border-radius:12px;transition:left .9s cubic-bezier(.65,0,.2,1),top .9s cubic-bezier(.65,0,.2,1),border-color .6s,background .6s;transition-delay:calc(var(--i) * 45ms)}
+.tu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;display:grid;place-items:center;background:var(--ops);color:#fff;font:800 20px var(--display);box-shadow:0 0 0 10px rgba(255,92,122,.16),0 0 0 22px rgba(255,92,122,.06);animation:beat 1.1s ease-in-out infinite;transition:top .9s cubic-bezier(.65,0,.2,1),width .6s,height .6s,border-radius .6s,background .6s,font-size .6s}
+@keyframes beat{50%{box-shadow:0 0 0 14px rgba(255,92,122,.22),0 0 0 30px rgba(255,92,122,.05)}}
+.phd{position:absolute;left:var(--x);top:15%;transform:translate(-50%,-50%);font:800 17px var(--display);color:var(--nc);opacity:0;transition:opacity .5s;white-space:nowrap}
+.phd::after{content:"";display:block;height:3px;border-radius:3px;background:var(--nc);margin-top:6px}
+.vizwrap.grouped .node{left:var(--bx);top:var(--by);border-color:var(--nc);background:color-mix(in srgb,var(--nc) 14%,var(--surface))}
+.vizwrap.grouped .links line{opacity:0}
+.vizwrap.grouped .phd{opacity:1;transition-delay:.5s}
+.vizwrap.grouped .tu{top:90%;width:64px;height:40px;border-radius:999px;font-size:15px;background:var(--blue);animation:none;box-shadow:none}
+.vizcap{position:relative;height:1.6em;margin:var(--s2) 0 0;text-align:center;color:var(--muted);font-size:15px}
+.vizcap span{position:absolute;inset:0;transition:opacity .5s}
+.vizcap .cb,.vizwrap.grouped .vizcap .ca{opacity:0}
+.vizwrap.grouped .vizcap .cb{opacity:1}
+/* o problema */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5);align-items:start;padding-top:var(--s6);padding-bottom:var(--s6);border-top:1px solid var(--line)}
+.split .intro-list{grid-template-columns:1fr 1fr;margin-top:0}
+.split .prose{margin-top:var(--s4)}
+.split h2{max-width:14ch}
+/* pilares com índice que acompanha a leitura */
+.story{padding:0}
+.storygrid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:var(--s5);align-items:start}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 100px);padding-top:var(--s6)}
+.rp{margin-bottom:var(--s3)}
+.rph{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 18px var(--display);color:var(--ink);padding:6px 0;transition:color .3s}
+.rpn{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--pc) 18%,transparent);color:var(--pc);font-size:14px;transition:background .3s,color .3s}
+.rp.on .rph{color:var(--pc)}
+.rp.on .rpn{background:var(--pc);color:var(--bg)}
+.rr{display:block;text-decoration:none;color:var(--muted);font-size:15px;line-height:1.35;padding:8px 0 8px 18px;margin-left:14px;border-left:2px solid var(--line);transition:color .3s,border-color .3s}
+.rr:hover{color:var(--ink)}
+.rr.on{color:var(--ink);border-color:var(--pc);font-weight:600}
+.railnow{display:none}
+.storycol{min-width:0}
+.storycol .chapter{padding:var(--s6) 0}
+.storycol .chapter:first-child{border-top:0}
+.storycol .fn{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 96px)}
+.bridgewrap{padding:var(--s5) 0!important}
+/* ferramentas */
+.band{padding:var(--s6) 0}
+.band.alt{background:rgba(255,255,255,.025);border-block:1px solid var(--line)}
+main > .container .cta{margin:var(--s6) 0}
+.sitefoot{border-top:1px solid var(--line);padding:var(--s4) 0}
+.footin{display:flex;justify-content:space-between;align-items:center;gap:var(--s2);color:var(--muted);font-size:15px}
+@media (max-width:980px){
+  .navlinks{display:none}
+  .navcta{margin-left:auto}
+  .herogrid{grid-template-columns:1fr;gap:var(--s4)}
+  .herowrap{padding:var(--s4) 0 var(--s5)}
+  .node{font-size:11.5px;width:29%;padding:7px 4px;border-radius:10px}
+  .phd{font-size:14px}
+  .tu{width:60px;height:60px;font-size:17px}
+  .split{grid-template-columns:1fr;gap:var(--s4);padding-top:var(--s5);padding-bottom:var(--s5)}
+  .storygrid{grid-template-columns:minmax(0,1fr);gap:0}
+  .rail{min-width:0}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 124px)}
+  .rail{top:calc(env(safe-area-inset-top,0px) + 68px);z-index:6;padding:0;margin:0 -24px;background:rgba(10,21,56,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .railin{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:10px 24px;scrollbar-width:none}
+  .rp{margin:0;flex:none}
+  .rr{display:none}
+  .rph{font-size:14px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:999px;gap:8px}
+  .rpn{width:24px;height:24px;border-radius:50%;font-size:12px}
+  .railnow{display:block;flex:none;margin:0 0 0 6px;font-size:13px;color:var(--ink);white-space:nowrap}
+  .storycol .fn{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 130px)}
+  .storycol .chapter{padding:var(--s5) 0}
+  .band{padding:var(--s5) 0}
+}
+@media (max-width:520px){
+  .split .intro-list{grid-template-columns:1fr}
+  .navcta{padding:9px 14px;font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .links line,.tu{animation:none}
+}
+
+/* ===== LETRA DA IDENTIDADE OPERA (Archivo) ===== */
+:root{--display:"Archivo","Helvetica Neue",Arial,sans-serif;--body:"Archivo","Helvetica Neue",Arial,sans-serif}
+body{font-family:var(--body)}
+h1,h2,.fn h3,.cta .tag,.bridge,.ch-num,.phd,.brand{font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.005em}
+.herowrap .hero h1{font-size:clamp(34px,4.5vw,62px);line-height:1.02}
+h2{line-height:1.05}
+.split h2{max-width:none}
+.fn h3{line-height:1.05}
+.fn h3 span{text-transform:none;font-stretch:100%;font-weight:600}
+.cta .tag{line-height:1}
+.bridge{line-height:1.12}
+.brand{letter-spacing:.02em}
+.pillar h3,.phase h3,.detail h4,.ext h3,.mistakes b,.signs b,.rph,.result .big,.field output,.intro-list li{font-stretch:112%}
+.hero-stack span,.navcta,.btn,.toggle button,.nav{font-stretch:100%}
+h1,h2,.fn h3,.bridge{text-wrap:balance}
+
+</style>
+</head>
+<body>
+
+<header class="topnav" id="topnav">
+  <div class="container navin">
+    <a class="brand" href="#top">OPERA<span>.</span></a>
+    <nav class="navlinks" aria-label="Secções">
+      <a href="#problema">O problema</a><a href="#pilares">Pilares</a><a href="#externos">Serviços externos</a><a href="#mapa">Ferramentas</a>
+    </nav>
+    <a class="navcta" href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener">Agendar chamada</a>
+  </div>
+</header>
+<section class="herowrap" id="top">
+  <div class="container herogrid">
+    <div class="hero"><h1>A equipa imobiliária que não depende de ti.</h1><p>Um guia prático para organizar o teu negócio por funções, em 3 pilares, e deixares de ser o gargalo do teu próprio crescimento.</p><div aria-hidden="true" class="hero-stack">
+<span class="c-acq">Aquisição</span><span class="c-ops">Operações</span><span class="c-del">Entrega</span>
+</div>
+      <div class="heroactions"><a class="btn" href="#problema">Ler o guia</a><a class="btn ghost" href="#mapa">Ver as ferramentas</a></div>
+    </div>
+    <div class="vizwrap"><div class="orgviz" id="orgviz" aria-hidden="true">
+  <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="50" y1="50" x2="50" y2="12"/><line x1="50" y1="50" x2="80" y2="26"/><line x1="50" y1="50" x2="84" y2="60"/><line x1="50" y1="50" x2="66" y2="86"/><line x1="50" y1="50" x2="34" y2="86"/><line x1="50" y1="50" x2="16" y2="60"/><line x1="50" y1="50" x2="20" y2="26"/></svg>
+  <div class="phd" style="--x:17%;--nc:var(--acq)">Aquisição</div><div class="phd" style="--x:50%;--nc:var(--ops)">Operações</div><div class="phd" style="--x:83%;--nc:var(--del)">Entrega</div>
+  <div class="tu">Tu</div>
+  <div class="node" style="--ax:50%;--ay:12%;--bx:17%;--by:36%;--nc:var(--acq);--i:0">Prospetor</div><div class="node" style="--ax:80%;--ay:26%;--bx:17%;--by:56%;--nc:var(--acq);--i:1">Angariador</div><div class="node" style="--ax:84%;--ay:60%;--bx:50%;--by:36%;--nc:var(--ops);--i:2">Gestor processual</div><div class="node" style="--ax:66%;--ay:86%;--bx:50%;--by:56%;--nc:var(--ops);--i:3">Gestor de leads</div><div class="node" style="--ax:34%;--ay:86%;--bx:50%;--by:76%;--nc:var(--ops);--i:4">Administrativo financeiro</div><div class="node" style="--ax:16%;--ay:60%;--bx:83%;--by:36%;--nc:var(--del);--i:5">Especialista de compradores</div><div class="node" style="--ax:20%;--ay:26%;--bx:83%;--by:56%;--nc:var(--del);--i:6">Gestor de clientes</div>
+</div>
+<p class="vizcap" aria-hidden="true"><span class="ca">Hoje: tudo passa por ti.</span><span class="cb">Com estrutura: cada função no seu pilar.</span></p></div>
+  </div>
+</section>
+<main>
+<section class="container split" id="problema">
+  <div><h2>Tu já tens uma equipa. Só que são todos tu.</h2><div class="prose">
+<p>Um consultor que trabalha sozinho não faz um trabalho. Faz sete. De manhã é prospetor, à tarde é vendedor, à noite é administrativo, e no fim de semana é o jurista que ainda não conseguiu ver a certidão que faltava.</p>
+<p>Cada uma destas funções exige competências diferentes. Quando a mesma pessoa as faz todas, faz a maioria delas mal, e sempre à pressa. O resultado é conhecido: meses bons seguidos de meses maus, leads que ficam sem resposta, processos que atrasam e um teto de faturação que não sobe por mais horas que trabalhes.</p>
+</div></div>
+  <div><ul class="intro-list">
+<li>Prospetor<small>procura proprietários</small></li>
+<li>Angariador<small>vai às reuniões e fecha contratos</small></li>
+<li>Gestor processual<small>trata da documentação</small></li>
+<li>Gestor de leads<small>responde a quem pede contacto</small></li>
+<li>Administrativo financeiro<small>fatura e controla comissões</small></li>
+<li>Especialista de compradores<small>faz visitas e propostas</small></li>
+<li>Gestor de clientes<small>acompanha o proprietário</small></li>
+</ul><div class="prose">
+<p>A solução não é trabalhar mais. É separar estas funções, agrupá-las em 3 pilares e decidir quem faz o quê: tu, alguém da equipa ou um serviço externo. É isso que este guia te mostra, função a função.</p>
+</div></div>
+</section>
+<section class="story" id="pilares">
+  <div class="container storygrid">
+    <aside class="rail" aria-label="Pilares e funções"><div class="railin"><div class="rp" data-p="acq" style="--pc:var(--acq)"><a class="rph" href="#pilar1"><span class="rpn">1</span>Aquisição</a><a class="rr" href="#fn-sdr" data-role="sdr">SDR/BDR</a><a class="rr" href="#fn-closer" data-role="closer">Closer</a></div><div class="rp" data-p="ops" style="--pc:var(--ops)"><a class="rph" href="#pilar2"><span class="rpn">2</span>Operações</a><a class="rr" href="#fn-proc" data-role="proc">Gestora processual</a><a class="rr" href="#fn-leads" data-role="leads">Gestora de leads</a><a class="rr" href="#fn-fin" data-role="fin">Administrativa financeira</a></div><div class="rp" data-p="del" style="--pc:var(--del)"><a class="rph" href="#pilar3"><span class="rpn">3</span>Entrega</a><a class="rr" href="#fn-buyer" data-role="buyer">Especialista de compradores</a><a class="rr" href="#fn-client" data-role="client">Gestor de clientes</a></div><p class="railnow" id="railnow"></p></div></aside>
+    <div class="storycol">
+      <section class="chapter" id="pilar1" style="--pc:var(--acq)">
+<div class="ch-head" data-pillar="acq" data-role="">
+<div class="ch-num">1</div>
+<h2>Aquisição de clientes</h2>
+<p class="lead">O pilar que alimenta todos os outros. Sem reuniões de angariação na agenda, não há imóveis para vender nem processos para gerir.</p>
+</div>
+<div class="prose">
+<p>Aquisição é tudo o que traz proprietários até à tua mesa: prospeção ativa, seja ela qual for (FSBO, porta a porta, contactos da tua rede), leads de tráfego pago e apresentações de serviço.</p>
+<p>O erro mais comum é tratar a prospeção como algo que se faz quando sobra tempo. Prospeção feita aos soluços gera uma agenda aos soluços. O objetivo deste pilar é previsibilidade: saber que na próxima semana tens reuniões marcadas, porque há alguém cujo único trabalho é marcá-las.</p>
+</div>
+<div class="signs">
+<b>Sinais de que este pilar está a falhar</b>
+<ul>
+<li>A tua faturação depende de referências e de sorte</li>
+<li>Só prospetas quando a agenda fica vazia</li>
+<li>Pagas tráfego pago mas as leads demoram horas ou dias a ser contactadas</li>
+</ul>
+</div>
+<article class="fn" data-pillar="acq" data-role="sdr" id="fn-sdr">
+<h3>SDR/BDR<span>Prospeção e agendamento</span></h3>
+<p class="what">É a pessoa que transforma contactos em reuniões. Não angaria, não negocia, não vai a imóveis. A função termina quando a reunião está marcada na agenda do Closer.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Blocos fixos de prospeção ativa ao mercado FSBO, todos os dias à mesma hora</li>
+<li>Contacto às leads de tráfego pago nos primeiros 5 minutos, quando a intenção ainda está quente</li>
+<li>Qualificação: porque quer vender, em que prazo, por quanto e quem decide</li>
+<li>Agendamento da reunião e confirmação na véspera, para reduzir faltas</li>
+<li>Registo de cada contacto no CRM, incluindo os que disseram "agora não"</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Contactos feitos por dia, taxa de contacto efetivo, reuniões agendadas por semana e taxa de comparência.</dd>
+<dt>Perfil</dt>
+<dd>Resiliente à rejeição, disciplinado e à vontade ao telefone. Não precisa de experiência imobiliária. Precisa de um guião, de rotina e de métricas claras.</dd>
+<dt>Quando contratar</dt>
+<dd>Quando tens tempo para mais reuniões mas a agenda não enche sozinha.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Pôr o SDR a ir às reuniões. Assim que ele sai do telefone, a máquina de agendamento para.</dd>
+</dl>
+</article>
+<article class="fn" data-pillar="acq" data-role="closer" id="fn-closer">
+<h3>Closer<span>Angariação, por norma o líder da equipa</span></h3>
+<p class="what">É quem vai à reunião, apresenta o serviço e sai com o imóvel angariado. É a função com mais impacto na faturação, e por isso é onde o tempo do líder deve estar concentrado.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Preparação de cada reunião com estudo de mercado da zona e comparáveis</li>
+<li>Apresentação do serviço, do método de trabalho e do plano de promoção do imóvel</li>
+<li>Gestão de objeções: comissão, exclusividade, preço</li>
+<li>Fecho do contrato de mediação, idealmente em exclusivo e ao preço de mercado</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Taxa de conversão de reunião em angariação, percentagem de exclusivos e diferença entre preço angariado e valor de mercado.</dd>
+<dt>Perfil</dt>
+<dd>Confiante, bom a ouvir, com domínio do mercado. Sabe dizer que não a uma angariação sobreavaliada.</dd>
+<dt>Quando delegar</dt>
+<dd>Quando há mais reuniões marcadas do que consegues fazer. Aí formas um segundo Closer com o teu método.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Aceitar tudo para aumentar o número de angariações. Um imóvel acima do preço consome meses de trabalho e não vende.</dd>
+</dl>
+</article>
+</section><section class="chapter" id="pilar2" style="--pc:var(--ops)">
+<div class="ch-head" data-pillar="ops" data-role="">
+<div class="ch-num">2</div>
+<h2>Operações</h2>
+<p class="lead">O pilar invisível. O cliente não o vê quando funciona, mas sente imediatamente quando falha.</p>
+</div>
+<div class="prose">
+<p>Operações é tudo o que acontece entre a angariação e o dinheiro na conta: administrativo, processual, financeiro e gestão de leads. Nenhuma destas tarefas gera faturação por si. Mas qualquer uma delas, mal feita, pode destruí-la. Um documento que falta no dia da escritura pode custar uma comissão inteira.</p>
+<p>É também o pilar que mais tempo rouba ao líder, porque é urgente, repetitivo e nunca acaba. Enquanto for o Closer a tratar de certidões, estás a pagar ao teu melhor vendedor para fazer trabalho administrativo.</p>
+</div>
+<div class="signs">
+<b>Sinais de que este pilar está a falhar</b>
+<ul>
+<li>Processos parados à espera de um documento que ninguém pediu</li>
+<li>Leads espalhadas pelo WhatsApp, email e caderno de cada pessoa</li>
+<li>Não sabes quanto tens a receber este mês sem abrir três folhas de cálculo</li>
+</ul>
+</div>
+<article class="fn" data-pillar="ops" data-role="proc" id="fn-proc">
+<h3>Gestora processual<span>Da angariação à escritura</span></h3>
+<p class="what">Garante que cada negócio chega à escritura sem surpresas. Trabalha desde o primeiro dia da angariação, não apenas quando aparece um comprador.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Recolha e verificação da documentação logo na angariação: caderneta predial, certidão permanente, licença de utilização, certificado energético</li>
+<li>Identificação de problemas cedo: ónus, heranças, áreas que não batem certo</li>
+<li>Preparação e acompanhamento do CPCV</li>
+<li>Acompanhamento do crédito do comprador e da avaliação bancária</li>
+<li>Agendamento da escritura e comunicação com advogados, bancos, notários e conservatórias</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Tempo médio entre CPCV e escritura, e número de processos atrasados por falhas documentais.</dd>
+<dt>Perfil</dt>
+<dd>Preferencialmente com formação jurídica. Rigorosa, metódica e com olho para o detalhe.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Só olhar para os documentos quando já há proposta aceite. Nessa altura, um problema vira uma crise.</dd>
+</dl>
+</article>
+<article class="fn" data-pillar="ops" data-role="leads" id="fn-leads">
+<h3>Gestora de leads<span>Nenhuma lead fica sem resposta</span></h3>
+<p class="what">É o centro de receção de todos os contactos que entram no negócio, de proprietários e de compradores. Responde, qualifica e entrega cada lead à pessoa certa.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Primeira resposta rápida a todos os pedidos: portais, redes sociais, anúncios, telefone</li>
+<li>Qualificação inicial e encaminhamento: proprietários para o SDR ou Closer, compradores para o Especialista de compradores</li>
+<li>Plano de acompanhamento para quem ainda não está pronto, porque quem vende daqui a 6 meses também é cliente</li>
+<li>CRM organizado e atualizado, com a origem de cada lead registada</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Tempo de primeira resposta, percentagem de leads contactadas e custo por lead qualificada, por origem.</dd>
+<dt>Perfil</dt>
+<dd>Rápida, organizada e com boa comunicação escrita e ao telefone.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Deixar as leads no telemóvel de cada consultor. O que não está no CRM não existe e não pode ser acompanhado.</dd>
+</dl>
+</article>
+<article class="fn" data-pillar="ops" data-role="fin" id="fn-fin">
+<h3>Administrativa financeira<span>Dinheiro organizado e visível</span></h3>
+<p class="what">Dá ao líder uma coisa que a maioria dos consultores não tem: saber, a qualquer momento, quanto faturou, quanto gastou e quanto está para receber.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Faturação e controlo de comissões recebidas e a receber, incluindo partilhas</li>
+<li>Registo de despesas e reconciliação bancária</li>
+<li>Relatório mensal: entradas, saídas, margem e pipeline de escrituras previstas</li>
+<li>Controlo do custo de marketing face aos negócios que gerou</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Comissões em atraso, relatório entregue até ao dia combinado e despesas por classificar.</dd>
+<dt>Perfil</dt>
+<dd>Rigorosa com números e prazos. Discreta.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Só olhar para os números no fim do ano, quando já não há nada a corrigir.</dd>
+</dl>
+</article>
+<div class="signs" style="--pc:var(--blue)">
+<b>Contratar ou subcontratar este pilar?</b>
+<p style="margin:0;color:var(--muted)">Montar operações internamente significa recrutar, formar e gerir 3 pessoas com salário fixo, muitas vezes antes de teres volume para as justificar. A alternativa é subcontratar o pilar inteiro a um departamento operacional externo, como a OPERA, e ter a estrutura pronta desde o primeiro dia.</p>
+</div>
+</section><section class="chapter" id="pilar3" style="--pc:var(--del)">
+<div class="ch-head" data-pillar="del" data-role="">
+<div class="ch-num">3</div>
+<h2>Entrega de serviço</h2>
+<p class="lead">Angariar é prometer. Entregar é cumprir: vender o imóvel no prazo e ao preço certo, e aproveitar tudo o que essa venda gera.</p>
+</div>
+<div class="prose">
+<p>Entrega de serviço é promoção dos imóveis, visitas com compradores e negociação. É aqui que se ganha ou perde a reputação da equipa, e é daqui que vêm as referências que alimentam o pilar 1.</p>
+<p>Mas há um segundo efeito que quase ninguém aproveita. Cada angariação atrai vários compradores qualificados, e só um compra o imóvel. Os outros já têm financiamento, sabem o que procuram e confiam em ti. São negócios que ainda não existem, à espera de alguém que os acompanhe.</p>
+</div>
+<div class="signs">
+<b>Sinais de que este pilar está a falhar</b>
+<ul>
+<li>Os proprietários só têm notícias tuas quando há uma proposta</li>
+<li>Os imóveis ficam meses no mercado sem revisão de preço</li>
+<li>Quando um imóvel se vende, os outros compradores interessados ficam esquecidos</li>
+</ul>
+</div>
+<article class="fn" data-pillar="del" data-role="buyer" id="fn-buyer">
+<h3>Especialista de compradores<span>Recupera negócio</span></h3>
+<p class="what">A função não é só mostrar casas. É transformar cada comprador qualificado num negócio fechado, com ou sem o imóvel que o trouxe até ti.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Qualificação de todos os compradores que chegam pelos imóveis angariados: financiamento, pré aprovação bancária, zona, tipologia e prazo</li>
+<li>Visitas e propostas nos imóveis da equipa</li>
+<li>Acompanhamento de quem não ficou com o imóvel: perceber o que procura e encontrar outro, na carteira da equipa ou no mercado em partilha</li>
+<li>Cruzamento de cada nova angariação com a base de compradores ativos, antes mesmo de ir para os portais</li>
+<li>Contacto regular com a base, para que o comprador não vá comprar com outro consultor</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Compradores qualificados em carteira, negócios fechados com compradores de outras angariações e taxa de conversão de comprador qualificado em escritura.</dd>
+<dt>Perfil</dt>
+<dd>Paciente, persistente e excelente a ouvir. Conhece bem o mercado e a carteira da equipa.</dd>
+<dt>Quando contratar</dt>
+<dd>Quando as visitas ocupam os teus dias e há compradores qualificados a ficar sem acompanhamento. Quando a base crescer além da capacidade de uma pessoa, formas um segundo especialista.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Tratar o comprador como uma visita a um imóvel. Quando esse imóvel se vende, a relação acaba e o negócio vai para outro.</dd>
+</dl>
+</article>
+<article class="fn" data-pillar="del" data-role="client" id="fn-client">
+<h3>Gestor de clientes<span>Especialista de angariação, faz sentido ser o líder</span></h3>
+<p class="what">É o ponto de contacto do proprietário do início ao fim. Quem angariou, quem tem a confiança do cliente e quem protege a reputação da equipa.</p>
+<dl>
+<dt>Dia a dia</dt>
+<dd><ul>
+<li>Plano de promoção de cada imóvel e acompanhamento da sua execução</li>
+<li>Relatório regular ao proprietário: visitas, reações, propostas</li>
+<li>Revisão de preço com base em dados, não em opiniões</li>
+<li>Condução da negociação final</li>
+<li>Depois da escritura: pedido de testemunho e de referências</li>
+</ul></dd>
+<dt>Como se mede</dt>
+<dd>Tempo médio até à venda, diferença entre preço angariado e preço de venda, e referências geradas.</dd>
+<dt>Perfil</dt>
+<dd>Comunicador, calmo sob pressão e firme a negociar. Normalmente é o líder, que junta esta função à de Closer.</dd>
+<dt>Erro a evitar</dt>
+<dd class="warn">Desaparecer depois de assinar o contrato. O proprietário que não tem notícias começa a desconfiar do teu trabalho.</dd>
+</dl>
+</article>
+</section>
+      <section class="chapter" id="externos">
+<h2>Serviços externos essenciais</h2>
+<p class="lead">Há funções que raramente compensa ter dentro de casa numa equipa em crescimento. Especialização e escala valem mais do que controlo.</p>
+<div class="ext">
+<div>
+<h3>Marketing, conteúdo e tráfego pago</h3>
+<p>Constrói a marca, dá visibilidade aos imóveis e garante um fluxo constante de leads para o SDR e para o Especialista de compradores. Exige competências técnicas que mudam todos os meses.</p>
+</div>
+<div>
+<h3>OPERA</h3>
+<p>O pilar 2 completo: processual, jurídico, financeiro e gestão de leads. A tua equipa interna fica focada em angariar e vender.</p>
+</div>
+</div>
+</section>
+      <section class="chapter bridgewrap"><p class="bridge">Agora que conheces cada função, vê como encaixam no teu negócio.</p></section>
+    </div>
+  </div>
+</section>
+<section class="band alt" id="mapa"><div class="container">
+<h2>Se tu paras, o negócio para.</h2>
+<p class="lead">O problema não é falta de esforço, é falta de estrutura. Primeiro divides o trabalho em 3 pilares, depois atribuis funções.</p>
+<div class="how"><b>Como usar</b><ol><li>Escolhe se queres montar as operações com equipa própria ou com a OPERA.</li><li>Toca em qualquer função para ver a missão, as tarefas e o perfil.</li></ol></div>
+<div aria-label="Como resolver as operações" class="toggle" role="group">
+<button aria-pressed="true" data-mode="team" type="button">Operações com equipa própria</button>
+<button aria-pressed="false" data-mode="opera" type="button">Operações com OPERA</button>
+</div><span class="autonote" id="autonote"><i></i>A mostrar as funções automaticamente</span>
+<div class="map" id="map"></div>
+<div aria-live="polite" class="detail" id="detail"></div>
+</div></section><section class="band" id="compradores"><div class="container">
+<h2>Uma angariação traz vários compradores. Só um compra.</h2>
+<p class="lead">Os outros compradores qualificados são negócios que ainda não existem. O Especialista de compradores existe para os acompanhar e fechar. Ajusta aos teus números.</p>
+<div class="how"><b>Como usar</b><ol><li>Arrasta cada barra até aos números reais do teu negócio.</li><li>O resultado mostra quanto podes estar a perder por ano e porquê.</li></ol></div>
+<div class="calc">
+<div>
+<div class="field">
+<label for="ang">Angariações por mês <output id="o-ang"></output></label>
+<span class="hint">Quantos imóveis angarias, em média, por mês</span>
+<input id="ang" max="20" min="1" type="range" value="4"/>
+</div>
+<div class="field">
+<label for="cq">Compradores qualificados por angariação <output id="o-cq"></output></label>
+<span class="hint">Compradores com capacidade financeira que se interessam por cada imóvel</span>
+<input id="cq" max="15" min="2" type="range" value="6"/>
+</div>
+<div class="field">
+<label for="tx">Compradores recuperados que compram outro imóvel <output id="o-tx"></output></label>
+<span class="hint">Dos compradores que não ficam com o imóvel, quantos acabam por comprar outro contigo</span>
+<input id="tx" max="20" min="1" type="range" value="5"/>
+</div>
+<div class="field">
+<label for="com">Comissão média por negócio <output id="o-com"></output></label>
+<span class="hint">O que recebes, em média, por cada escritura</span>
+<input id="com" max="20000" min="2000" step="500" type="range" value="6000"/>
+</div>
+</div>
+<div aria-live="polite" class="result">
+<div class="big" id="r-rev">0 €</div>
+<div style="color:var(--muted);margin-top:6px">em comissões por ano que hoje ficam na mesa</div>
+<div aria-hidden="true" class="funnel" id="funnel"></div>
+<div style="font-size:13px;color:var(--muted)"><span style="color:var(--acq)">■</span> compra o imóvel   <span style="color:var(--del)">■</span> recuperável   <span style="color:var(--line)">■</span> perdido</div>
+<p class="explain" id="r-explain"></p>
+<div class="row"><span>Compradores que sobram por mês</span><b id="r-left">0</b></div>
+<div class="row"><span>Negócios recuperados por ano</span><b id="r-deals">0</b></div>
+<p class="note">Simulação indicativa. Os resultados dependem do teu mercado e do acompanhamento feito.</p>
+</div>
+</div>
+</div></section><section class="band alt" id="fases"><div class="container">
+<h2>Por onde começar.</h2>
+<p class="lead">Não precisas de montar tudo de uma vez. Contrata na ordem que liberta mais tempo teu para angariar, e só avança quando o sinal aparecer.</p>
+<div class="how"><b>Como usar</b><ol><li>Lê o sinal de cada fase e identifica em qual estás hoje.</li><li>Toca na fase para ver quem entra na equipa nesse momento.</li></ol></div>
+<div class="legend"><span class="l-new">Nova contratação ou serviço</span><span>Já existia na fase anterior</span></div>
+<div class="phases" id="phases"></div>
+</div></section><section class="band" id="diagnostico"><div class="container">
+<h2>És o gargalo do teu negócio?</h2>
+<p class="lead">Marca as frases que se aplicam a ti. O resultado atualiza à medida que marcas.</p>
+<div class="checks" id="checks"></div>
+<div aria-live="polite" class="verdict">
+<b id="v-title">Marca as frases que se aplicam.</b>
+<span id="v-text" style="color:var(--muted)">O resultado aparece aqui.</span>
+<div class="meter"><div id="v-meter"></div></div>
+</div>
+</div></section><section class="band alt" id="erros"><div class="container">
+<h2>Os 4 erros mais comuns ao montar equipa.</h2>
+<ol class="mistakes">
+<li><b>Contratar vendedores antes de ter operações.</b><span>Mais negócios sem estrutura significa mais caos e mais processos parados.</span></li>
+<li><b>Contratar pela simpatia e não pela função.</b><span>Cada função tem um perfil e métricas próprias.</span></li>
+<li><b>Não ter processos escritos.</b><span>Sem guiões e procedimentos, cada saída de alguém obriga a recomeçar do zero.</span></li>
+<li><b>O líder continuar a fazer tudo.</b><span>Delegar e depois voltar a fazer por falta de confiança anula o investimento na equipa.</span></li>
+</ol>
+</div></section>
+<div class="container"><div class="cta">
+<div class="tag">You sell.<br/>We operate.</div>
+<p>A forma mais rápida de libertar horas para angariar é tirar as operações das tuas mãos. A OPERA é o teu departamento operacional externo: processual, jurídico, financeiro e gestão de leads. Numa chamada de diagnóstico analisamos a estrutura do teu negócio e dizemos se a OPERA faz sentido para ti.</p>
+<a class="btn" href="https://cal.com/opera-os/discovery-call" rel="noopener" target="_blank">Agendar chamada de diagnóstico</a>
+</div></div>
+</main>
+<footer class="sitefoot"><div class="container footin"><a class="brand" href="#top">OPERA<span>.</span></a><span>You sell. We operate.</span></div></footer>
+
+<script>
+
+const ROLES = {
+  sdr:{p:"acq",name:"SDR/BDR",short:"Prospeção e agendamento",mission:"Prospetar ativamente e transformar contactos em reuniões de angariação marcadas.",tasks:["Prospeção ativa do mercado FSBO (proprietários que vendem sem mediador)","Contacto rápido às leads de tráfego pago, idealmente nos primeiros 5 minutos","Qualificação: motivação, prazo, preço esperado e decisores","Agendamento da reunião na agenda do Closer"],kpi:"contactos por dia, reuniões agendadas por semana, taxa de comparência.",profile:"Resiliente, organizado, à vontade ao telefone. Precisa de disciplina e de um guião, não de experiência."},
+  closer:{p:"acq",name:"Closer",short:"Angariação, por norma o líder",mission:"Ir às reuniões, apresentar o serviço e angariar o imóvel.",tasks:["Preparação da reunião com estudo de mercado","Apresentação do serviço e do plano de marketing do imóvel","Fecho do contrato de mediação, idealmente em exclusivo"],kpi:"conversão de reunião em angariação, percentagem de exclusivos.",profile:"Por norma é o líder da equipa. É a função de maior valor e onde o teu tempo deve estar."},
+  proc:{p:"ops",name:"Gestora processual",short:"Da angariação à escritura",mission:"Levar cada negócio da angariação à escritura sem falhas.",tasks:["Recolha e verificação de documentação","Acompanhamento do CPCV, do crédito e da escritura","Comunicação com advogados, bancos, notários e conservatórias"],kpi:"processos sem atrasos, tempo médio até à escritura.",profile:"Preferencialmente com formação jurídica. Rigorosa e metódica."},
+  leads:{p:"ops",name:"Gestora de leads",short:"Nenhuma lead fica sem resposta",mission:"Garantir que todas as leads têm resposta rápida e acompanhamento.",tasks:["Primeira resposta a todos os pedidos que entram","Qualificação e encaminhamento para a pessoa certa","CRM atualizado e acompanhamento de quem ainda não está pronto"],kpi:"tempo de primeira resposta, leads encaminhadas por semana.",profile:"Organizada, rápida e com boa comunicação escrita."},
+  fin:{p:"ops",name:"Administrativa financeira",short:"Dinheiro organizado e visível",mission:"Manter as finanças do negócio organizadas e visíveis.",tasks:["Faturação e controlo de comissões recebidas e a receber","Registo de despesas e reconciliação bancária","Relatório mensal: entradas, saídas e pipeline"],kpi:"comissões em atraso, relatório entregue a tempo.",profile:"Rigorosa com números e prazos."},
+  buyer:{p:"del",name:"Especialista de compradores",short:"Recupera negócio",mission:"Recuperar negócio. Cada angariação atrai vários compradores qualificados, mas só um compra esse imóvel. Os outros são negócios que ainda não existem.",tasks:["Qualificação de todos os compradores que chegam pelos imóveis angariados","Visitas e propostas nos imóveis da equipa","Acompanhamento de quem não ficou com o imóvel, para lhe encontrar outro na carteira ou no mercado","Fecho de negócios que, sem esta função, simplesmente se perdiam"],kpi:"compradores qualificados em carteira, negócios fechados com compradores de outras angariações.",profile:"Paciente, persistente e excelente a ouvir o que o comprador procura."},
+  client:{p:"del",name:"Gestor de clientes",short:"Especialista de angariação",mission:"Ser o ponto de contacto do proprietário do início ao fim.",tasks:["Plano de promoção do imóvel e relatório regular ao proprietário","Revisão de preço com base em visitas e propostas","Condução da negociação final"],kpi:"tempo médio até à venda, satisfação do proprietário.",profile:"Faz sentido ser o líder: é quem angariou e quem tem a confiança do proprietário."}
+};
+const PILLARS = [
+  {id:"acq",name:"Aquisição",goal:"Encher a agenda de reuniões de angariação.",roles:["sdr","closer"]},
+  {id:"ops",name:"Operações",goal:"Tudo o que acontece nos bastidores, sem erros nem atrasos.",roles:["proc","leads","fin"]},
+  {id:"del",name:"Entrega",goal:"Vender o imóvel e transformar os compradores que sobram em novos negócios.",roles:["buyer","client"]}
+];
+const COLORS={acq:"var(--acq)",ops:"var(--ops)",del:"var(--del)"};
+let mode="team", open=null;
+const map=document.getElementById("map"), detail=document.getElementById("detail");
+
+function renderMap(){
+  map.innerHTML="";
+  PILLARS.forEach(p=>{
+    const col=document.createElement("div");
+    col.className="pillar"; col.style.setProperty("--pc",COLORS[p.id]);
+    col.innerHTML=`<h3 style="color:${COLORS[p.id]}">${p.name}</h3><p class="goal">${p.goal}</p>`;
+    if(p.id==="ops" && mode==="opera"){
+      const b=document.createElement("button");
+      b.className="role opera"; b.type="button"; b.dataset.k="opera"; b.setAttribute("aria-expanded","false");
+      b.innerHTML=`OPERA<small>O pilar inteiro, pronto desde o primeiro dia</small><ul class="opera-list"><li>Gestão processual e jurídica</li><li>Gestão de leads</li><li>Administração financeira</li></ul><i class="bar"></i>`;
+      b.onclick=()=>showOpera();
+      col.appendChild(b);
+    } else {
+      p.roles.forEach(k=>{
+        const r=ROLES[k], b=document.createElement("button");
+        b.className="role"; b.type="button"; b.dataset.k=k;
+        b.setAttribute("aria-expanded", open===k ? "true":"false");
+        b.innerHTML=`${r.name}<small>${r.short}</small><i class="bar"></i>`;
+        b.onclick=()=>toggleRole(k);
+        col.appendChild(b);
+      });
+    }
+    map.appendChild(col);
+  });
+}
+function placeDetail(){
+  const btn=map.querySelector(`[data-k="${open}"]`);
+  if(btn && matchMedia("(max-width:760px)").matches) btn.after(detail); else map.after(detail);
+}
+function toggleRole(k){
+  open = open===k ? null : k;
+  renderMap();
+  if(!open){detail.className="detail";return;}
+  const r=ROLES[k];
+  detail.style.setProperty("--pc",COLORS[r.p]);
+  detail.innerHTML=`<h4>${r.name}</h4><p class="mission">${r.mission}</p><ul>${r.tasks.map(t=>`<li>${t}</li>`).join("")}</ul><p class="kpi"><b>Métricas:</b> ${r.kpi}</p><p class="kpi" style="margin-top:6px"><b>Perfil:</b> ${r.profile}</p>`;
+  detail.className="detail"; void detail.offsetWidth; detail.className="detail show"; placeDetail();
+}
+function showOpera(){
+  open="opera";
+  detail.style.setProperty("--pc","var(--blue)");
+  detail.innerHTML=`<h4>Porquê subcontratar o pilar de operações?</h4><p class="mission">Montar este pilar internamente significa recrutar, formar e gerir 3 pessoas com salário fixo, antes de teres volume para as justificar.</p><ul><li>Estrutura operacional pronta desde o primeiro dia</li><li>Sem custos de recrutamento nem rotatividade</li><li>A equipa interna fica focada em angariar e vender</li></ul>`;
+  detail.className="detail"; void detail.offsetWidth; detail.className="detail show"; placeDetail();
+}
+document.querySelectorAll(".toggle button").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll(".toggle button").forEach(x=>x.setAttribute("aria-pressed", x===b?"true":"false"));
+  if(mode==="opera" && ["proc","leads","fin"].includes(open)){open=null;}
+  renderMap();
+  if(mode==="opera") showOpera(); else {detail.className="detail"; open=null; renderMap();}
+});
+renderMap();
+toggleRole("sdr");
+
+/* Calculadora */
+const eur=n=>new Intl.NumberFormat("pt-PT",{maximumFractionDigits:0}).format(n)+" €";
+const $=id=>document.getElementById(id);
+function calc(){
+  const a=+$("ang").value, q=+$("cq").value, t=+$("tx").value, c=+$("com").value;
+  $("o-ang").textContent=a; $("o-cq").textContent=q; $("o-tx").textContent=t+"%"; $("o-com").textContent=eur(c);
+  const left=a*(q-1), deals=left*(t/100)*12;
+  tween($("r-left"),left,n=>Math.round(n));
+  tween($("r-deals"),deals,n=>n.toLocaleString("pt-PT",{maximumFractionDigits:1}));
+  tween($("r-rev"),deals*c,eur);
+  $("r-explain").textContent=`Com ${a} angariações por mês e ${q} compradores qualificados em cada, só ${a} compram. Sobram ${left} compradores por mês. Se ${t}% deles comprarem outro imóvel contigo, são ${deals.toLocaleString("pt-PT",{maximumFractionDigits:1})} negócios a mais por ano.`;
+  const f=$("funnel"); f.innerHTML="";
+  const recN=Math.max(1,Math.round((q-1)*t/100*4));
+  for(let i=0;i<q;i++){const s=document.createElement("i"); s.style.setProperty("--d",(i*0.05)+"s"); if(i===0)s.className="sold"; else if(i<=Math.min(recN,q-1))s.className="rec"; f.appendChild(s);}
+}
+["ang","cq","tx","com"].forEach(id=>$(id).addEventListener("input",calc));
+
+/* Fases */
+const PHASES=[
+  {t:"Libertar o líder",sig:"Passas mais tempo em papelada e telefonemas do que em reuniões.",d:"Externalizas operações e marketing. Tu ficas como Closer e Gestor de clientes, as duas funções de maior valor.",who:[["Tu: Closer e Gestor de clientes",0],["OPERA",1],["Marketing e tráfego pago",1]]},
+  {t:"Encher a agenda",sig:"Tens tempo livre para reuniões mas a agenda não enche.",d:"Contratas o SDR/BDR para prospetar FSBO e contactar as leads pagas. O teu trabalho passa a ser só ir às reuniões.",who:[["Tu",0],["SDR/BDR",1],["OPERA",0],["Marketing",0]]},
+  {t:"Recuperar compradores",sig:"As visitas ocupam os teus dias e há compradores qualificados a ficar esquecidos.",d:"Contratas o Especialista de compradores. Cada angariação passa a gerar mais do que uma venda.",who:[["Tu",0],["SDR/BDR",0],["Especialista de compradores",1],["OPERA",0]]},
+  {t:"Multiplicar",sig:"Há mais reuniões ou mais compradores qualificados do que a equipa consegue acompanhar.",d:"Formas um segundo Closer e um segundo Especialista de compradores com o teu método. O negócio angaria, opera e vende sem que estejas em todas as etapas.",who:[["Tu: líder",0],["2 Closers",1],["2 Especialistas de compradores",1],["SDR/BDR",0],["OPERA",0]]}
+];
+const ph=$("phases");
+PHASES.forEach((p,i)=>{
+  const el=document.createElement("div"); el.className="phase"; el.dataset.n=i+1;
+  el.innerHTML=`<button type="button" aria-expanded="false"><h3>${p.t}</h3><div class="sig">Sinal para avançar: ${p.sig}</div></button><div class="body"><p style="margin:0 0 12px">${p.d}</p><div class="who">${p.who.map(w=>`<span class="${w[1]?"new":""}">${w[0]}</span>`).join("")}</div></div>`;
+  el.querySelector("button").onclick=()=>{
+    const isOpen=el.classList.toggle("open");
+    el.querySelector("button").setAttribute("aria-expanded",isOpen);
+  };
+  ph.appendChild(el);
+});
+
+/* Diagnóstico */
+const CHECKS=["Sou eu que trato de toda a documentação dos processos","Já perdi leads por não ter respondido a tempo","Não sei ao certo quanto tenho a receber em comissões este mês","Faço prospeção só quando a agenda está vazia","Se tirar duas semanas de férias, os negócios param","Quando um imóvel se vende, os outros compradores interessados ficam esquecidos"];
+const ch=$("checks");
+CHECKS.forEach((c,i)=>{
+  const l=document.createElement("label"); l.className="check";
+  l.innerHTML=`<input type="checkbox" id="c${i}"><span>${c}</span>`;
+  ch.appendChild(l);
+});
+function verdict(){
+  const n=ch.querySelectorAll("input:checked").length;
+  $("v-meter").style.width=(n/CHECKS.length*100)+"%";
+  let t,x;
+  if(n===0){t="Marca as frases que se aplicam.";x="O resultado aparece aqui.";}
+  else if(n<=2){t=`${n} de 6: estás no limite.`;x="Ainda aguentas, mas o próximo salto de faturação vai exigir estrutura. Começa pela fase 1.";}
+  else if(n<=4){t=`${n} de 6: és o gargalo.`;x="O teu crescimento está limitado pelas tuas horas. Tirar as operações das tuas mãos é o passo com mais impacto imediato.";}
+  else {t=`${n} de 6: o negócio és tu.`;x="Se parares, tudo para. Precisas de estrutura antes de precisares de mais leads.";}
+  $("v-title").textContent=t; $("v-text").textContent=x;
+}
+ch.addEventListener("change",verdict);
+
+/* MOVIMENTO */
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function tween(el,to,fmt){
+  const from = el._v||0; el._v=to;
+  if(RM){el.textContent=fmt(to);return;}
+  const t0=performance.now(), dur=700;
+  cancelAnimationFrame(el._raf);
+  const step=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);
+    el.textContent=fmt(from+(to-from)*e); if(k<1) el._raf=requestAnimationFrame(step);};
+  el._raf=requestAnimationFrame(step);
+}
+// hero
+(function(){
+  const h=document.querySelector(".hero h1");
+  const words=h.textContent.trim().split(" ");
+  h.setAttribute("aria-label",h.textContent.trim());
+  h.innerHTML=words.map((w,i)=>`<span class="w" aria-hidden="true" style="--d:${0.15+i*0.07}s">${w}</span>`).join(" ");
+  const base=0.15+words.length*0.07;
+  document.querySelector(".hero p").classList.add("fade");
+  document.querySelector(".hero p").style.setProperty("--d",base+0.1+"s");
+  document.querySelectorAll(".hero-stack span").forEach((el,i)=>{el.classList.add("fade");el.style.setProperty("--d",base+0.3+i*0.12+"s");});
+})();
+// revelar ao fazer scroll
+if(!RM && "IntersectionObserver" in window){
+  const sel=["main h2",".lead",".prose",".signs",".fn",".how",".legend",".ext > div",".intro-list li",".mistakes li",".pillar",".calc",".checks",".verdict",".cta",".ch-num",".bridge"];
+  const els=document.querySelectorAll(sel.join(","));
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12,rootMargin:"0px 0px -8% 0px"});
+  els.forEach(el=>{
+    if(el.closest(".hero")) return;
+    const sib=el.parentElement.children; const idx=[...sib].indexOf(el);
+    if(el.matches(".intro-list li,.mistakes li,.ext > div,.pillar")) el.style.setProperty("--d",(idx*0.09)+"s");
+    el.classList.add("rv"); io.observe(el);
+  });
+}
+// demonstração automática do mapa
+(function(){
+  let stopped=RM, timer=null, idx=0, visible=false;
+  const note=document.getElementById("autonote");
+  const seq=()=>mode==="team"?["sdr","closer","proc","leads","fin","buyer","client"]:["sdr","closer","opera","buyer","client"];
+  function mark(){const b=map.querySelector(`[data-k="${open}"]`); if(b&&!stopped) b.classList.add("auto");}
+  function next(){
+    if(stopped||!visible) return;
+    const s=seq(); idx=(s.indexOf(open)+1)%s.length; const k=s[idx];
+    if(k==="opera"){open=null;renderMap();showOpera();} else {open=null;toggleRole(k);}
+    mark();
+  }
+  function stop(){stopped=true;clearInterval(timer);note.classList.add("off");map.querySelectorAll(".auto").forEach(b=>b.classList.remove("auto"));}
+  map.addEventListener("click",e=>{if(e.isTrusted) stop();});
+  document.querySelectorAll(".toggle button").forEach(b=>b.addEventListener("click",e=>{if(e.isTrusted) stop();}));
+  if(stopped){note.classList.add("off");return;}
+  new IntersectionObserver(es=>{visible=es[0].isIntersecting;
+    if(visible&&!stopped&&!timer){mark();timer=setInterval(next,4500);}
+    if(!visible&&timer){clearInterval(timer);timer=null;}
+  },{threshold:.15}).observe(map);
+})();
+// calculadora conta quando aparece
+(function(){
+  const sec=document.getElementById("compradores"); let done=false;
+  const go=()=>{if(!done){done=true;calc();}};
+  if(!("IntersectionObserver" in window)) return go();
+  new IntersectionObserver(es=>{if(es[0].isIntersecting) go();},{threshold:.25}).observe(sec);
+})();
+// fases abrem sozinhas e a linha enche com o scroll
+(function(){
+  const list=document.getElementById("phases"), items=[...list.children];
+  items.forEach(el=>el.querySelector("button").addEventListener("click",()=>el.dataset.touched="1"));
+  const openIt=el=>{if(el.dataset.touched) return; el.classList.add("open"); el.querySelector("button").setAttribute("aria-expanded","true");};
+  if(RM||!("IntersectionObserver" in window)){items.forEach(openIt);return;}
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){openIt(e.target);io.unobserve(e.target);}}),{rootMargin:"0px 0px -40% 0px"});
+  items.forEach(el=>io.observe(el));
+  const upd=()=>{const r=list.getBoundingClientRect(), vh=innerHeight;
+    const p=Math.max(0,Math.min(1,(vh*0.6-r.top)/r.height)); list.style.setProperty("--p",(p*100)+"%");};
+  addEventListener("scroll",upd,{passive:true}); upd();
+})();
+
+/* ===== V4 ===== */
+(function(){
+  const nav=document.getElementById("topnav");
+  const onS=()=>nav.classList.toggle("scrolled",scrollY>12);
+  addEventListener("scroll",onS,{passive:true}); onS();
+  // organograma: de "tudo passa por ti" para 3 pilares, em ciclo
+  const vw=document.querySelector(".vizwrap");
+  if(RM){vw.classList.add("grouped");}
+  else{
+    let t=null, vis=true;
+    const tick=()=>{ if(vis) vw.classList.toggle("grouped"); };
+    setTimeout(()=>{tick(); t=setInterval(tick,3600);},2200);
+    if("IntersectionObserver" in window) new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(vw);
+  }
+  // índice lateral acompanha a leitura
+  const rps=document.querySelectorAll(".rp"), rrs=document.querySelectorAll(".rr"), now=document.getElementById("railnow");
+  const names={}; rrs.forEach(a=>names[a.dataset.role]=a.textContent);
+  function set(p,r){
+    rps.forEach(x=>x.classList.toggle("on",x.dataset.p===p));
+    rrs.forEach(x=>x.classList.toggle("on",!!r && x.dataset.role===r));
+    now.textContent=r?names[r]:"";
+    const on=document.querySelector(".rp.on");
+    if(on && getComputedStyle(now).display!=="none"){const rin=on.parentElement; rin.scrollTo({left:Math.max(0,on.offsetLeft-24),behavior:"smooth"});}
+  }
+  if("IntersectionObserver" in window){
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting) set(e.target.dataset.pillar,e.target.dataset.role);}),{rootMargin:"-38% 0px -58% 0px"});
+    document.querySelectorAll(".storycol [data-pillar]").forEach(el=>io.observe(el));
+  }
+  set("acq","");
+})();
+
+</script>
+</body>
+</html>
