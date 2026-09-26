@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OPERA · Real Estate Operations as a Service</title>
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="OPERA · Real Estate Operations as a Service">
+<meta property="og:description" content="You sell. We operate. O departamento operacional da tua atividade imobiliária.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040A20; --navy:#0A1A4A; --blue:#3D7BFF; --blue2:#79A6FF; --violet:#8C6BFF;
+  --ice:#E9EEFF; --mute:#98A6CF; --dim:#5F6E99; --line:rgba(140,170,255,.18); --line2:rgba(140,170,255,.34);
+  --panel:linear-gradient(180deg,rgba(46,78,180,.26),rgba(18,34,96,.22));
+  --font:"Archivo","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#040A20; --ice:#E9EEFF; } }
+:root[data-theme="dark"]{ --bg:#040A20; --ice:#E9EEFF; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ice);font-family:var(--font);font-size:17px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue2);outline-offset:3px;border-radius:6px}
+
+/* Fundo */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:
+    radial-gradient(60vw 60vw at calc(85% - var(--p,0)*30%) 5%, rgba(34,74,190,.55), transparent 60%),
+    radial-gradient(50vw 50vw at calc(5% + var(--p,0)*20%) 100%, rgba(22,52,150,.5), transparent 60%),
+    var(--bg);
+  transition:background-position 1s}
+.beam{position:absolute;left:-20%;width:140%;height:2px;top:calc(62% - var(--p,0)*18%);transform:rotate(-24deg);
+  background:linear-gradient(90deg,transparent,rgba(120,170,255,.0) 20%,rgba(140,190,255,.9) 48%,rgba(120,170,255,0) 80%,transparent);
+  box-shadow:0 0 24px 4px rgba(80,140,255,.35);opacity:.7;transition:top 1.1s cubic-bezier(.2,.7,.2,1)}
+.beam.b2{top:calc(18% + var(--p,0)*10%);opacity:.35;transform:rotate(-24deg) translateX(20%)}
+.plane{position:absolute;inset:0;background:linear-gradient(156deg,transparent 55%,rgba(30,60,160,.22) 55.1%,rgba(10,26,80,.1) 80%);}
+.orb{position:absolute;border-radius:50%;filter:blur(2px);
+  background:radial-gradient(circle at 35% 30%,#b9c8ff,#7b62ff 45%,#2b3fd0 75%,transparent 76%);
+  opacity:.0;transition:opacity 1s, transform 1.2s cubic-bezier(.2,.7,.2,1)}
+
+/* Estrutura de slides */
+.deck{position:relative;z-index:1;height:100%}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:flex;
+  padding:clamp(28px,5vh,64px) clamp(20px,6vw,96px) calc(96px + env(safe-area-inset-bottom,0px));
+  opacity:0;visibility:hidden;transform:translateX(48px);
+  transition:opacity .45s ease, transform .6s cubic-bezier(.2,.7,.2,1), visibility 0s linear .6s}
+.slide.before{transform:translateX(-48px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.inner{width:100%;max-width:1220px;margin:auto}
+
+/* Tipografia */
+.wide{font-stretch:125%;font-weight:800;text-transform:uppercase;letter-spacing:-.005em;line-height:.95}
+.title{font-size:clamp(28px,4vw,54px);margin:0 0 .5em;max-width:18ch}
+.lead{font-size:clamp(17px,1.5vw,21px);color:var(--mute);max-width:52ch;margin:0 0 1.6em}
+h3{font-size:19px;font-weight:700;margin:0 0 .35em;letter-spacing:.005em}
+p{margin:0}
+.muted{color:var(--mute)}
+.outline{color:transparent;-webkit-text-stroke:1.4px rgba(170,195,255,.6);white-space:nowrap}
+
+/* Botões */
+.btn{border:1px solid var(--line2);background:rgba(40,70,170,.25);border-radius:999px;padding:.72em 1.3em;font-weight:600;font-size:15px;transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{background:rgba(61,123,255,.3);border-color:var(--blue2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 8px 30px rgba(61,123,255,.35)}
+.btn.primary:hover{background:#5a8fff}
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px;padding:5px;border:1px solid var(--line);border-radius:999px;background:rgba(10,20,60,.5)}
+.seg button{border:0;background:transparent;border-radius:999px;padding:.55em 1.1em;font-size:14px;font-weight:600;color:var(--mute);transition:background .25s,color .25s}
+.seg button[aria-pressed="true"],.seg button[aria-current="true"]{background:var(--blue);color:#fff}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+
+/* Capa */
+.cover .inner{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:100%}
+.mega{font-size:clamp(76px,17vw,250px);margin:0;display:flex;line-height:.85}
+.mega span{display:inline-block;opacity:0;transform:translateY(.25em);filter:blur(8px)}
+.slide.active .mega span{animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards}
+.mega span:nth-child(2){animation-delay:.08s!important}.mega span:nth-child(3){animation-delay:.16s!important}
+.mega span:nth-child(4){animation-delay:.24s!important}.mega span:nth-child(5){animation-delay:.32s!important}
+@keyframes rise{to{opacity:1;transform:none;filter:none}}
+.tagline{font-size:clamp(22px,2.6vw,36px);font-weight:600;margin:.35em 0 1.6em;opacity:0}
+.slide.active .tagline{animation:fade .8s .55s forwards}
+.cover .actions{opacity:0}.slide.active .actions{animation:fade .8s .8s forwards}
+.cover .foot{position:absolute;right:clamp(20px,6vw,96px);bottom:calc(90px + env(safe-area-inset-bottom,0px));font-size:12px;letter-spacing:.28em;color:var(--mute);font-weight:600}
+@keyframes fade{to{opacity:1}}
+
+/* Problema */
+.two{display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(24px,4vw,64px);align-items:center}
+.problems{display:grid;gap:14px}
+.problems .panel{padding:18px 22px}
+.problems p{color:var(--mute);font-size:15.5px}
+.chaos{position:relative;height:clamp(320px,52vh,440px)}
+.hub{position:absolute;left:50%;top:52%;width:66%;height:78%;transform:translate(-50%,-50%) scale(.9);border-radius:22px;border:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(61,123,255,.22),rgba(20,40,110,.3));opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,.7,.2,1)}
+.hub b{position:absolute;top:14px;left:0;right:0;text-align:center;font-stretch:125%;font-weight:800;letter-spacing:.04em}
+.chaos.ordered .hub{opacity:1;transform:translate(-50%,-50%)}
+.chip{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;padding:.5em 1em;border-radius:999px;font-size:14px;font-weight:600;
+  border:1px solid var(--line2);background:rgba(16,30,80,.85);transition:left .8s cubic-bezier(.2,.7,.2,1),top .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1),background .6s,border-color .6s}
+.chaos.ordered .chip{background:rgba(61,123,255,.28);border-color:rgba(121,166,255,.6);min-width:15em;text-align:center}
+.chaos-bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:10px}
+.chaos-cap{color:var(--mute);font-size:15px;min-height:1.5em}
+.kicker{margin-top:26px;font-size:clamp(18px,1.8vw,24px);font-weight:700}
+
+/* Proposta: jornada */
+.journey{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 22px}
+.journey::before{content:"";position:absolute;left:6%;right:6%;top:27px;height:1px;background:var(--line2)}
+.stage{position:relative;border:0;background:none;text-align:left;padding:0;display:flex;flex-direction:column;gap:10px}
+.stage .dot{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-stretch:125%;
+  border:1px solid var(--line2);background:#0c1a4c;transition:background .3s,box-shadow .3s,transform .3s}
+.stage span.nm{font-weight:700;font-size:clamp(16px,1.5vw,20px);color:var(--mute);transition:color .3s}
+.stage[aria-selected="true"] .dot{background:radial-gradient(circle at 35% 30%,#c7d2ff,#7b62ff 50%,#3048d8);box-shadow:0 0 30px rgba(123,98,255,.6);transform:scale(1.06);border-color:transparent}
+.stage[aria-selected="true"] span.nm{color:#fff}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.split .panel{padding:22px 24px;min-height:128px}
+.split small{display:block;font-size:13px;color:var(--blue2);font-weight:700;margin-bottom:8px;letter-spacing:.02em}
+.split p{font-size:clamp(16px,1.4vw,19px)}
+.split .us{border-color:rgba(121,166,255,.5);background:linear-gradient(180deg,rgba(61,123,255,.3),rgba(20,40,110,.3))}
+.swap{animation:swap .45s cubic-bezier(.2,.7,.2,1)}
+@keyframes swap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Pilares */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pillars .panel{padding:26px;display:flex;flex-direction:column;gap:10px;min-height:230px}
+.pillars .panel p{color:var(--mute)}
+.pillars .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(61,123,255,.18);color:var(--blue2);margin-bottom:6px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:8px}
+
+/* Áreas */
+.area-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.area-word{font-size:clamp(46px,8.6vw,138px);margin:0;overflow:hidden;max-width:100%}
+.area-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(20px,3vw,48px);align-items:end}
+.blocks{display:grid;gap:12px}
+.blocks .panel{padding:18px 22px}
+.blocks ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.blocks li{color:var(--mute);font-size:15.5px;padding-left:18px;position:relative}
+.blocks li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.blocks p{color:var(--mute);font-size:15.5px}
+.claim{font-size:clamp(26px,3.2vw,46px);text-align:right;margin:0}
+.area-orb{position:relative;height:180px;margin-bottom:24px}
+.area-orb .orb{opacity:.9;width:180px;height:180px;right:0;top:0;animation:float 7s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px)}}
+
+/* Support */
+.steps{display:grid;gap:14px}
+.step{display:grid;grid-template-columns:60px 1fr;gap:16px;align-items:center;padding:14px 18px;border-radius:18px;border:1px solid transparent;transition:background .4s,border-color .4s}
+.step .n{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-stretch:125%;font-size:20px;
+  background:radial-gradient(circle at 35% 30%,#c7d2ff,#7b62ff 50%,#3048d8);box-shadow:0 0 0 rgba(123,98,255,0);transition:box-shadow .4s,filter .4s;filter:saturate(.5) brightness(.8)}
+.step p{color:var(--mute);font-size:15.5px}
+.step.on{background:rgba(61,123,255,.14);border-color:var(--line2)}
+.step.on .n{filter:none;box-shadow:0 0 34px rgba(123,98,255,.7)}
+.ticket{padding:24px}
+.ticket .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+.ticket .id{font-size:13px;color:var(--mute);font-weight:600}
+.badge{font-size:12px;font-weight:700;padding:.35em .8em;border-radius:999px;background:rgba(152,166,207,.18);color:var(--mute);transition:background .3s,color .3s}
+.badge.ok{background:rgba(70,210,150,.18);color:#7ff0bf}
+.badge.run{background:rgba(61,123,255,.25);color:#b9cdff}
+.msg{background:rgba(5,12,40,.55);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:15.5px;margin-bottom:16px}
+.tl{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:10px}
+.tl li{display:flex;gap:12px;align-items:center;color:var(--dim);font-size:15px;transition:color .3s}
+.tl li i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--dim);flex:none;transition:all .3s}
+.tl li.done{color:var(--ice)}
+.tl li.done i{background:var(--blue);border-color:var(--blue);box-shadow:0 0 12px rgba(61,123,255,.8)}
+
+/* Account */
+.nps{padding:24px}
+.scale{display:grid;grid-template-columns:repeat(11,1fr);gap:6px;margin:16px 0 14px}
+.scale button{aspect-ratio:1;border-radius:10px;border:1px solid var(--line2);background:rgba(10,20,60,.6);font-weight:700;font-size:14px;transition:background .2s,transform .15s}
+.scale button:hover{transform:translateY(-2px)}
+.scale button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.scale-legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
+.nps-out{margin-top:16px;min-height:3.2em;font-size:15.5px;color:var(--mute)}
+.nps-out b{color:#fff}
+
+/* Tecnologia */
+.app{display:grid;grid-template-columns:240px 1fr;overflow:hidden;min-height:400px}
+.app-side{border-right:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:6px;background:rgba(5,12,40,.4)}
+.app-brand{font-stretch:125%;font-weight:800;font-size:15px;padding:6px 10px 14px;display:flex;gap:8px;align-items:center}
+.app-brand i{width:8px;height:8px;border-radius:50%;background:#46d296;box-shadow:0 0 10px #46d296}
+.tab{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;display:flex;gap:10px;align-items:center;color:var(--mute);font-size:14.5px;font-weight:600;transition:background .2s,color .2s}
+.tab:hover{background:rgba(61,123,255,.12)}
+.tab[aria-selected="true"]{background:rgba(61,123,255,.28);color:#fff}
+.app-main{padding:24px 26px;display:flex;flex-direction:column;gap:16px}
+.app-main > p{color:var(--mute);max-width:56ch}
+.rows{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;padding:12px 14px;border-radius:12px;background:rgba(5,12,40,.5);border:1px solid var(--line);font-size:14.5px}
+.row .meta{color:var(--mute);font-size:13px}
+.bar{grid-column:1/-1;height:6px;border-radius:6px;background:rgba(152,166,207,.15);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--violet));border-radius:6px;width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.bubble{max-width:78%;padding:10px 14px;border-radius:14px;font-size:14.5px;background:rgba(5,12,40,.6);border:1px solid var(--line)}
+.bubble.me{margin-left:auto;background:rgba(61,123,255,.3);border-color:rgba(121,166,255,.45)}
+.bubble small{display:block;color:var(--mute);font-size:12px;margin-top:4px}
+.chart{display:flex;align-items:flex-end;gap:10px;height:120px;padding:10px 4px 0;border-bottom:1px solid var(--line)}
+.chart i{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--blue2),var(--blue));height:0;transition:height .9s cubic-bezier(.2,.7,.2,1)}
+.toggle{display:flex;justify-content:space-between;align-items:center;font-size:14.5px}
+.switch{width:40px;height:22px;border-radius:999px;background:rgba(152,166,207,.3);position:relative;border:0;padding:0;transition:background .25s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s}
+.switch[aria-checked="true"]{background:var(--blue)}
+.switch[aria-checked="true"]::after{transform:translateX(18px)}
+.note{font-size:12.5px;color:var(--dim)}
+
+/* OPERA SA */
+.sa-wrap{display:grid;grid-template-columns:1.25fr auto .9fr;gap:18px;align-items:stretch}
+.sa-steps{display:grid;gap:8px}
+.sa-step{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:center;padding:11px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(10,22,70,.55);transition:background .35s,border-color .35s,transform .35s}
+.sa-step .ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);color:var(--blue2)}
+.sa-step b{font-size:16px}.sa-step b em{font-style:normal;color:var(--blue2)}
+.sa-step p{color:var(--mute);font-size:14px}
+.sa-step.on{background:rgba(61,123,255,.28);border-color:rgba(121,166,255,.7);transform:translateX(6px)}
+.sa-mid{display:grid;place-items:center;color:var(--blue2)}
+.sa-mid .ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);background:#0c1a4c;transition:box-shadow .4s}
+.sa-mid.on .ic{box-shadow:0 0 30px rgba(61,123,255,.8)}
+.consultant{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;gap:16px;transition:border-color .5s,box-shadow .5s}
+.consultant .big{font-size:clamp(22px,2.2vw,30px);font-weight:700;line-height:1.2}
+.consultant hr{width:50%;border:0;height:2px;background:var(--blue);margin:0}
+.consultant.on{border-color:var(--blue2);box-shadow:0 0 60px rgba(61,123,255,.35)}
+.sa-foot{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;margin-top:16px;align-items:center}
+.sa-foot .panel{padding:16px 20px;font-size:15.5px}
+.sa-foot .panel b{color:var(--blue2)}
+.benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-size:13px;color:var(--mute);font-weight:600}
+.benefits .ic{width:38px;height:38px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);color:var(--blue2)}
+
+/* Modelo */
+.flow{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px}
+.flow .line{position:absolute;left:12.5%;right:12.5%;top:64px;height:2px;background:var(--line)}
+.flow .line i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--violet));box-shadow:0 0 14px rgba(123,98,255,.8)}
+.slide.active .flow .line i{animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{width:100%}}
+.node{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+.node .o{width:128px;height:128px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;letter-spacing:.04em;text-align:center;line-height:1.2;
+  background:radial-gradient(circle at 35% 30%,#d3dbff,#8c6bff 48%,#3048d8 78%);box-shadow:0 0 50px rgba(123,98,255,.5);opacity:.25;transform:scale(.85)}
+.slide.active .node .o{animation:pop .6s cubic-bezier(.2,.9,.3,1.3) forwards}
+.slide.active .node:nth-child(3) .o{animation-delay:.7s}.slide.active .node:nth-child(4) .o{animation-delay:1.2s}.slide.active .node:nth-child(5) .o{animation-delay:1.7s}
+.slide.active .node:nth-child(2) .o{animation-delay:.2s}
+@keyframes pop{to{opacity:1;transform:none}}
+.node ul{list-style:none;margin:0;padding:0;color:var(--mute);font-size:clamp(16px,1.4vw,19px);line-height:1.6}
+.node.final .o{font-size:16px;text-transform:none;letter-spacing:0}
+
+/* Planos */
+.plans-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:16px}
+.tbl-wrap{overflow-x:auto;border-radius:18px}
+table.plans{border-collapse:separate;border-spacing:0;width:100%;min-width:860px;font-size:14px;table-layout:fixed}
+.plans th,.plans td{padding:6px 10px;line-height:1.3;text-align:center;border-bottom:1px solid var(--line);transition:background .3s}
+.plans td:first-child,.plans th:first-child{text-align:left;color:var(--ice);width:26%}
+.plans td:first-child span{display:inline-flex;align-items:center;gap:10px}
+.plans td:first-child svg{color:var(--blue2);flex:none}
+.plans thead th{vertical-align:bottom;border-bottom:1px solid var(--line2)}
+.plan-btn{border:0;background:none;width:100%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:12px 4px 4px;position:relative;border-radius:14px}
+.plan-btn .nm{font-size:22px;font-weight:800}
+.plan-btn .sb{font-size:12.5px;color:var(--blue2)}
+.plan-btn .pr{font-size:24px;font-weight:800;margin-top:4px}
+.plan-btn .pr small{font-size:13px;font-weight:500;color:var(--mute)}
+.rec{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.plans .sel{background:rgba(61,123,255,.16)}
+.plans thead .sel{background:rgba(61,123,255,.26)}
+.plans tfoot td{color:var(--mute);font-size:13.5px;border-bottom:0;vertical-align:top}
+.plans tfoot td.sel{color:#fff}
+.yes{color:var(--blue2)}
+.no{display:inline-block;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--dim)}
+.more{display:flex;align-items:center;gap:14px;justify-content:center;margin-top:12px;padding:10px 20px;border-radius:999px;border:1px solid var(--line);background:rgba(10,20,60,.5);font-size:15px;flex-wrap:wrap;text-align:center}
+.more b{font-weight:700}.more span{color:var(--mute)}
+
+/* SA preços */
+.sa-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sa-card{padding:28px;position:relative}
+.sa-card.hi{border-color:rgba(121,166,255,.6);background:linear-gradient(180deg,rgba(61,123,255,.3),rgba(20,40,110,.3))}
+.sa-card .tagx{position:absolute;top:-12px;left:28px;background:var(--blue);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;padding:4px 10px;border-radius:999px}
+.sa-card h3{font-size:24px}
+.price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:14px 0 18px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.price strong{font-size:clamp(40px,4.4vw,58px);font-weight:800;line-height:1}
+.price .pm{color:var(--mute)}
+.pill{font-size:13px;font-weight:700;color:var(--blue2);border:1px solid var(--line2);border-radius:999px;padding:.3em .8em;background:rgba(61,123,255,.14)}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:9px;font-size:15px}
+.checks li{display:grid;grid-template-columns:20px 1fr;gap:10px;color:var(--ice)}
+.checks svg{color:var(--blue2);margin-top:2px}
+.bundle-note{margin-top:16px;padding:14px 20px;font-size:15px}
+.bundle-note b{color:var(--blue2)}
+
+/* Simulador */
+.sim{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:stretch}
+.sim .panel{padding:26px}
+.opt-group{margin-bottom:22px}
+.opt-group h3{margin-bottom:12px}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.opt{border:1px solid var(--line2);background:rgba(10,20,60,.55);border-radius:14px;padding:12px 14px;text-align:left;transition:background .2s,border-color .2s}
+.opt b{display:block;font-size:15.5px}
+.opt span{font-size:13px;color:var(--mute)}
+.opt[aria-pressed="true"]{background:rgba(61,123,255,.3);border-color:var(--blue2)}
+.result{display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,rgba(61,123,255,.34),rgba(40,30,140,.3));border-color:rgba(121,166,255,.55)}
+.total{font-size:clamp(48px,5.4vw,76px);font-weight:800;line-height:1;font-stretch:112%}
+.total small{font-size:16px;font-weight:500;color:var(--mute);font-stretch:100%}
+.lines{display:grid;gap:8px;font-size:15px;border-top:1px solid var(--line2);padding-top:14px}
+.lines div{display:flex;justify-content:space-between;gap:10px}
+.lines .sv{color:#7ff0bf;font-weight:600}
+.year{color:var(--mute);font-size:14.5px}
+
+.opts.two-col{grid-template-columns:1fr 1fr}
+.opt span{display:block;margin-top:4px}
+.opt em{display:block;font-style:normal;font-weight:700;color:var(--blue2);margin-top:10px;font-size:14.5px}
+.hint{margin-top:12px;font-size:14.5px;color:var(--mute)}.hint b{color:#7ff0bf}
+@media (max-width:600px){.opts.two-col{grid-template-columns:1fr}}
+
+/* Navegação */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:14px;
+  padding:12px clamp(16px,3vw,40px) calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(4,10,32,.92),rgba(4,10,32,0))}
+.nav .brand{font-stretch:125%;font-weight:800;font-size:15px;letter-spacing:.02em}
+.progress{flex:1;height:3px;border-radius:3px;background:rgba(152,166,207,.18);overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.count{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:rgba(20,36,100,.5);display:grid;place-items:center;transition:background .2s}
+.icon-btn:hover{background:rgba(61,123,255,.35)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+
+.overview{position:fixed;inset:0;z-index:10;background:rgba(4,10,32,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  padding:calc(40px + env(safe-area-inset-top,0px)) clamp(20px,5vw,80px) 40px;overflow-y:auto;opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+.overview.open{opacity:1;visibility:visible;transition-delay:0s}
+.ov-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ov-grid button{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:border-color .2s,background .2s}
+.ov-grid button:hover{border-color:var(--blue2)}
+.ov-grid button[aria-current="true"]{border-color:var(--blue);background:rgba(61,123,255,.25)}
+.ov-grid small{color:var(--mute);font-variant-numeric:tabular-nums}
+.ov-grid b{font-size:16px}
+
+/* Responsivo */
+@media (max-width:900px){
+  body{font-size:16px}
+  .slide{padding-top:calc(24px + env(safe-area-inset-top,0px))}
+  .inner{margin:0 auto auto}
+  .two,.area-grid,.sa-wrap,.sa-foot,.sim,.sa-cards{grid-template-columns:1fr}
+  .pillars{grid-template-columns:1fr}
+  .pillars .panel{min-height:0}
+  .split{grid-template-columns:1fr}
+  .claim{text-align:left}
+  .area-orb{display:none}
+  .app{grid-template-columns:1fr}
+  .app-side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .app-brand{display:none}
+  .tab{white-space:nowrap}
+  .sa-mid{display:none}
+  .benefits{grid-template-columns:repeat(2,1fr)}
+  .flow{grid-template-columns:1fr;gap:26px;margin-top:20px}
+  .flow .line{left:63px;right:auto;top:40px;bottom:40px;width:2px;height:auto}
+  .slide.active .flow .line i{animation:drawv 1.8s .3s forwards;width:100%;height:0}
+  .node{flex-direction:row;text-align:left;gap:20px}
+  .node .o{width:88px;height:88px;flex:none;font-size:11.5px}
+  .node.final .o{font-size:12px}
+  .journey{grid-template-columns:repeat(2,1fr);row-gap:18px}
+  .journey::before{display:none}
+  .chaos{height:340px}
+  .nav .brand{display:none}
+}
+@keyframes drawv{to{height:100%}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><div class="plane"></div><div class="beam"></div><div class="beam b2"></div></div>
+
+<main class="deck" id="deck">
+
+<!-- 1 Capa -->
+<section class="slide cover" data-title="OPERA" aria-label="Capa">
+  <div class="inner">
+    <h1 class="mega wide" aria-label="OPERA"><span>O</span><span>P</span><span>E</span><span>R</span><span>A</span></h1>
+    <p class="tagline">You sell. We operate.</p>
+    <div class="actions"><button class="btn primary" data-go="next">Começar apresentação</button></div>
+    <p class="foot">REAL ESTATE OPERATIONS AS A SERVICE</p>
+  </div>
+</section>
+
+<!-- 2 Problema -->
+<section class="slide" data-title="O problema">
+  <div class="inner two">
+    <div>
+      <h2 class="title wide">O problema</h2>
+      <div class="problems">
+        <div class="panel"><h3>Processos e burocracia</h3><p>Documentação, prazos, follow-ups, chamadas e tarefas que não geram receita.</p></div>
+        <div class="panel"><h3>Operação fragmentada</h3><p>Informação espalhada por emails, WhatsApp, ficheiros e diferentes ferramentas. Quando alguém falta ou a equipa cresce, a operação perde consistência.</p></div>
+        <div class="panel"><h3>Falta de estrutura</h3><p>Cada pessoa cria a sua própria forma de trabalhar. O crescimento fica limitado: fechar mais negócio significa muitas vezes contratar mais pessoas e somar complexidade.</p></div>
+      </div>
+      <p class="kicker">O negócio cresce. A operação torna-se o travão.</p>
+    </div>
+    <div>
+      <div class="chaos" id="chaos">
+        <div class="hub"><b>OPERA</b></div>
+      </div>
+      <div class="chaos-bar">
+        <div class="seg" role="group" aria-label="Comparar">
+          <button aria-pressed="true" data-chaos="0">Hoje</button>
+          <button aria-pressed="false" data-chaos="1">Com a OPERA</button>
+        </div>
+        <p class="chaos-cap" id="chaosCap">Tudo espalhado. Cada pessoa trabalha à sua maneira.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 Proposta -->
+<section class="slide" data-title="A nossa proposta">
+  <div class="inner">
+    <h2 class="title wide" style="max-width:22ch">Tu tratas do negócio. A OPERA trata do resto.</h2>
+    <p class="lead">Escolhe uma etapa do negócio e vê quem faz o quê.</p>
+    <div class="journey" role="tablist" aria-label="Etapas do negócio">
+      <button class="stage" role="tab" aria-selected="true" data-stage="0"><span class="dot">1</span><span class="nm">Prospeção</span></button>
+      <button class="stage" role="tab" aria-selected="false" data-stage="1"><span class="dot">2</span><span class="nm">Relação</span></button>
+      <button class="stage" role="tab" aria-selected="false" data-stage="2"><span class="dot">3</span><span class="nm">Negociação</span></button>
+      <button class="stage" role="tab" aria-selected="false" data-stage="3"><span class="dot">4</span><span class="nm">Fecho</span></button>
+    </div>
+    <div class="split" id="stageOut" role="tabpanel">
+      <div class="panel"><small>O consultor</small><p id="stTu"></p></div>
+      <div class="panel us"><small>A OPERA</small><p id="stUs"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 Pilares -->
+<section class="slide" data-title="O que é a OPERA">
+  <div class="inner">
+    <h2 class="title wide">Uma extensão da tua estrutura</h2>
+    <p class="lead">A OPERA não é mais um consultor externo. É a equipa que faz a operação acontecer.</p>
+    <div class="pillars">
+      <div class="panel"><div class="ic" data-icon="bolt"></div><h3>Executa. Não só aconselha.</h3><p>Assume a operação para que te foques no negócio.</p></div>
+      <div class="panel"><div class="ic" data-icon="building"></div><h3>Departamento externo</h3><p>Não precisas de construir internamente. A OPERA integra-se como o teu departamento operacional.</p></div>
+      <div class="panel"><div class="ic" data-icon="layers"></div><h3>Estrutura completa</h3><p>Tudo centralizado numa única equipa.</p>
+        <div class="jump"><button class="btn" data-go="5">Operations</button><button class="btn" data-go="7">Finance</button><button class="btn" data-go="6">Legal</button></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 Operations -->
+<section class="slide" data-title="Operations">
+  <div class="inner">
+    <div class="area-head">
+      <h2 class="area-word wide outline">Operations</h2>
+      <div class="seg" aria-label="Áreas"><button data-go="5" aria-current="true">Operations</button><button data-go="6">Legal</button><button data-go="7">Finance</button></div>
+    </div>
+    <div class="area-grid">
+      <div class="blocks">
+        <div class="panel"><h3>Processos & Documentação</h3><ul><li>Preenchimento de CMIs e inserção de listings</li><li>Abertura e acompanhamento de processos</li><li>Gestão documental e compliance</li><li>Controlo de prazos e checklists</li></ul></div>
+        <div class="panel"><h3>Coordenação & Escrituras</h3><ul><li>Coordenação de intervenientes e parceiros</li><li>Acompanhamento de escrituras</li><li>Gestão de pedidos e tickets</li></ul></div>
+        <div class="panel"><h3>Follow-ups & Estado</h3><p>Follow-ups operacionais e atualização de estado. O consultor sabe sempre onde está o processo e quem trata dele.</p></div>
+      </div>
+      <div><div class="area-orb"><div class="orb"></div></div><p class="claim wide">Gestão processual por trás de cada negócio.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 Legal -->
+<section class="slide" data-title="Legal">
+  <div class="inner">
+    <div class="area-head">
+      <h2 class="area-word wide outline">Legal</h2>
+      <div class="seg" aria-label="Áreas"><button data-go="5">Operations</button><button data-go="6" aria-current="true">Legal</button><button data-go="7">Finance</button></div>
+    </div>
+    <div class="area-grid">
+      <div class="blocks">
+        <div class="panel"><h3>Apoio contratual</h3><p>Revisão documental e apoio jurídico em transações imobiliárias.</p></div>
+        <div class="panel"><h3>CPCV & Contratos</h3><p>Elaboração, validação e revisão de CPCV e contratos imobiliários.</p></div>
+        <div class="panel"><h3>Suporte legal</h3><p>Esclarecimento de dúvidas legais e coordenação jurídica especializada.</p></div>
+      </div>
+      <div><div class="area-orb"><div class="orb"></div></div><p class="claim wide">Suporte jurídico integrado.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 Finance -->
+<section class="slide" data-title="Finance">
+  <div class="inner">
+    <div class="area-head">
+      <h2 class="area-word wide outline">Finance</h2>
+      <div class="seg" aria-label="Áreas"><button data-go="5">Operations</button><button data-go="6">Legal</button><button data-go="7" aria-current="true">Finance</button></div>
+    </div>
+    <div class="area-grid">
+      <div class="blocks">
+        <div class="panel"><h3>Faturação & Pagamentos</h3><p>Faturação, controlo de pagamentos e acompanhamento de receitas vs despesas.</p></div>
+        <div class="panel"><h3>Organização financeira</h3><p>Controlo de despesas, prazos e preparação para a contabilidade, com relatório financeiro mensal de gestão do teu negócio.</p></div>
+        <div class="panel"><h3>Fiscal & Compliance</h3><p>Controlo de IVA e impostos.</p></div>
+      </div>
+      <div><div class="area-orb"><div class="orb"></div></div><p class="claim wide">Vender é uma coisa. Gerir financeiramente é outra.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 Support -->
+<section class="slide" data-title="Support">
+  <div class="inner two">
+    <div>
+      <h2 class="title wide">Support</h2>
+      <p class="lead">Um ponto de contacto para tudo o que não devia estar nas mãos do consultor.</p>
+      <div class="steps" id="supSteps">
+        <div class="step"><span class="n">1</span><div><h3>Pedir</h3><p>O consultor faz um pedido simples. A OPERA recebe, classifica e direciona para Operations, Finance ou Legal.</p></div></div>
+        <div class="step"><span class="n">2</span><div><h3>Acompanhar</h3><p>O estado do pedido está visível em tempo real. Menos emails perdidos, sem falta de resposta.</p></div></div>
+        <div class="step"><span class="n">3</span><div><h3>Resolver</h3><p>A OPERA resolve e confirma.</p></div></div>
+      </div>
+    </div>
+    <div class="panel ticket" aria-live="polite">
+      <div class="top"><span class="id">Pedido de exemplo</span><span class="badge" id="tkBadge">Por enviar</span></div>
+      <div class="msg">Preciso da certidão permanente atualizada para o CPCV de quinta feira.</div>
+      <ul class="tl" id="tkTl">
+        <li><i></i>Pedido recebido</li>
+        <li><i></i>Classificado e encaminhado para Legal</li>
+        <li><i></i>Em curso, visível para o consultor</li>
+        <li><i></i>Resolvido e confirmado</li>
+      </ul>
+      <button class="btn primary" id="tkRun">Simular pedido</button>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Account -->
+<section class="slide" data-title="Account">
+  <div class="inner two">
+    <div>
+      <h2 class="title wide">Uma relação, não apenas um ticket</h2>
+      <div class="blocks" style="margin-top:8px">
+        <div class="panel"><h3>Relação & Timings</h3><p>Acompanha a relação com o consultor e garante o cumprimento dos timings acordados.</p></div>
+        <div class="panel"><h3>Feedback & NPS</h3><p>Recolhe feedback, acompanha o grau de satisfação e identifica melhorias e necessidades adicionais.</p></div>
+      </div>
+    </div>
+    <div class="panel nps">
+      <h3>De 0 a 10, qual a probabilidade de recomendares a OPERA?</h3>
+      <p class="note">Exemplo de pergunta de satisfação. Experimenta.</p>
+      <div class="scale" id="npsScale" role="group" aria-label="Escala de 0 a 10"></div>
+      <div class="scale-legend"><span>Nada provável</span><span>Muito provável</span></div>
+      <p class="nps-out" id="npsOut" aria-live="polite">Cada resposta é lida e tem seguimento.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 Tecnologia -->
+<section class="slide" data-title="Tecnologia">
+  <div class="inner">
+    <h2 class="title wide">Tecnologia</h2>
+    <p class="lead">Tudo numa plataforma centralizada. Carrega nas secções.</p>
+    <div class="panel app">
+      <div class="app-side" role="tablist" aria-label="Plataforma">
+        <div class="app-brand"><i></i>OPERA OS</div>
+        <button class="tab" role="tab" aria-selected="true" data-tab="0"><span data-icon="folder"></span>Processos & Docs</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="1"><span data-icon="chat"></span>Pedidos & Comunicação</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="2"><span data-icon="check"></span>Tarefas & Financeiro</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="3"><span data-icon="chart"></span>Reporting & Automação</button>
+      </div>
+      <div class="app-main" id="appMain" role="tabpanel"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 OPERA SA -->
+<section class="slide" data-title="OPERA SA">
+  <div class="inner">
+    <div class="plans-head">
+      <div><h2 class="title wide" style="margin-bottom:.2em">OPERA SA</h2><p class="lead" style="margin:0">Nenhuma lead é desperdiçada.</p></div>
+      <button class="btn primary" id="saRun">Seguir uma lead</button>
+    </div>
+    <div class="sa-wrap">
+      <div class="sa-steps" id="saSteps">
+        <div class="sa-step"><span class="ic" data-icon="phone"></span><div><b><em>1.</em> Atende</b><p>Inbound de imóveis e tráfego pago.</p></div></div>
+        <div class="sa-step"><span class="ic" data-icon="clip"></span><div><b><em>2.</em> Qualifica</b><p>O quê, onde, quando, quanto e financiamento.</p></div></div>
+        <div class="sa-step"><span class="ic" data-icon="refresh"></span><div><b><em>3.</em> Faz follow-up</b><p>Garante que houve tentativa de contacto, sem nurturing.</p></div></div>
+        <div class="sa-step"><span class="ic" data-icon="card"></span><div><b><em>4.</em> Regista</b><p>Lead, informação e notas no CRM.</p></div></div>
+        <div class="sa-step"><span class="ic" data-icon="cal"></span><div><b><em>5.</em> Agenda</b><p>Visitas quando a lead está pronta.</p></div></div>
+        <div class="sa-step"><span class="ic" data-icon="undo"></span><div><b><em>6.</em> Recupera</b><p>Uma campanha mensal de reativação de leads antigas.</p></div></div>
+      </div>
+      <div class="sa-mid" id="saMid"><span class="ic" data-icon="users"></span></div>
+      <div class="panel consultant" id="saCons">
+        <h3 style="font-size:22px">O consultor</h3>
+        <span data-icon="user" data-size="54" style="color:var(--blue2)"></span>
+        <hr>
+        <p class="big">vende, negoceia<br>e fecha.</p>
+      </div>
+    </div>
+    <div class="sa-foot">
+      <div class="panel">A OPERA cuida da primeira e mais crítica etapa. O consultor foca-se no que faz a diferença: <b>fechar negócios.</b></div>
+      <div class="benefits">
+        <div><span class="ic" data-icon="check"></span>Mais oportunidades para o consultor</div>
+        <div><span class="ic" data-icon="clock"></span>Mais tempo para vender</div>
+        <div><span class="ic" data-icon="chart"></span>Mais conversões para o negócio</div>
+        <div><span class="ic" data-icon="euro"></span>Mais resultados para todos</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 Modelo -->
+<section class="slide" data-title="Novo modelo operacional">
+  <div class="inner">
+    <h2 class="title wide" style="max-width:none;text-align:center">Um novo modelo operacional</h2>
+    <div class="flow">
+      <div class="line"><i></i></div>
+      <div class="node"><span class="o">CONSULTOR</span><ul><li>Angaria</li><li>Vende</li><li>Negoceia</li><li>Relaciona-se</li></ul></div>
+      <div class="node"><span class="o">OPERA</span><ul><li>Operations</li><li>Finance</li><li>Legal</li></ul></div>
+      <div class="node"><span class="o">RESULTADO</span><ul><li>Mais tempo comercial</li><li>Menos complexidade</li></ul></div>
+      <div class="node final"><span class="o">You sell.<br>We operate.</span><ul></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 Fecho -->
+<section class="slide cover" data-title="You sell. We operate.">
+  <div class="inner">
+    <h2 class="mega wide" aria-label="OPERA"><span>O</span><span>P</span><span>E</span><span>R</span><span>A</span></h2>
+    <p class="tagline">You sell. We operate.</p>
+    <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" data-go="14">Single</button><button class="btn primary" data-go="15">Team</button><button class="btn" data-go="1">Voltar ao início</button></div>
+    <p class="foot">REAL ESTATE OPERATIONS AS A SERVICE</p>
+  </div>
+</section>
+
+<!-- 14 Plano Single -->
+<section class="slide" data-title="Plano Single"><div class="inner"><div class="sim-root" data-plan="single"></div></div></section>
+
+<!-- 15 Plano Team -->
+<section class="slide" data-title="Plano Team"><div class="inner"><div class="sim-root" data-plan="team"></div></div></section>
+
+</main>
+
+<nav class="nav" aria-label="Navegação">
+  <span class="brand">OPERA</span>
+  <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+  <span class="count" id="count">1 / 15</span>
+  <button class="icon-btn" id="prev" aria-label="Diapositivo anterior"><span data-icon="left"></span></button>
+  <button class="icon-btn" id="next" aria-label="Diapositivo seguinte"><span data-icon="right"></span></button>
+  <button class="icon-btn" id="ovBtn" aria-label="Ver todos os diapositivos"><span data-icon="grid"></span></button>
+  <button class="icon-btn" id="fsBtn" aria-label="Ecrã inteiro"><span data-icon="full"></span></button>
+</nav>
+
+<div class="overview" id="overview" role="dialog" aria-modal="true" aria-label="Todos os diapositivos">
+  <div class="ov-top"><h2 class="wide" style="margin:0;font-size:22px">Índice</h2><button class="icon-btn" id="ovClose" aria-label="Fechar"><span data-icon="x"></span></button></div>
+  <div class="ov-grid" id="ovGrid"></div>
+</div>
+
+<script>
+(function(){
+// Ícones
+const P={
+ left:'<path d="M15 18l-6-6 6-6"/>',right:'<path d="M9 18l6-6-6-6"/>',
+ grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ folder:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ chart:'<path d="M5 20V11M12 20V5M19 20v-7"/>',
+ phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2"/>',
+ clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 13l2 2 4-4"/>',
+ refresh:'<path d="M20 12a8 8 0 01-14 5.3M4 12A8 8 0 0118 6.7"/><path d="M18 3v4h-4M6 21v-4h4"/>',
+ card:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.6-1.4 1.5-2 2.5-2s1.9.6 2.5 2M14 10h4M14 13h3"/>',
+ cal:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M9 15l2 2 4-4"/>',
+ undo:'<path d="M4 12a8 8 0 108-8 8.5 8.5 0 00-6 2.5L4 8"/><path d="M4 3v5h5"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.3-5.5 6.5-5.5s5.7 2 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18 14.8c1.8.8 3 2.6 3.5 5.2"/>',
+ user:'<circle cx="12" cy="7.5" r="3.8"/><path d="M4.5 21c.9-4.4 3.8-7 7.5-7s6.6 2.6 7.5 7"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ euro:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5A4 4 0 009 12a4 4 0 006.5 3.5M7.5 11h5M7.5 13.5h5"/>',
+ bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ building:'<rect x="4" y="3" width="11" height="18" rx="1"/><path d="M15 9h5v12h-5M7.5 7h4M7.5 11h4M7.5 15h4"/>',
+ layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+ scale:'<path d="M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a3 3 0 005 0zM19 7l-2.5 6a3 3 0 005 0z"/>',
+ home:'<path d="M3 11l9-7 9 7M5 10v10h14V10"/>',
+ file:'<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+ upload:'<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+ pie:'<path d="M12 3v9h9A9 9 0 1112 3z"/><path d="M15 3.5A9 9 0 0120.5 9H15z"/>',
+ rocket:'<path d="M14 4c3-1.5 5.5-1 6 0 1 .5 1.5 3 0 6l-7 7-6-6z"/><path d="M7 11l-3 1-1 3 4-1M13 17l-1 3-3 1 1-4M15.5 8.5h.01"/>'
+};
+function svg(n,s){s=s||18;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[n]||'')+'</svg>';}
+function paintIcons(root){(root||document).querySelectorAll('[data-icon]').forEach(e=>{if(!e.dataset.done){e.innerHTML=svg(e.dataset.icon,+e.dataset.size||(e.classList.contains('ic')?20:18));e.dataset.done=1;}});}
+const eur=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'€';
+
+// Navegação
+const slides=[...document.querySelectorAll('.slide')],N=slides.length;let cur=0;
+const prog=document.getElementById('prog'),count=document.getElementById('count'),prev=document.getElementById('prev'),next=document.getElementById('next');
+const ovGrid=document.getElementById('ovGrid'),ov=document.getElementById('overview');
+slides.forEach((s,i)=>{const b=document.createElement('button');b.innerHTML='<small>'+String(i+1).padStart(2,'0')+'</small><b>'+s.dataset.title+'</b>';b.onclick=()=>{closeOv();go(i)};ovGrid.appendChild(b);});
+function go(i){
+  i=Math.max(0,Math.min(N-1,i));
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i);s.inert=(k!==i);});
+  cur=i;prog.style.width=((i)/(N-1)*100)+'%';count.textContent=(i+1)+' / '+N;
+  prev.disabled=i===0;next.disabled=i===N-1;
+  document.documentElement.style.setProperty('--p',(i/(N-1)).toFixed(3));
+  [...ovGrid.children].forEach((b,k)=>b.setAttribute('aria-current',k===i));
+  slides[i].scrollTop=0;
+  try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+  clearAuto();const h=enter[i];if(h)h();
+}
+const enter={};let autoT=[];function clearAuto(){autoT.forEach(t=>{clearTimeout(t);clearInterval(t);});autoT=[];}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-go]');if(!t)return;const v=t.dataset.go;go(v==='next'?cur+1:v==='prev'?cur-1:(+v-1));});
+prev.onclick=()=>go(cur-1);next.onclick=()=>go(cur+1);
+function openOv(){ov.classList.add('open');ov.querySelector('[aria-current="true"]')?.focus();}
+function closeOv(){ov.classList.remove('open');}
+document.getElementById('ovBtn').onclick=openOv;document.getElementById('ovClose').onclick=closeOv;
+document.getElementById('fsBtn').onclick=()=>{try{if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}catch(e){}};
+document.addEventListener('keydown',e=>{
+  if(ov.classList.contains('open')){if(e.key==='Escape'||e.key==='g'||e.key==='G')closeOv();return;}
+  const onBtn=e.target.closest&&e.target.closest('button');
+  if(['ArrowRight','PageDown'].includes(e.key)||(e.key===' '&&!onBtn)){e.preventDefault();go(cur+1);}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(N-1);
+  else if(e.key==='g'||e.key==='G')openOv();
+  else if(e.key==='f'||e.key==='F')document.getElementById('fsBtn').click();
+});
+let tx=0,ty=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.4&&!e.target.closest('.tbl-wrap,.app-side')){go(cur+(dx<0?1:-1));}},{passive:true});
+
+// Problema: caos vs ordem
+const chaos=document.getElementById('chaos');
+const chipData=[['Novo processo',22,12,-8],['Pedir CPCV',74,22,7],['Direitos de preferência',36,40,-4],['Organizar faturas e despesas',62,56,6],['Inserir nova angariação',30,74,5],['Ligar às leads compradoras',64,90,-6]];
+const chips=chipData.map(d=>{const c=document.createElement('span');c.className='chip';c.textContent=d[0];chaos.appendChild(c);return c;});
+function layout(ordered){
+  chips.forEach((c,i)=>{const d=chipData[i];
+    if(ordered){c.style.left='50%';c.style.top=(28+i*11.3)+'%';c.style.transform='translate(-50%,-50%) rotate(0deg)';}
+    else{c.style.left=d[1]+'%';c.style.top=d[2]+'%';c.style.transform='translate(-50%,-50%) rotate('+d[3]+'deg)';}
+  });
+  chaos.classList.toggle('ordered',ordered);
+  document.getElementById('chaosCap').textContent=ordered?'Tudo centralizado numa única equipa.':'Tudo espalhado. Cada pessoa trabalha à sua maneira.';
+  document.querySelectorAll('[data-chaos]').forEach(b=>b.setAttribute('aria-pressed',(+b.dataset.chaos===1)===ordered));
+}
+document.querySelectorAll('[data-chaos]').forEach(b=>b.onclick=()=>{clearAuto();layout(b.dataset.chaos==='1');});
+enter[1]=()=>{layout(false);autoT.push(setTimeout(()=>layout(true),1800));};
+layout(false);
+
+// Proposta
+const stages=[
+ ['Foca-se em encontrar oportunidades e gerar negócio.','Trata do resto.'],
+ ['Constrói confiança com os clientes. É a prioridade.','Garante que a operação não interrompe essa relação.'],
+ ['Negoceia sem distrações.','Assume o que acontece antes, durante e depois da transação.'],
+ ['Fecha o negócio.','Do CPCV à escritura, coordena todos os intervenientes.']];
+let curStage=0;function stage(i){curStage=i;
+  document.querySelectorAll('.stage').forEach((b,k)=>b.setAttribute('aria-selected',k===i));
+  document.getElementById('stTu').textContent=stages[i][0];document.getElementById('stUs').textContent=stages[i][1];
+  const o=document.getElementById('stageOut');o.classList.remove('swap');void o.offsetWidth;o.classList.add('swap');
+}
+document.querySelectorAll('.stage').forEach(b=>{b.onclick=()=>{clearAuto();stage(+b.dataset.stage);};
+  b.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.stopPropagation();}}});
+stage(0);
+enter[2]=()=>{stage(0);autoT.push(setInterval(()=>stage((curStage+1)%4),3200));};
+
+// Support: simulador de pedido
+const tkLis=[...document.querySelectorAll('#tkTl li')],steps=[...document.querySelectorAll('#supSteps .step')],badge=document.getElementById('tkBadge'),tkRun=document.getElementById('tkRun');
+let tkT=[];
+function tkReset(){tkT.forEach(clearTimeout);tkT=[];tkLis.forEach(l=>l.classList.remove('done'));steps.forEach(s=>s.classList.remove('on'));badge.className='badge';badge.textContent='Por enviar';tkRun.textContent='Simular pedido';}
+function tkPlay(){tkReset();tkRun.disabled=true;
+  const seq=[[0,0,'Recebido','run'],[1,0,'Legal','run'],[2,1,'Em curso','run'],[3,2,'Resolvido','ok']];
+  seq.forEach((s,k)=>tkT.push(setTimeout(()=>{tkLis[s[0]].classList.add('done');steps.forEach((st,j)=>st.classList.toggle('on',j===s[1]));badge.className='badge '+s[3];badge.textContent=s[2];
+    if(k===seq.length-1){tkRun.disabled=false;tkRun.textContent='Repetir';}},350+k*1100)));}
+tkRun.onclick=tkPlay;enter[7]=()=>{tkReset();autoT.push(setTimeout(tkPlay,500));};
+
+// Account: NPS
+const sc=document.getElementById('npsScale'),npsOut=document.getElementById('npsOut');
+for(let i=0;i<=10;i++){const b=document.createElement('button');b.textContent=i;b.setAttribute('aria-pressed','false');b.onclick=()=>{clearAuto();npsSet(i);};sc.appendChild(b);}
+function npsSet(i){const b=sc.children[i];
+  [...sc.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+  npsOut.innerHTML=i>=9?'<b>Promotor.</b> Ótimo. Percebemos o que está a funcionar para continuar a fazê-lo.':i>=7?'<b>Neutro.</b> A OPERA contacta para perceber o que falta para ser um 10.':'<b>Detrator.</b> Alerta imediato para a equipa. Há contacto e um plano de melhoria.';}
+enter[8]=()=>{const seq=[10,8,4];let k=0;npsSet(seq[0]);autoT.push(setInterval(()=>{k=(k+1)%seq.length;npsSet(seq[k]);},3000));};
+
+// Tecnologia
+const views=[
+ ()=>'<p>Consulta processos, documentação e estado de cada negócio em tempo real.</p><div class="rows">'+
+   [['Apartamento T3','CPCV em preparação',62],['Moradia V4','Escritura agendada',90],['Loja comercial','Documentação em falta',30]].map(r=>'<div class="row"><b>'+r[0]+'</b><span class="meta">'+r[1]+'</span><div class="bar"><i data-w="'+r[2]+'"></i></div></div>').join('')+'</div><p class="note">Dados ilustrativos</p>',
+ ()=>'<p>Faz pedidos e comunica diretamente com a equipa OPERA numa plataforma centralizada.</p><div class="rows">'+
+   '<div class="bubble me">Podem confirmar a data da escritura com o banco?<small>Consultor</small></div>'+
+   '<div class="bubble">Confirmado. Ficou marcada e já está no processo, com todos os intervenientes avisados.<small>Equipa OPERA</small></div>'+
+   '<div class="bubble me">Perfeito, obrigado.<small>Consultor</small></div></div><p class="note">Dados ilustrativos</p>',
+ ()=>'<p>Acompanha tarefas e prazos e consulta a informação financeira atualizada a qualquer momento.</p><div class="rows">'+
+   [['Enviar caderneta predial','Hoje',100],['Rever minuta do CPCV','Amanhã',55],['Faturar comissão','Esta semana',20]].map(r=>'<div class="row"><b>'+r[0]+'</b><span class="meta">'+r[1]+'</span><div class="bar"><i data-w="'+r[2]+'"></i></div></div>').join('')+'</div><p class="note">Dados ilustrativos</p>',
+ ()=>'<p>Acede a reporting completo e automatiza tarefas repetitivas para ganhar escala e eficiência.</p><div class="chart">'+
+   [38,52,46,64,72,88].map(h=>'<i data-h="'+h+'"></i>').join('')+'</div><div class="rows">'+
+   ['Lembrete automático de prazos','Relatório mensal enviado por email'].map((t,k)=>'<div class="toggle"><span>'+t+'</span><button class="switch" role="switch" aria-checked="'+(k===0)+'" aria-label="'+t+'"></button></div>').join('')+'</div><p class="note">Dados ilustrativos</p>'];
+const appMain=document.getElementById('appMain');
+function tab(i){document.querySelectorAll('.tab').forEach((b,k)=>b.setAttribute('aria-selected',k===i));
+  appMain.innerHTML=views[i]();appMain.classList.remove('swap');void appMain.offsetWidth;appMain.classList.add('swap');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{appMain.querySelectorAll('[data-w]').forEach(e=>e.style.width=e.dataset.w+'%');appMain.querySelectorAll('[data-h]').forEach(e=>e.style.height=e.dataset.h+'%');}));
+  appMain.querySelectorAll('.switch').forEach(s=>s.onclick=()=>s.setAttribute('aria-checked',s.getAttribute('aria-checked')!=='true'));}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{clearAuto();tab(+b.dataset.tab);});
+tab(0);enter[9]=()=>{let k=0;tab(0);autoT.push(setInterval(()=>{k=(k+1)%4;tab(k);},4200));};
+
+// OPERA SA: seguir lead
+const saSteps=[...document.querySelectorAll('#saSteps .sa-step')],saMid=document.getElementById('saMid'),saCons=document.getElementById('saCons'),saRun=document.getElementById('saRun');
+let saT=[];
+function saReset(){saT.forEach(clearTimeout);saT=[];saSteps.forEach(s=>s.classList.remove('on'));saMid.classList.remove('on');saCons.classList.remove('on');saRun.disabled=false;}
+saRun.onclick=()=>{saReset();saRun.disabled=true;
+  [0,1,2,3,4,5].forEach((k,j)=>saT.push(setTimeout(()=>saSteps.forEach((s,m)=>s.classList.toggle('on',m===k)),j*650)));
+  saT.push(setTimeout(()=>{saSteps.forEach(s=>s.classList.remove('on'));saMid.classList.add('on');},6*650));
+  saT.push(setTimeout(()=>{saMid.classList.remove('on');saCons.classList.add('on');saRun.disabled=false;saRun.textContent='Repetir';},7*650+200));};
+enter[10]=()=>{saReset();saRun.textContent='Seguir uma lead';autoT.push(setTimeout(()=>saRun.click(),600));};
+
+// Modelo: reinicia animação
+enter[11]=()=>{const s=slides[11];s.querySelectorAll('.o,.line i').forEach(e=>{e.style.animation='none';void e.offsetWidth;e.style.animation='';});};
+
+// Simuladores (pack de 3 meses)
+const PR={
+ single:{title:'Monta o teu plano Single',lead:'Para 1 consultor. Pack de 3 meses.',bo:{pif:2250,inst:900},sa:{pif:2550,inst:1000},bundle:{pif:4500,inst:1800}},
+ team:{title:'Monta o teu plano Team',lead:'Para equipas até 10 comerciais. Pack de 3 meses.',bo:{pif:4500,inst:1800},sa:{pif:5100,inst:2000},bundle:{pif:9000,inst:3600},more:true}};
+const sims={};
+document.querySelectorAll('.sim-root').forEach(root=>{
+  const k=root.dataset.plan,d=PR[k],st={bo:true,sa:true,pay:'pif',shown:0,raf:0};
+  root.innerHTML='<h2 class="title wide" style="max-width:none">'+d.title+'</h2><p class="lead">'+d.lead+'</p><div class="sim"><div class="panel">'+
+   '<div class="opt-group"><h3>Serviços</h3><div class="opts two-col">'+
+   '<button class="opt" data-s="bo"><b>OPERA BO</b><span>Operations, Legal e Finance, incluindo angariações.</span><em>'+eur(d.bo.pif)+' ou 3x '+eur(d.bo.inst)+'</em></button>'+
+   '<button class="opt" data-s="sa"><b>OPERA SA</b><span>Atende, qualifica, faz follow-up, regista, agenda e recupera leads.</span><em>'+eur(d.sa.pif)+' ou 3x '+eur(d.sa.inst)+'</em></button></div>'+
+   '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> ou <b>3x '+eur(d.bundle.inst)+'</b>.</p></div>'+
+   '<div class="opt-group" style="margin:0"><h3>Pagamento</h3><div class="seg" role="group" aria-label="Pagamento"><button data-p="pif">Pagamento integral</button><button data-p="inst">3 prestações</button></div></div></div>'+
+   '<div class="panel result" aria-live="polite"><p class="muted">Total do pack de 3 meses</p><div class="total"><span class="t"></span></div><p class="year sub"></p><div class="lines"></div>'+
+   (d.more?'<p class="note" style="margin-top:auto">Mais de 10 comerciais? Fala connosco para uma proposta à medida.</p>':'')+'</div></div>';
+  const tEl=root.querySelector('.t');
+  function anim(v){cancelAnimationFrame(st.raf);const from=st.shown,t0=performance.now();
+    const step=t=>{const q=Math.min(1,(t-t0)/500),e=1-Math.pow(1-q,3);st.shown=Math.round(from+(v-from)*e);tEl.textContent=eur(st.shown);if(q<1)st.raf=requestAnimationFrame(step);};st.raf=requestAnimationFrame(step);}
+  function render(){
+    root.querySelectorAll('[data-s]').forEach(b=>b.setAttribute('aria-pressed',st[b.dataset.s]));
+    root.querySelectorAll('[data-p]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===st.pay));
+    const both=st.bo&&st.sa,none=!st.bo&&!st.sa;let total=0,lines='',sub='';
+    if(none){lines='<div class="muted"><span>Escolhe pelo menos um serviço.</span></div>';}
+    else if(st.pay==='pif'){
+      if(st.bo)lines+='<div><span>OPERA BO</span><span>'+eur(d.bo.pif)+'</span></div>';
+      if(st.sa)lines+='<div><span>OPERA SA</span><span>'+eur(d.sa.pif)+'</span></div>';
+      if(both){total=d.bundle.pif;lines+='<div class="sv"><span>Desconto bundle</span><span>'+eur(d.bo.pif+d.sa.pif-d.bundle.pif)+'</span></div>';}
+      else total=st.bo?d.bo.pif:d.sa.pif;
+      sub='Pagamento único. Equivale a '+eur(Math.round(total/3))+' por mês.';
+    }else{
+      const full=(st.bo?d.bo.inst:0)+(st.sa?d.sa.inst:0),m=both?d.bundle.inst:full;total=m*3;
+      if(st.bo)lines+='<div><span>OPERA BO</span><span>3x '+eur(d.bo.inst)+'</span></div>';
+      if(st.sa)lines+='<div><span>OPERA SA</span><span>3x '+eur(d.sa.inst)+'</span></div>';
+      if(both)lines+='<div class="sv"><span>Desconto bundle</span><span>'+eur((full-m)*3)+'</span></div>';
+      sub='3 prestações mensais de '+eur(m)+'.';
+    }
+    root.querySelector('.lines').innerHTML=lines;root.querySelector('.sub').textContent=sub;anim(total);}
+  root.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{st[b.dataset.s]=!st[b.dataset.s];render();});
+  root.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{st.pay=b.dataset.p;render();});
+  render();
+});
+
+paintIcons();
+const h=parseInt((location.hash||'').slice(1),10);go(h>=1&&h<=N?h-1:0);
+})();
+</script>
+</body>
+</html>
