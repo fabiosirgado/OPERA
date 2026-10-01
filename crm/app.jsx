@@ -497,6 +497,11 @@ const db = {
     if (error) throw error;
     return data;
   },
+  async getFinanceiroDocUrl(path) {
+    const { data, error } = await sb.storage.from("financeiro-docs").createSignedUrl(path, 600, { download: true });
+    if (error) throw error;
+    return data.signedUrl;
+  },
 };
 
 // ---------- Shared UI atoms ----------
@@ -1089,9 +1094,10 @@ function finBuildBuckets(despesas, receitas, granularity) {
   despesas.forEach((e) => {
     const date = finParseDate(e.date);
     const b = finBucketInfo(date, granularity);
-    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
+    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
     const rec = map.get(b.key);
     rec.despesa += Number(e.amount);
+    rec.ivaDespesa += Number(e.iva) || 0;
     rec.byRubrica[e.rubrica] = (rec.byRubrica[e.rubrica] || 0) + Number(e.amount);
     rec.byFornecedor[e.vendor] = (rec.byFornecedor[e.vendor] || 0) + Number(e.amount);
     if (date > rec.order) rec.order = date;
@@ -1099,9 +1105,10 @@ function finBuildBuckets(despesas, receitas, granularity) {
   receitas.forEach((r) => {
     const date = finParseDate(r.date);
     const b = finBucketInfo(date, granularity);
-    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
+    if (!map.has(b.key)) map.set(b.key, { key: b.key, label: b.label, receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0, order: date, byRubrica: {}, byFornecedor: {} });
     const rec = map.get(b.key);
     rec.receita += Number(r.amount);
+    rec.ivaReceita += Number(r.iva) || 0;
     if (date > rec.order) rec.order = date;
   });
   return Array.from(map.values()).sort((a, b) => a.order - b.order).slice(-FIN_BUCKET_COUNT[granularity]);
@@ -1519,6 +1526,9 @@ function FinVisaoGeral({ granularity, setGranularity, selectedBucketKey, setSele
   const [topRubricaNome, topRubricaValor] = finAggregateField([current], "byRubrica")[0] || ["—", 0];
   const reconciliados = extrato.filter((b) => b.status === "reconciliado").length;
   const taxaReconciliacao = extrato.length ? (reconciliados / extrato.length) * 100 : null;
+  const ivaAPagar = current.ivaReceita || 0;
+  const ivaAReceber = current.ivaDespesa || 0;
+  const ivaDiferenca = ivaAPagar - ivaAReceber;
 
   return (
     <>
@@ -1550,6 +1560,13 @@ function FinVisaoGeral({ granularity, setGranularity, selectedBucketKey, setSele
         <MetricCard label="Receita" value={fmtEUR(current.receita)} color={C.accent} sub={fmtDelta(dReceita)} />
         <MetricCard label="Despesa" value={fmtEUR(current.despesa)} color={C.red} sub={fmtDelta(dDespesa)} />
         <MetricCard label="Margem" value={fmtEUR(margem)} color={margem >= 0 ? C.green : C.red} sub={fmtDelta(dMargem)} />
+      </div>
+
+      <SectionTitle>IVA</SectionTitle>
+      <div style={{ display: "flex", gap: 14, marginBottom: 20, flexWrap: "wrap" }}>
+        <MetricCard label="IVA a pagar" value={fmtEUR(ivaAPagar)} color={C.red} sub="cobrado nas receitas" />
+        <MetricCard label="IVA a receber" value={fmtEUR(ivaAReceber)} color={C.green} sub="pago nas despesas" />
+        <MetricCard label="Diferença" value={fmtEUR(ivaDiferenca)} color={ivaDiferenca > 0 ? C.red : C.green} sub={ivaDiferenca > 0 ? "a entregar ao Estado" : ivaDiferenca < 0 ? "crédito de imposto" : "sem diferença"} />
       </div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
@@ -1608,36 +1625,55 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
     } catch (err) { alert(err.message); setBusy(false); }
   };
   return (
-    <label className="op-type-btn" style={{
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
-      padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, flex: "1 1 260px", textAlign: "center",
-    }}>
-      <span style={{ fontSize: 20 }}>{busy ? "⏳" : icon}</span>
-      {busy ? "A carregar e a pedir à IA para ler…" : label}
-      <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handle} disabled={busy} />
-    </label>
+    <div style={{ display: "flex", gap: 8, flex: "1 1 260px" }}>
+      <label className="op-type-btn" style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+        padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, flex: "1 1 auto", textAlign: "center",
+      }}>
+        <span style={{ fontSize: 20 }}>{busy ? "⏳" : icon}</span>
+        {busy ? "A carregar e a pedir à IA para ler…" : label}
+        <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handle} disabled={busy} />
+      </label>
+      <label className="op-type-btn" title="Tirar foto na hora" style={{
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+        padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, width: 70, textAlign: "center", flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 20 }}>📷</span>
+        Foto
+        <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handle} disabled={busy} />
+      </label>
+    </div>
   );
 }
 
 function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, onAddReceita, onChangeRubrica, onDeleteDespesa, onDeleteReceita, onDocUploaded }) {
-  const [novaDespesa, setNovaDespesa] = useState({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "" });
-  const [novaReceita, setNovaReceita] = useState({ date: finDateStr(new Date()), description: "", amount: "" });
+  const [novaDespesa, setNovaDespesa] = useState({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "", iva: "" });
+  const [novaReceita, setNovaReceita] = useState({ date: finDateStr(new Date()), description: "", amount: "", iva: "" });
   const [saving, setSaving] = useState(false);
+  const [downloading, setDownloading] = useState(null);
+
+  const downloadDoc = async (it) => {
+    setDownloading(it.id);
+    try {
+      const url = await db.getFinanceiroDocUrl(it.storage_path);
+      window.open(url, "_blank");
+    } catch (e) { alert(e.message); } finally { setDownloading(null); }
+  };
 
   const submitDespesa = async () => {
     if (!novaDespesa.vendor.trim() || !novaDespesa.amount) return;
     setSaving(true);
     try {
-      await onAddDespesa({ date: novaDespesa.date, vendor: novaDespesa.vendor.trim(), rubrica: novaDespesa.rubrica, amount: Number(novaDespesa.amount) });
-      setNovaDespesa({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "" });
+      await onAddDespesa({ date: novaDespesa.date, vendor: novaDespesa.vendor.trim(), rubrica: novaDespesa.rubrica, amount: Number(novaDespesa.amount), iva: Number(novaDespesa.iva) || 0 });
+      setNovaDespesa({ date: finDateStr(new Date()), vendor: "", rubrica: FIN_RUBRICAS[0].name, amount: "", iva: "" });
     } catch (e) { alert(e.message); } finally { setSaving(false); }
   };
   const submitReceita = async () => {
     if (!novaReceita.description.trim() || !novaReceita.amount) return;
     setSaving(true);
     try {
-      await onAddReceita({ date: novaReceita.date, description: novaReceita.description.trim(), amount: Number(novaReceita.amount) });
-      setNovaReceita({ date: finDateStr(new Date()), description: "", amount: "" });
+      await onAddReceita({ date: novaReceita.date, description: novaReceita.description.trim(), amount: Number(novaReceita.amount), iva: Number(novaReceita.iva) || 0 });
+      setNovaReceita({ date: finDateStr(new Date()), description: "", amount: "", iva: "" });
     } catch (e) { alert(e.message); } finally { setSaving(false); }
   };
 
@@ -1665,6 +1701,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                 {FIN_RUBRICAS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
               </select>
               <input type="number" step="0.01" placeholder="Valor (€)" value={novaDespesa.amount} onChange={(e) => setNovaDespesa({ ...novaDespesa, amount: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="IVA incluído (€)" value={novaDespesa.iva} onChange={(e) => setNovaDespesa({ ...novaDespesa, iva: e.target.value })} style={inputStyle} />
               <button onClick={submitDespesa} disabled={saving} style={{ background: C.red, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar despesa</button>
             </div>
           </FinSectionCard>
@@ -1673,6 +1710,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
               <input type="date" value={novaReceita.date} onChange={(e) => setNovaReceita({ ...novaReceita, date: e.target.value })} style={inputStyle} />
               <input placeholder="Descrição (ex. Renda — Apartamento X)" value={novaReceita.description} onChange={(e) => setNovaReceita({ ...novaReceita, description: e.target.value })} style={inputStyle} />
               <input type="number" step="0.01" placeholder="Valor (€)" value={novaReceita.amount} onChange={(e) => setNovaReceita({ ...novaReceita, amount: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="IVA incluído (€)" value={novaReceita.iva} onChange={(e) => setNovaReceita({ ...novaReceita, iva: e.target.value })} style={inputStyle} />
               <button onClick={submitReceita} disabled={saving} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar receita</button>
             </div>
           </FinSectionCard>
@@ -1692,6 +1730,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Tipo</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Rubrica</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>IVA</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>
                 </tr>
@@ -1719,6 +1758,9 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                     <td style={{ padding: "8px", textAlign: "right", color: it.tipo === "emitida" ? C.accent : C.text, fontVariantNumeric: "tabular-nums" }}>
                       {it.status === "processando" ? <span style={{ color: C.muted }}>—</span> : <>{it.tipo === "emitida" ? "+" : "-"}{fmtEURDec(it.amount)}</>}
                     </td>
+                    <td style={{ padding: "8px", textAlign: "right", color: C.muted, fontVariantNumeric: "tabular-nums" }}>
+                      {it.status === "processando" || !it.iva ? "—" : fmtEURDec(it.iva)}
+                    </td>
                     <td style={{ padding: "8px" }}>
                       {it.status === "processando" ? (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: C.accent, fontSize: 11, fontWeight: 700 }}>
@@ -1731,7 +1773,12 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                         <FinBadge text={it.source === "upload" ? "Lido pela IA" : "Manual"} color={C.green} />
                       )}
                     </td>
-                    <td style={{ padding: "8px" }}>
+                    <td style={{ padding: "8px", whiteSpace: "nowrap" }}>
+                      {it.storage_path && (
+                        <span onClick={() => downloadDoc(it)} style={{ cursor: "pointer", color: C.muted, marginRight: 10 }} title="Descarregar documento">
+                          {downloading === it.id ? "⏳" : "⬇️"}
+                        </span>
+                      )}
                       <span onClick={() => (it.tipo === "custo" ? onDeleteDespesa(it.id) : onDeleteReceita(it.id))} style={{ cursor: "pointer", color: C.muted }} title="Apagar">×</span>
                     </td>
                   </tr>
@@ -1854,9 +1901,9 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
   const selectedIndex = selectedBucketKey ? buckets.findIndex((b) => b.key === selectedBucketKey) : -1;
   const currentIndex = selectedIndex >= 0 ? selectedIndex : buckets.length - 1;
   const current = selectedIndex === -1 && selectedBucketKey
-    ? { key: selectedBucketKey, label: "", receita: 0, despesa: 0, byRubrica: {}, byFornecedor: {} }
-    : (buckets[currentIndex] || { receita: 0, despesa: 0 });
-  const previous = selectedIndex >= 0 ? (buckets[selectedIndex - 1] || { receita: 0, despesa: 0 }) : (buckets[buckets.length - 2] || { receita: 0, despesa: 0 });
+    ? { key: selectedBucketKey, label: "", receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0, byRubrica: {}, byFornecedor: {} }
+    : (buckets[currentIndex] || { receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0 });
+  const previous = selectedIndex >= 0 ? (buckets[selectedIndex - 1] || { receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0 }) : (buckets[buckets.length - 2] || { receita: 0, despesa: 0, ivaReceita: 0, ivaDespesa: 0 });
 
   const addDespesa = async (payload) => { const row = await db.addDespesa({ client_id: clientId, source: "manual", ...payload }); setDespesas((prev) => [row, ...prev]); };
   const addReceita = async (payload) => { const row = await db.addReceita({ client_id: clientId, source: "manual", ...payload }); setReceitas((prev) => [row, ...prev]); };
