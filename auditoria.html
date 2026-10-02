@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Auditoria OPERA | Quanto negócio estás a perder por falta de operação?</title>
+<meta name="description" content="Em 3 minutos, descobre quanto tempo e potencial comercial estás a deixar preso em tarefas operacionais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-0:#050B1F; --navy-1:#0A1633; --navy-2:#13234A; --line:#22345F;
+  --blue:#2F7BFF; --blue-soft:#8DB6FF; --white:#FFFFFF; --muted:#9AA8C7;
+  --warn:#FF6B5B; --ok:#43D49A;
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;font-family:var(--font);color:var(--white);
+  background:radial-gradient(1200px 700px at 85% -10%,#1B3A80 0%,transparent 60%),linear-gradient(180deg,var(--navy-1),var(--navy-0));
+  background-color:var(--navy-0);background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+a{color:var(--blue-soft)}
+:focus-visible{outline:3px solid var(--blue-soft);outline-offset:3px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:28px 22px 60px}
+header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+.logo{font-weight:900;font-stretch:125%;letter-spacing:.06em;font-size:20px}
+.logo span{color:var(--blue)}
+.tag{color:var(--muted);font-size:14px}
+
+/* HERO */
+.hero h1{font-size:clamp(34px,6.4vw,58px);line-height:1.02;font-weight:850;font-stretch:112%;margin:0 0 20px;letter-spacing:-.01em}
+.hero p.lead{font-size:19px;color:#C9D3EA;max-width:56ch;margin:0 0 28px}
+.week{margin:36px 0 34px;border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;background:rgba(10,22,51,.6)}
+.week-head{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:10px}
+.bar{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--navy-2)}
+.bar div{height:100%;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.seg-op{background:repeating-linear-gradient(135deg,#3A4C78 0 6px,#2D3D63 6px 12px)}
+.seg-biz{background:var(--blue)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.facts{display:flex;gap:26px;flex-wrap:wrap;color:var(--muted);font-size:15px;margin-top:6px}
+.facts b{color:var(--white)}
+
+.gets{margin:0 0 30px}
+.gets p{margin:0 0 12px;color:#C9D3EA;font-size:16px}
+.gets-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.gets-row div{border-left:3px solid var(--blue);padding:4px 0 4px 14px}
+.gets-row strong{display:block;font-size:18px;font-weight:800;font-stretch:108%}
+.gets-row span{color:var(--muted);font-size:14px}
+
+.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:750;font-size:17px;
+  background:var(--blue);color:#fff;padding:16px 26px;border-radius:12px;text-decoration:none;display:inline-block;
+  box-shadow:0 10px 30px -10px rgba(47,123,255,.7);transition:transform .15s,background .15s}
+.btn:hover{background:#1F6BF0}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:#DCE4F5}
+.btn.ghost:hover{border-color:var(--blue-soft)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* QUIZ */
+.screen{display:none}
+.screen.on{display:block}
+.progress{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+.progress .track{flex:1;height:6px;background:var(--navy-2);border-radius:99px;overflow:hidden}
+.progress .fill{height:100%;background:var(--blue);width:0;transition:width .4s}
+.progress small{color:var(--muted);font-size:13px;white-space:nowrap}
+.block-name{color:var(--blue-soft);font-size:15px;font-weight:600;margin:0 0 10px}
+.q h2{font-size:clamp(25px,4.2vw,34px);line-height:1.15;font-weight:800;font-stretch:105%;margin:0 0 10px}
+.q .help{color:var(--muted);margin:0 0 24px;font-size:16px}
+.opts{display:grid;gap:10px;margin-bottom:28px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;width:100%;cursor:pointer;
+  background:rgba(19,35,74,.55);border:1px solid var(--line);color:#E6ECF8;border-radius:12px;padding:15px 16px;font:inherit;font-size:17px;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#3A5694}
+.opt .dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid #4A5F8F}
+.opt.multi .dot{border-radius:5px}
+.opt[aria-pressed="true"]{border-color:var(--blue);background:rgba(47,123,255,.14)}
+.opt[aria-pressed="true"] .dot{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px var(--navy-1)}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.back{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:10px 4px}
+.back:hover{color:#fff}
+
+.num{display:flex;align-items:center;gap:10px;background:rgba(19,35,74,.55);border:1px solid var(--line);border-radius:12px;padding:6px 16px;max-width:320px;margin-bottom:28px}
+.num input{flex:1;background:transparent;border:0;color:#fff;font:inherit;font-size:30px;font-weight:800;padding:8px 0;width:100%}
+.num input:focus{outline:none}
+.num:focus-within{border-color:var(--blue)}
+.num span{font-size:26px;color:var(--muted);font-weight:700}
+
+.slider{margin:8px 0 34px}
+.slider output{display:block;font-size:56px;font-weight:850;font-stretch:115%;line-height:1;margin-bottom:18px}
+.slider output small{font-size:20px;color:var(--muted);font-weight:600;font-stretch:100%}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.scale{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+.note{border-left:3px solid var(--blue);padding:4px 0 4px 14px;color:#C9D3EA;font-size:15px;margin:-10px 0 26px}
+
+/* GATE */
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;background:rgba(19,35,74,.55);border:1px solid var(--line);border-radius:10px;color:#fff;font:inherit;font-size:17px;padding:14px}
+.field input:focus{outline:none;border-color:var(--blue)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);margin:8px 0 24px}
+.consent input{margin-top:3px;accent-color:var(--blue);width:18px;height:18px;flex:none}
+.err{color:var(--warn);font-size:14px;min-height:20px;margin-bottom:10px}
+
+/* RESULT */
+.verdict{border-radius:16px;padding:22px 22px 20px;margin:0 0 30px;border:1px solid var(--line);background:rgba(10,22,51,.7)}
+.verdict.red{border-color:rgba(255,107,91,.55);background:linear-gradient(180deg,rgba(255,107,91,.12),rgba(10,22,51,.7))}
+.verdict.blue{border-color:rgba(47,123,255,.6);background:linear-gradient(180deg,rgba(47,123,255,.14),rgba(10,22,51,.7))}
+.verdict h3{margin:0 0 8px;font-size:clamp(24px,4vw,30px);font-weight:850;font-stretch:108%;line-height:1.15}
+.verdict p{margin:0;color:#D3DCEF}
+.big{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:30px}
+.big div{border:1px solid var(--line);border-radius:14px;padding:18px;background:rgba(10,22,51,.55)}
+.big strong{display:block;font-size:38px;font-weight:850;font-stretch:112%;line-height:1.05}
+.big span{color:var(--muted);font-size:14px}
+.res h4{font-size:20px;margin:34px 0 10px;font-weight:800}
+.res p{color:#D3DCEF;margin:0 0 14px}
+.disc{font-size:14px;color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.flow span{border:1px solid var(--blue);color:var(--blue-soft);border-radius:99px;padding:6px 12px;font-size:14px;font-weight:600}
+.cta-box{margin-top:40px;border-radius:18px;padding:28px 24px;background:linear-gradient(160deg,#16306A,#0B1A3E);border:1px solid #2B4A8C}
+.cta-box h3{margin:0 0 10px;font-size:26px;font-weight:850;font-stretch:108%}
+.cta-box p{color:#D3DCEF;margin:0 0 22px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+footer{color:var(--muted);font-size:13px;margin-top:60px;border-top:1px solid var(--line);padding-top:18px}
+
+@media (max-width:520px){
+  .wrap{padding:22px 18px 48px}
+  header.top{margin-bottom:34px}
+  .btn{width:100%;text-align:center}
+  .nav .btn{width:auto;flex:1}
+  .slider output{font-size:46px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Formulário estático para o Netlify detetar os campos no deploy -->
+<form name="auditoria-opera" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="nome"><input name="email"><input name="telefone"><input name="bot-field">
+  <textarea name="respostas"></textarea><textarea name="resumo_crm"></textarea>
+  <input name="gargalo"><input name="valor_hora"><input name="horas_operacionais_mes"><input name="valor_capacidade_mes">
+</form>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">OPERA<span>.</span></div>
+    <div class="tag">You sell. We operate.</div>
+  </header>
+
+  <!-- INTRO -->
+  <section class="screen on hero" id="intro">
+    <h1>Quanto negócio estás a perder por falta de operação?</h1>
+    <p class="lead">Em 3 minutos, descobre quanto tempo e potencial comercial estás a deixar preso em tarefas operacionais, e onde está o maior gargalo do teu negócio.</p>
+
+    <div class="week" aria-hidden="true">
+      <div class="week-head"><span>Uma semana típica de um consultor sobrecarregado</span><span>45h</span></div>
+      <div class="bar"><div class="seg-op" style="width:58%"></div><div class="seg-biz" style="width:42%"></div></div>
+      <div class="legend"><span><i class="seg-op"></i>Operação: CRM, emails, processos, leads</span><span><i style="background:var(--blue)"></i>O que gera negócio</span></div>
+    </div>
+
+    <div class="gets">
+      <p>No fim, recebes automaticamente o teu diagnóstico:</p>
+      <div class="gets-row">
+        <div><strong>Horas por mês</strong><span>que dedicas a tarefas operacionais</span></div>
+        <div><strong>Valor em €</strong><span>da capacidade comercial que essas horas ocupam</span></div>
+        <div><strong>O teu gargalo</strong><span>backoffice, leads e follow up, ou ambos</span></div>
+      </div>
+    </div>
+
+    <button class="btn" id="startBtn">Começar a auditoria</button>
+    <div class="facts" style="margin-top:22px"><span><b id="nQ">18</b> perguntas</span><span><b>3</b> minutos</span><span><b>Diagnóstico automático</b> no final</span></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz">
+    <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><small id="count"></small></div>
+    <div class="q" id="qBox"></div>
+  </section>
+
+  <!-- GATE -->
+  <section class="screen q" id="gate">
+    <div class="progress"><div class="track"><div class="fill" style="width:100%"></div></div><small>Concluído</small></div>
+    <h2>O teu diagnóstico está pronto.</h2>
+    <p class="help">Diz-nos para onde o enviamos. Vês o resultado já a seguir, neste ecrã.</p>
+    <label class="field"><span>Nome</span><input id="fNome" autocomplete="name" required></label>
+    <label class="field"><span>Email</span><input id="fEmail" type="email" autocomplete="email" required></label>
+    <label class="field"><span>Telemóvel</span><input id="fTel" type="tel" autocomplete="tel" inputmode="tel" required></label>
+    <label class="consent"><input type="checkbox" id="fConsent"><span>Aceito que a OPERA utilize estes dados para me enviar o diagnóstico e entrar em contacto comigo sobre o resultado.</span></label>
+    <div class="err" id="gateErr" role="alert"></div>
+    <div class="nav"><button class="back" id="gateBack">Voltar</button><button class="btn" id="gateBtn">Ver o meu resultado</button></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen res" id="result"></section>
+
+  <footer>OPERA. Os valores apresentados são estimativas com base nas tuas respostas.</footer>
+</div>
+
+<script>
+const CAL_URL = "https://cal.com/opera-os/discovery-call";
+const BLUEPRINT_URL = "/opera-blueprint.html";
+const HOURS_YEAR = 2070;   // 45h/semana x 46 semanas
+const WEEKS_MONTH = 4.33;
+
+const Q = [
+ {id:"producao",block:"O teu negócio",title:"Qual é a tua produção anual aproximada?",type:"single",
+  opts:["Até 50.000€","50.000€ a 100.000€","100.000€ a 200.000€","200.000€ a 300.000€","Mais de 300.000€"],mid:[40000,75000,150000,250000,350000]},
+ {id:"transacoes",block:"O teu negócio",title:"Quantas transações realizas, aproximadamente, por ano?",type:"single",
+  opts:["1 a 5","6 a 10","11 a 20","21 a 30","Mais de 30"]},
+ {id:"comissao",block:"O teu negócio",title:"Quanto vale, em média, a tua comissão por negócio?",type:"number",
+  help:"Serve para calcular o valor económico de cada oportunidade."},
+ {id:"trafego",block:"Leads e tráfego",title:"Investes atualmente em tráfego pago para gerar leads?",type:"single",
+  opts:["Não","Sim, até 250€/mês","250€ a 500€/mês","500€ a 1.000€/mês","Mais de 1.000€/mês"]},
+ {id:"leads",block:"Leads e tráfego",title:"Quantas leads recebes, em média, por mês?",type:"single",
+  opts:["1 a 10","11 a 25","26 a 50","51 a 100","Mais de 100"]},
+ {id:"resposta",block:"Leads e tráfego",title:"Quanto tempo demora, normalmente, até uma nova lead ser contactada?",type:"single",
+  opts:["Menos de 5 minutos","5 a 15 minutos","15 a 60 minutos","1 a 4 horas","4 a 24 horas","Mais de 24 horas","Não existe um processo definido"]},
+ {id:"primeiro",block:"Leads e tráfego",title:"Quem faz o primeiro contacto com uma nova lead?",type:"single",
+  opts:["Eu","Assistente","Equipa comercial","Outro","Depende","Ninguém de forma consistente"]},
+ {id:"followup",block:"Leads e tráfego",title:"Depois do primeiro contacto, existe um processo de follow up?",type:"single",
+  opts:["Sim, automatizado ou estruturado","Sim, mas faço manualmente","Tento acompanhar, mas depende do tempo","Não"]},
+ {id:"antigas",block:"Leads e tráfego",title:"Tens leads antigas que ainda poderiam ser trabalhadas?",type:"single",
+  opts:["Não","Algumas","Muitas","Tenho centenas"]},
+ {id:"h_bo",block:"O teu tempo",title:"Quantas horas por semana gastas em tarefas administrativas e processuais?",type:"slider",max:40,def:10,
+  help:"Inserir angariações, preparar processos, tratar documentação de imóveis, preparar CPCV e escrituras, acompanhar o banco, contabilidade, faturação e despesas, CRM e emails."},
+ {id:"h_leads",block:"O teu tempo",title:"Quantas horas por semana gastas em acompanhamento de leads?",type:"slider",max:30,def:5,
+  help:"Contactos, qualificação, follow up e agendamentos."},
+ {id:"h_prosp",block:"O teu tempo",title:"Quantas horas por semana dedicas a prospeção e angariação?",type:"slider",max:30,def:6,
+  help:"O tempo que realmente gera negócio novo."},
+ {id:"backoffice",block:"Estrutura",title:"Quem trata atualmente do teu backoffice?",type:"single",
+  opts:["Eu faço praticamente tudo","Eu, com algum suporte da agência","Assistente","Agência ou equipa","Tenho várias pessoas de apoio","Depende do processo"]},
+ {id:"processos",block:"Estrutura",title:"Tens processos ou checklists definidos para as tarefas que repetes?",type:"single",
+  opts:["Sim, praticamente todos","Alguns","Poucos","Não, está tudo na cabeça"]},
+ {id:"escala",block:"Estrutura",title:"Se amanhã aumentasses 50% o número de negócios, a tua estrutura conseguiria acompanhar?",type:"single",
+  opts:["Sim, facilmente","Sim, mas com alguma pressão","Provavelmente não","De certeza que não"]},
+ {id:"retirar",block:"Estrutura",title:"Qual destas áreas gostarias mais de retirar da tua agenda?",type:"multi",max:3,help:"Escolhe até 3.",
+  opts:["Contacto e qualificação de leads","Follow up de leads","CRM","Administrativo","Processual","Emails e organização","Acompanhamento dos negócios","Outra"]},
+ {id:"recuperar",block:"A pergunta que fecha",title:"Se pudesses recuperar 10 horas por semana, onde as utilizarias?",type:"single",
+  opts:["Prospeção","Angariações","Reuniões","Visitas","Follow up de clientes","Vida pessoal","Outra"]},
+ {id:"valor_hora",block:"A pergunta que fecha",title:"Quanto vale uma hora do teu tempo?",type:"hourvalue"}
+];
+
+const A = {};
+let i = 0;
+const $ = s => document.querySelector(s);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("#"+id).classList.add("on"); window.scrollTo({top:0}); };
+const fmt = n => Math.round(n).toLocaleString("pt-PT");
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function estHour(){
+  const q = Q[0]; const idx = A.producao;
+  if(idx==null) return 50;
+  return Math.max(20, Math.round(q.mid[idx]/HOURS_YEAR));
+}
+
+function render(){
+  const q = Q[i];
+  $("#fill").style.width = (i/Q.length*100)+"%";
+  $("#count").textContent = `${i+1} de ${Q.length}`;
+  let h = `<p class="block-name">${q.block}</p><h2>${q.title}</h2>${q.help?`<p class="help">${q.help}</p>`:"<div style='height:14px'></div>"}`;
+
+  if(q.type==="single"||q.type==="multi"){
+    h += `<div class="opts" role="group">`;
+    q.opts.forEach((o,k)=>{
+      const on = q.type==="single" ? A[q.id]===k : (A[q.id]||[]).includes(k);
+      h += `<button class="opt ${q.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="${on}"><span class="dot"></span>${o}</button>`;
+    });
+    h += `</div>`;
+  } else if(q.type==="number"){
+    h += `<div class="num"><input id="numIn" type="number" inputmode="numeric" min="0" step="100" placeholder="5000" value="${A[q.id]??""}"><span>€</span></div>`;
+  } else if(q.type==="slider"){
+    const v = A[q.id] ?? q.def;
+    h += `<div class="slider"><output id="sOut">${v}<small> h/semana</small></output>
+      <input type="range" id="sIn" min="0" max="${q.max}" step="1" value="${v}" aria-label="${q.title}">
+      <div class="scale"><span>0h</span><span>${q.max}h</span></div></div>`;
+  } else if(q.type==="hourvalue"){
+    const e = estHour(); const v = A.valor_hora ?? e;
+    h += `<p class="note">Com base na tua produção anual, estimamos que a tua hora vale cerca de <b>${e}€</b>. Podes ajustar este valor.</p>
+      <div class="slider"><output id="sOut">${v}<small> €/hora</small></output>
+      <input type="range" id="sIn" min="20" max="300" step="5" value="${v}" aria-label="Valor da tua hora">
+      <div class="scale"><span>20€</span><span>300€</span></div></div>`;
+  }
+
+  const needs = q.type==="single"||q.type==="multi"||q.type==="number";
+  h += `<div class="nav"><button class="back" id="bk">${i===0?"Início":"Voltar"}</button>
+        <button class="btn" id="nx" ${needs && !answered(q)?"disabled":""}>${i===Q.length-1?"Terminar":"Seguinte"}</button></div>`;
+  $("#qBox").innerHTML = h;
+
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const k = +b.dataset.k;
+    if(q.type==="single"){ A[q.id]=k; render(); setTimeout(next,220); }
+    else{
+      const cur = A[q.id]||[];
+      if(cur.includes(k)) A[q.id]=cur.filter(x=>x!==k);
+      else if(cur.length<q.max) A[q.id]=[...cur,k];
+      else A[q.id]=[...cur.slice(1),k];
+      render();
+    }
+  });
+  const ni = $("#numIn");
+  if(ni){ ni.focus(); ni.oninput=()=>{A[q.id]=ni.value===""?null:Math.max(0,+ni.value); $("#nx").disabled=!answered(q);}; ni.onkeydown=e=>{if(e.key==="Enter"&&answered(q))next();}; }
+  const si = $("#sIn");
+  if(si){
+    const unit = q.type==="hourvalue"?" €/hora":" h/semana";
+    A[q.id] = +si.value;
+    si.oninput=()=>{A[q.id]=+si.value; $("#sOut").innerHTML=`${si.value}<small>${unit}</small>`;};
+  }
+  $("#bk").onclick=()=>{ if(i===0) show("intro"); else {i--; render();} };
+  $("#nx").onclick=next;
+}
+function answered(q){
+  const v = A[q.id];
+  if(q.type==="multi") return Array.isArray(v)&&v.length>0;
+  if(q.type==="number") return v!=null && v>0;
+  return v!=null;
+}
+function next(){
+  if(!answered(Q[i]) && !["slider","hourvalue"].includes(Q[i].type)) return;
+  if(i<Q.length-1){ i++; render(); } else show("gate");
+}
+
+/* ---------- DIAGNÓSTICO ---------- */
+function diagnose(){
+  const opW = A.h_bo + A.h_leads;
+  const opM = opW * WEEKS_MONTH;
+  const val = opM * A.valor_hora;
+  const prospM = A.h_prosp * WEEKS_MONTH;
+
+  let sa = 0, bo = 0;
+  if(A.trafego>0) sa += 2;
+  if(A.leads>=2) sa += 1;
+  if(A.resposta>=3) sa += 2; else if(A.resposta===2) sa += 1;
+  if(A.resposta===6) sa += 2;
+  if([0,4,5].includes(A.primeiro)) sa += 1;
+  if(A.followup>=2) sa += 2; else if(A.followup===1) sa += 1;
+  if(A.antigas>=2) sa += 1;
+  if(A.h_leads>=5) sa += 1;
+  if((A.retirar||[]).some(k=>k<=1)) sa += 1;
+
+  if(A.h_bo >= 10) bo += 2; else if(A.h_bo >= 6) bo += 1;
+  if(A.backoffice===0) bo += 2; else if(A.backoffice===1) bo += 1;
+  if(A.processos>=2) bo += 1;
+  if(A.escala>=2) bo += 2;
+  if(opW > A.h_prosp) bo += 1;
+  if((A.retirar||[]).some(k=>k>=2 && k<=6)) bo += 1;
+
+  const hasSA = sa>=5, hasBO = bo>=4;
+  let code = hasSA&&hasBO ? "BO + SA" : hasSA ? "SA" : hasBO ? "BO" : "Sem gargalo crítico";
+  return {opW,opM,val,prospM,sa,bo,hasSA,hasBO,code};
+}
+
+function lbl(id){ const q=Q.find(x=>x.id===id); const v=A[id];
+  if(q.type==="multi") return (v||[]).map(k=>q.opts[k]).join(", ");
+  if(q.type==="single") return q.opts[v];
+  return v; }
+
+function crmSummary(d){
+  return [
+    `Produção: ${lbl("producao")}`,
+    `Transações/ano: ${lbl("transacoes")}`,
+    `Comissão média: ${fmt(A.comissao)}€`,
+    `Tráfego: ${lbl("trafego")}`,
+    `Leads: ${lbl("leads")}/mês`,
+    `Resposta: ${lbl("resposta")}`,
+    `Primeiro contacto: ${lbl("primeiro")}`,
+    `Follow up: ${lbl("followup")}`,
+    `Leads antigas: ${lbl("antigas")}`,
+    `Administrativo e processual: ${A.h_bo}h/semana`,
+    `Leads e follow up: ${A.h_leads}h/semana`,
+    `Prospeção: ${A.h_prosp}h/semana`,
+    `Backoffice: ${lbl("backoffice")}`,
+    `Processos: ${lbl("processos")}`,
+    `Escala +50%: ${lbl("escala")}`,
+    `Valor hora: ${A.valor_hora}€`,
+    `Gargalo: ${d.code} (score SA ${d.sa}, BO ${d.bo})`,
+    `Interesse: ${lbl("retirar")}`,
+    `Usaria 10h em: ${lbl("recuperar")}`
+  ].join("\n");
+}
+
+/* ---------- GATE ---------- */
+$("#gateBack").onclick=()=>{ show("quiz"); render(); };
+$("#gateBtn").onclick=async()=>{
+  const nome=$("#fNome").value.trim(), email=$("#fEmail").value.trim(), tel=$("#fTel").value.trim();
+  const err=$("#gateErr");
+  if(!nome||!email||!tel){ err.textContent="Preenche o nome, o email e o telemóvel para veres o resultado."; return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ err.textContent="O email não parece válido. Confirma se está bem escrito."; return; }
+  if(tel.replace(/\D/g,"").length<9){ err.textContent="O telemóvel precisa de ter pelo menos 9 dígitos."; return; }
+  if(!$("#fConsent").checked){ err.textContent="Para continuar, aceita a utilização dos dados."; return; }
+  err.textContent="";
+  const d = diagnose();
+  const respostas = {}; Q.forEach(q=>respostas[q.id]=lbl(q.id));
+  const body = new URLSearchParams({
+    "form-name":"auditoria-opera", nome, email, telefone:tel,
+    respostas:JSON.stringify(respostas), resumo_crm:crmSummary(d),
+    gargalo:d.code, valor_hora:String(A.valor_hora),
+    horas_operacionais_mes:String(Math.round(d.opM)), valor_capacidade_mes:String(Math.round(d.val))
+  });
+  const btn=$("#gateBtn"); btn.disabled=true; btn.textContent="A preparar o resultado";
+  try{ await fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()}); }catch(e){}
+  renderResult(d, nome.split(" ")[0]);
+  show("result");
+};
+
+/* ---------- RESULTADO ---------- */
+function renderResult(d, first){
+  const half = d.opM/2;
+  const valHalf = d.val/2;
+  const comm = A.comissao||0;
+  const dealsEq = comm ? (valHalf/comm) : 0;
+  const total = d.opW + A.h_prosp;
+  const opPct = total ? Math.round(d.opW/total*100) : 0;
+
+  let verdict, cls;
+  if(d.hasSA && d.hasBO){
+    cls="red";
+    verdict=`<h3>Operação sobrecarregada</h3><p>O crescimento está a criar mais trabalho do que capacidade. Tens duas áreas onde dependes demasiado do teu próprio tempo: operações e backoffice, e leads e follow up.</p>`;
+  } else if(d.hasSA){
+    cls="blue";
+    verdict=`<h3>Tens um problema de capacidade comercial</h3><p>O teu maior gargalo está no que acontece depois de a lead chegar: contacto, qualificação e follow up.</p>`;
+  } else if(d.hasBO){
+    cls="blue";
+    verdict=`<h3>O teu maior gargalo está no backoffice</h3><p>Estás a gastar uma parte significativa do teu tempo em tarefas que podem sair da tua agenda.</p>`;
+  } else {
+    cls="";
+    verdict=`<h3>A tua operação está relativamente equilibrada</h3><p>Não identificámos um gargalo crítico. Ainda assim, há tempo operacional que pode ser libertado para crescer.</p>`;
+  }
+
+  let h = `<p class="block-name">${first?esc(first)+", este é o teu diagnóstico":"O teu diagnóstico"}</p>
+  <div class="verdict ${cls}">${verdict}</div>
+
+  <div class="week">
+    <div class="week-head"><span>A tua semana de trabalho declarada</span><span>${total}h</span></div>
+    <div class="bar"><div class="seg-op" style="width:${opPct}%"></div><div class="seg-biz" style="width:${100-opPct}%"></div></div>
+    <div class="legend"><span><i class="seg-op"></i>Operação: ${d.opW}h (${opPct}%)</span><span><i style="background:var(--blue)"></i>Prospeção e angariação: ${A.h_prosp}h</span></div>
+  </div>
+
+  <div class="big">
+    <div><strong>${fmt(d.opM)}h</strong><span>por mês em tarefas operacionais</span></div>
+    <div><strong>${fmt(d.val)}€</strong><span>de capacidade comercial mensal ocupada, a ${A.valor_hora}€/hora</span></div>
+  </div>
+  <p class="disc">Isto não significa que este valor esteja a ser perdido em receita. Significa que tens cerca de ${fmt(d.val)}€ de capacidade comercial por mês ocupada por tarefas operacionais, usando o valor por hora que indicaste.</p>
+
+  <h4>E se recuperasses apenas metade desse tempo?</h4>
+  <p>Seriam cerca de <b>${fmt(half)} horas por mês</b> para ${lbl("recuperar").toLowerCase()==="vida pessoal"?"a tua vida pessoal, sem perder ritmo comercial":"angariações, prospeção, reuniões e visitas"}.${comm?` Em capacidade, isso equivale a ${fmt(valHalf)}€ por mês, ou seja, o valor de ${dealsEq>=1?"cerca de "+dealsEq.toFixed(1).replace(".",","):"uma fração de um"} negócio${dealsEq>=1.5?"s":""} à tua comissão média de ${fmt(comm)}€.`:""}</p>`;
+
+  if(d.opW > A.h_prosp){
+    h += `<p>Hoje dedicas <b>${d.opW}h</b> por semana à operação e <b>${A.h_prosp}h</b> à prospeção e angariação. Por cada hora a gerar negócio novo, gastas ${(d.opW/Math.max(A.h_prosp,1)).toFixed(1).replace(".",",")} horas a operar.</p>`;
+  }
+
+  if(d.hasSA){
+    const traf = A.trafego>0 ? `Estás a investir ${lbl("trafego").replace("Sim, ","").toLowerCase()} em aquisição de leads e recebes ${lbl("leads").toLowerCase()} oportunidades por mês. ` : `Recebes ${lbl("leads").toLowerCase()} leads por mês. `;
+    const resp = A.resposta===6 ? "Não existe um processo definido para o primeiro contacto" : `O primeiro contacto demora, normalmente, ${lbl("resposta").toLowerCase()}`;
+    h += `<h4>Leads e follow up</h4>
+    <p>${traf}${resp}${A.primeiro===0?", e depende da tua disponibilidade":""}.</p>
+    <p>Gerar leads é apenas uma parte do processo. O que acontece depois pode determinar quanto desse investimento se transforma em negócio.</p>
+    ${A.antigas>=2?`<p>Disseste também que tens ${A.antigas===3?"centenas de":"muitas"} leads antigas por trabalhar. Isso é potencial que já pagaste e que está parado.</p>`:""}
+    <p><b>Oportunidade identificada: OPERA SA</b></p>
+    <div class="flow"><span>Contacto</span><span>Qualificação</span><span>Follow up</span><span>CRM</span><span>Agendamento</span></div>`;
+  }
+  if(d.hasBO){
+    h += `<h4>Operações e backoffice</h4>
+    <p>Gastas cerca de <b>${A.h_bo}h por semana</b> entre administrativo e processual${A.backoffice===0?", e és tu que fazes praticamente tudo":A.backoffice===1?", e és tu que fazes a maior parte, com apoio pontual da agência":""}.${A.escala>=2?" Se o volume de negócios subisse 50%, a tua estrutura atual dificilmente acompanharia.":""}${A.processos>=2?" Com poucos processos definidos, cada tarefa depende de ti para ser feita.":""}</p>
+    <p><b>Oportunidade identificada: OPERA BO</b></p>
+    <div class="flow"><span>Operações</span><span>Processual</span><span>Legal</span><span>Financeiro</span><span>Angariações</span></div>`;
+  }
+
+  const lowFit = A.producao===0;
+  h += `<div class="cta-box">
+    <h3>Queres perceber quanto deste trabalho pode sair da tua agenda?</h3>
+    <p>${lowFit
+      ? "Na tua fase atual, o mais útil é estruturar o negócio antes de delegar. O OPERA Blueprint dá-te o método e as ferramentas para o fazer."
+      : "Numa reunião de 20 minutos, analisamos o teu resultado e mostramos o que pode ser delegado, acompanhado ou operado por uma estrutura externa."}</p>
+    <div class="cta-row">
+      ${lowFit
+        ? `<a class="btn" href="${BLUEPRINT_URL}">Conhecer o OPERA Blueprint</a><a class="btn ghost" href="${CAL_URL}" target="_blank" rel="noopener">Analisar o meu resultado</a>`
+        : `<a class="btn" href="${CAL_URL}" target="_blank" rel="noopener">Quero analisar o meu resultado</a>`}
+    </div>
+  </div>`;
+
+  $("#result").innerHTML = h;
+}
+
+$("#nQ").textContent = Q.length;
+$("#startBtn").onclick=()=>{ i=0; show("quiz"); render(); };
+</script>
+</body>
+</html>
