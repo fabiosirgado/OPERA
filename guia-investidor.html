@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A Empresa de Investimento que Não Depende de Ti | OPERA</title>
+<meta name="description" content="Guia prático para investidores imobiliários a partir de 5 transações por ano: 3 departamentos, 8 funções e a ordem certa para montar estrutura.">
+<meta name="theme-color" content="#0A1538">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:site_name" content="OPERA">
+<meta property="og:title" content="A empresa de investimento que não depende de ti">
+<meta property="og:description" content="Guia prático: 3 departamentos, 8 funções e a ordem certa para montar estrutura.">
+<meta property="og:url" content="https://opera-os.com/guia-investidor">
+<meta property="og:image" content="https://opera-os.com/guia-investidor-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050C26; --navy:#0A1538; --deep:#0D1C4D; --blue:#3D7BFF; --blue2:#79A6FF;
+  --ice:#E9EEFF; --mute:#9DAAD2; --dim:#6674A0;
+  --line:rgba(140,170,255,.16); --line2:rgba(140,170,255,.34);
+  --font:"Archivo","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(72px + env(safe-area-inset-top,0px))}
+body{margin:0;background:var(--bg);color:var(--ice);font-family:var(--font);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue2);outline-offset:3px;border-radius:6px}
+img,svg{max-width:100%}
+p{margin:0 0 1em}
+ul{margin:0;padding:0;list-style:none}
+.wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 clamp(20px,5vw,48px)}
+.read{max-width:68ch}
+.wide{font-stretch:118%;font-weight:800;letter-spacing:-.01em;line-height:1.02}
+h1,h2,h3{margin:0}
+h2{font-size:clamp(30px,4.4vw,52px);margin-bottom:.45em;max-width:20ch}
+h3{font-size:clamp(20px,2vw,24px);font-weight:750;font-stretch:110%;line-height:1.15}
+.muted{color:var(--mute)}
+.lede{font-size:clamp(18px,1.6vw,21px);color:var(--mute);max-width:56ch}
+
+/* Header */
+.top{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top,0px);background:rgba(5,12,38,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{font-weight:900;font-stretch:125%;font-size:22px;text-decoration:none;letter-spacing:.01em}
+.logo span{color:var(--blue)}
+.nav{display:flex;gap:22px;margin-left:auto;font-size:14.5px;font-weight:600}
+.nav a{text-decoration:none;color:var(--mute);transition:color .2s}
+.nav a:hover{color:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;border:1px solid var(--line2);background:rgba(40,70,170,.22);border-radius:999px;padding:.72em 1.3em;font-weight:650;font-size:15px;text-decoration:none;transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{background:rgba(61,123,255,.3);border-color:var(--blue2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(61,123,255,.3)}
+.btn.primary:hover{background:#5a8fff}
+.top .btn{padding:.55em 1.1em;font-size:14px}
+
+/* Hero */
+.hero{position:relative;padding:clamp(48px,8vh,96px) 0 clamp(56px,9vh,110px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(700px 520px at 88% 8%,rgba(34,74,190,.5),transparent 65%),radial-gradient(620px 520px at 0% 100%,rgba(22,52,150,.42),transparent 65%)}
+.hero-grid{display:grid;grid-template-columns:1fr 1.08fr;gap:clamp(28px,4vw,64px);align-items:center}
+.hero h1{font-size:clamp(38px,5.2vw,68px);max-width:13ch;margin-bottom:.4em}
+.hero .lede{margin-bottom:1.1em}
+.for{display:inline-block;border:1px solid var(--line2);border-radius:12px;padding:.7em 1em;font-size:15px;color:var(--ice);background:rgba(13,28,77,.6);margin-bottom:1.6em;max-width:44ch}
+.for b{color:var(--blue2)}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+
+/* Diagrama */
+.diag{position:relative}
+.seg{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:rgba(10,20,60,.6)}
+.seg button{border:0;background:transparent;border-radius:999px;padding:.5em 1.05em;font-size:14px;font-weight:650;color:var(--mute);transition:background .25s,color .25s}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff}
+.stage{position:relative;height:clamp(400px,48vw,480px);margin-top:16px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(13,28,77,.55),rgba(5,12,38,.3))}
+.col{position:absolute;top:21%;bottom:8%;width:31%;border-radius:16px;border:1px solid transparent;opacity:0;transform:translateY(10px);transition:opacity .6s,transform .7s cubic-bezier(.2,.7,.2,1),border-color .6s}
+.col b{display:block;text-align:center;padding-top:12px;font-size:13.5px;font-weight:800;font-stretch:115%;color:var(--blue2)}
+.col.c1{left:1.5%}.col.c2{left:34.5%}.col.c3{left:67.5%}
+.col.c2{background:rgba(61,123,255,.12)}
+.stage.on .col{opacity:1;transform:none;border-color:var(--line2)}
+.chip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:.48em .9em;border-radius:999px;font-size:13.5px;font-weight:650;line-height:1.2;text-align:center;
+  border:1px solid var(--line2);background:rgba(16,30,80,.92);white-space:nowrap;
+  transition:left .9s cubic-bezier(.2,.7,.2,1),top .9s cubic-bezier(.2,.7,.2,1),background .6s,border-color .6s,width .9s}
+.chip.me{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:800;padding:.6em 1.2em;font-size:15px;box-shadow:0 0 40px rgba(61,123,255,.55);z-index:2}
+.stage.on .chip:not(.me){white-space:normal;width:28%;border-radius:12px;background:rgba(61,123,255,.2)}
+.stage.on .chip.ops{background:rgba(61,123,255,.34);border-color:rgba(121,166,255,.7)}
+.spokes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity .5s}
+.stage.on .spokes{opacity:0}
+.stage.instant .chip,.stage.instant .col,.stage.instant .spokes{transition:none!important}
+.diag-cap{margin-top:12px;color:var(--mute);font-size:15px;min-height:1.6em}
+
+/* Secções */
+section.block{padding:clamp(64px,10vh,120px) 0;border-top:1px solid var(--line)}
+.fn-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 28px;margin:28px 0 30px}
+.fn-list li{display:flex;gap:12px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line)}
+.fn-list b{font-weight:700;min-width:12.5em}
+.fn-list span{color:var(--mute);font-size:15.5px}
+.note{border-left:3px solid var(--blue);padding:14px 18px;background:rgba(13,28,77,.6);border-radius:0 12px 12px 0;font-size:15.5px;color:var(--ice);margin:26px 0}
+.big-line{font-size:clamp(22px,2.6vw,32px);font-weight:750;font-stretch:112%;line-height:1.2;max-width:26ch;margin:34px 0 10px}
+.jumps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:36px}
+.jump{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:rgba(13,28,77,.45)}
+.jump a.h{display:flex;gap:10px;align-items:baseline;font-weight:800;font-stretch:115%;font-size:19px;text-decoration:none;margin-bottom:8px}
+.jump a.h i{font-style:normal;color:var(--blue2)}
+.jump .subs{display:flex;flex-wrap:wrap;gap:6px}
+.jump .subs a{font-size:13.5px;color:var(--mute);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:.25em .75em}
+.jump .subs a:hover{color:#fff;border-color:var(--line2)}
+
+/* Pilares */
+.pillar-head{display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,40px);align-items:start;margin-bottom:12px}
+.pnum{font-size:clamp(90px,13vw,170px);font-weight:900;font-stretch:125%;line-height:.8;color:transparent;-webkit-text-stroke:1.5px rgba(121,166,255,.55)}
+.pillar-head h2{margin-top:.1em}
+.pillar-head .tag{font-size:clamp(18px,1.6vw,21px);color:var(--ice);max-width:48ch}
+.signals{border:1px solid rgba(255,140,120,.28);background:rgba(120,30,40,.12);border-radius:16px;padding:18px 22px;margin:26px 0 8px;max-width:68ch}
+.signals b{display:block;margin-bottom:8px;font-size:15px}
+.signals li{position:relative;padding-left:22px;color:var(--mute);font-size:15.5px;margin:6px 0}
+.signals li::before{content:"";position:absolute;left:4px;top:.62em;width:8px;height:8px;border-radius:50%;background:#FF8C78}
+.fn{margin-top:44px;padding-top:34px;border-top:1px solid var(--line)}
+.fn-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:12px}
+.fn-head small{font-size:15px;color:var(--blue2);font-weight:650}
+.fn-head .own{margin-left:auto;font-size:12.5px;font-weight:700;border-radius:999px;padding:.3em .8em;background:rgba(61,123,255,.18);color:var(--blue2)}
+.fn-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(20px,3vw,44px);margin-top:18px}
+.fn-grid h4{margin:0 0 8px;font-size:14px;font-weight:750;color:var(--blue2)}
+.daily li{position:relative;padding-left:26px;margin:9px 0;font-size:16px}
+.daily li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:7px;border-left:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(-45deg)}
+.facts>div{padding:12px 0;border-bottom:1px solid var(--line)}
+.facts>div:first-child{padding-top:0}
+.facts p{margin:0;font-size:15.5px;color:var(--mute)}
+.facts .err{border:0;margin-top:10px;padding:14px 16px;border-radius:12px;background:rgba(120,30,40,.16);border:1px solid rgba(255,140,120,.22)}
+.facts .err h4{color:#FFB3A6}
+.callout{margin-top:48px;border-radius:20px;padding:clamp(22px,3vw,34px);background:linear-gradient(135deg,rgba(61,123,255,.3),rgba(13,28,77,.6));border:1px solid rgba(121,166,255,.45)}
+.callout h3{margin-bottom:10px}
+.callout p{margin:0;max-width:70ch}
+
+/* Externos */
+.ext{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.ext>div{border:1px solid var(--line);border-radius:18px;padding:24px;background:rgba(13,28,77,.45)}
+.ext>div.us{grid-column:span 2;border-color:rgba(121,166,255,.55);background:linear-gradient(180deg,rgba(61,123,255,.28),rgba(13,28,77,.5))}
+.ext h3{font-size:20px;margin-bottom:10px}
+.ext p{margin:0;color:var(--mute);font-size:15.5px}
+.ext .us p{color:var(--ice)}
+.bridge{margin-top:40px;font-size:clamp(19px,1.8vw,23px);font-weight:650}
+
+/* Ferramentas */
+.tool{padding:clamp(64px,10vh,120px) 0;border-top:1px solid var(--line)}
+.tool.alt{background:linear-gradient(180deg,rgba(13,28,77,.45),rgba(5,12,38,0))}
+.howto{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0 28px;font-size:15px;color:var(--mute)}
+.howto b{color:var(--ice);font-weight:700;width:100%}
+.howto ol{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.panel{border:1px solid var(--line);border-radius:20px;background:rgba(13,28,77,.5);padding:clamp(18px,2.5vw,28px)}
+
+/* Mapa */
+.map-top{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between;margin-bottom:18px}
+.hires{font-size:15px;color:var(--mute)}
+.hires b{color:#fff;font-size:22px;font-stretch:115%;margin-right:4px}
+.map{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+.map-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mcol{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.mcol.ops{background:rgba(61,123,255,.1)}
+.mcol>b{font-size:13.5px;font-weight:800;font-stretch:115%;color:var(--blue2);padding:2px 4px 4px}
+.mfn{text-align:left;border:1px solid var(--line2);background:rgba(16,30,80,.8);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:650;line-height:1.25;transition:background .2s,border-color .2s}
+.mfn small{display:block;margin-top:5px;font-size:12px;font-weight:700;color:var(--mute)}
+.mfn small.t-opera{color:#9fc0ff}
+.mfn small.t-tu{color:#FFD58A}
+.mfn small.t-ext{color:#8FE3C0}
+.mfn:hover{border-color:var(--blue2)}
+.mfn[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.mfn[aria-pressed="true"] small{color:rgba(255,255,255,.85)}
+.detail{min-height:100%}
+.detail small{color:var(--blue2);font-weight:700;font-size:13.5px}
+.detail h3{margin:4px 0 10px}
+.detail ul{margin:10px 0 14px}
+.detail li{position:relative;padding-left:18px;margin:6px 0;font-size:15.5px}
+.detail li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;border-radius:2px;background:var(--blue)}
+.detail .who{display:inline-block;margin-top:4px;padding:.35em .85em;border-radius:999px;background:rgba(61,123,255,.2);font-weight:700;font-size:14px}
+.swap{animation:swap .4s cubic-bezier(.2,.7,.2,1)}
+@keyframes swap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Calculadora */
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.slider{margin-bottom:22px}
+.slider:last-child{margin-bottom:0}
+.slider .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.slider label{font-weight:700;font-size:15.5px}
+.slider output{font-weight:800;font-stretch:115%;font-size:19px;color:var(--blue2);white-space:nowrap}
+.slider p{margin:2px 0 8px;font-size:13.5px;color:var(--dim)}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.res-big{font-size:clamp(48px,7vw,84px);font-weight:900;font-stretch:120%;line-height:1;margin:4px 0 6px}
+.res-sub{color:var(--mute);margin-bottom:18px}
+.weeks{display:grid;grid-template-columns:repeat(26,1fr);gap:4px;margin-bottom:8px}
+.weeks i{aspect-ratio:1;border-radius:3px;background:rgba(140,170,255,.14);transition:background .3s}
+.weeks i.on{background:#FF8C78}
+.weeks-cap{font-size:13.5px;color:var(--mute);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stats div{border:1px solid var(--line);border-radius:14px;padding:12px}
+.stats span{display:block;font-size:12.5px;color:var(--mute);line-height:1.3;margin-bottom:6px}
+.stats b{font-size:22px;font-stretch:115%}
+.fine{font-size:13px;color:var(--dim);margin-top:16px}
+
+/* Fases */
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.phase{text-align:left;border:1px solid var(--line2);background:rgba(16,30,80,.6);border-radius:16px;padding:14px 16px;transition:background .25s,border-color .25s}
+.phase span{display:block;font-size:13px;color:var(--mute);font-weight:650}
+.phase b{display:block;font-size:17px;font-stretch:110%;margin-top:2px}
+.phase[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.phase[aria-pressed="true"] span{color:rgba(255,255,255,.85)}
+.phase.icp{position:relative}
+.phase.icp::after{content:"O guia começa aqui";position:absolute;top:-10px;right:12px;font-size:11px;font-weight:800;letter-spacing:.04em;padding:.2em .6em;border-radius:6px;background:#FFD58A;color:#0A1538;white-space:nowrap}
+.phase-body{display:grid;grid-template-columns:1fr 1.2fr;gap:24px}
+.phase-body h3{margin-bottom:8px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-bottom:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.roles{display:flex;flex-wrap:wrap;gap:8px}
+.role{border-radius:999px;padding:.45em .95em;font-size:14px;font-weight:650;border:1px solid var(--line2);color:var(--mute)}
+.role.new{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* Teste */
+.quiz{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:start}
+.q{display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;transition:background .2s,border-color .2s}
+.q:hover{border-color:var(--line2)}
+.q input{margin-top:.25em;width:18px;height:18px;accent-color:var(--blue);flex:none}
+.q:has(input:checked){background:rgba(61,123,255,.18);border-color:rgba(121,166,255,.55)}
+.verdict{position:sticky;top:90px}
+.meter{height:10px;border-radius:99px;background:rgba(140,170,255,.14);overflow:hidden;margin:14px 0 18px}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),#FF8C78);transition:width .4s}
+.verdict h3{margin-bottom:8px}
+.verdict p{color:var(--mute);margin:0 0 16px}
+
+/* Erros */
+.errors{counter-reset:e;display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:28px}
+.errors li{counter-increment:e;border:1px solid var(--line);border-radius:18px;padding:22px 22px 22px 70px;position:relative;background:rgba(13,28,77,.45)}
+.errors li::before{content:counter(e);position:absolute;left:22px;top:16px;font-size:38px;font-weight:900;font-stretch:125%;color:transparent;-webkit-text-stroke:1.2px var(--blue2)}
+.errors b{display:block;margin-bottom:6px;font-size:17.5px}
+.errors span{color:var(--mute);font-size:15.5px}
+
+/* CTA */
+.cta{padding:clamp(80px,12vh,140px) 0;border-top:1px solid var(--line);position:relative;overflow:hidden}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(700px 480px at 80% 30%,rgba(61,123,255,.38),transparent 65%)}
+.slogan{font-size:clamp(52px,9vw,120px);font-weight:900;font-stretch:125%;line-height:.92;margin:0 0 .4em}
+.slogan span{display:block;color:transparent;-webkit-text-stroke:1.6px rgba(170,195,255,.75)}
+.cta p{max-width:60ch;color:var(--mute);font-size:18px;margin-bottom:1.6em}
+footer{border-top:1px solid var(--line);padding:26px 0 34px;font-size:14px;color:var(--mute)}
+footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+@media (max-width:960px){
+  .hero-grid,.map,.calc,.phase-body,.quiz,.fn-grid{grid-template-columns:1fr}
+  .nav{display:none}
+  .top .btn{margin-left:auto}
+  .jumps,.ext{grid-template-columns:1fr}
+  .ext>div.us{grid-column:auto}
+  .phases{grid-template-columns:repeat(2,1fr)}
+  .verdict{position:static}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  .fn-list,.errors{grid-template-columns:1fr}
+  .fn-list li{flex-direction:column;gap:2px}
+  .fn-list b{min-width:0}
+  .map-cols{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+  .stats b{font-size:18px}
+  .stage{height:460px}
+  .chip{font-size:12px;padding:.4em .7em;white-space:normal;max-width:40%}
+  .stage.on .chip:not(.me){font-size:11.5px;padding:.45em .35em}
+  .col b{font-size:11.5px}
+  .pillar-head{grid-template-columns:1fr}
+  .pnum{font-size:88px}
+  .errors li{padding-left:62px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top">OPERA<span>.</span></a>
+    <nav class="nav" aria-label="Secções">
+      <a href="#problema">O problema</a>
+      <a href="#departamentos">Departamentos</a>
+      <a href="#externos">Serviços externos</a>
+      <a href="#mapa">Ferramentas</a>
+    </nav>
+    <a class="btn primary" href="https://cal.com/opera-os/discovery-call">Agendar chamada</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1 class="wide">A empresa de investimento que não depende de ti.</h1>
+      <p class="lede">Um guia prático para organizar o teu negócio de investimento imobiliário por departamentos, e deixares de ser o gargalo entre a decisão de comprar e o dinheiro na conta.</p>
+      <p class="for">Escrito para investidores a partir de <b>5 transações por ano</b>: a fase em que a operação começa a travar o crescimento, e todas as que vêm depois.</p>
+      <div class="actions">
+        <a class="btn primary" href="#problema">Ler o guia</a>
+        <a class="btn" href="#mapa">Ver as ferramentas</a>
+      </div>
+    </div>
+    <div class="diag">
+      <div class="seg" role="group" aria-label="Ver a estrutura">
+        <button type="button" data-view="0" aria-pressed="true">Hoje</button>
+        <button type="button" data-view="1" aria-pressed="false">Com estrutura</button>
+      </div>
+      <div class="stage" id="stage" aria-hidden="true">
+        <svg class="spokes" id="spokes" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+        <div class="col c1"><b>Prospeção</b></div>
+        <div class="col c2"><b>Operações</b></div>
+        <div class="col c3"><b>Entrega de produto</b></div>
+        <span class="chip me" data-k="me">Tu</span>
+        <span class="chip" data-k="f1">Prospetor de negócios</span>
+        <span class="chip" data-k="f2">Analista e decisor</span>
+        <span class="chip ops" data-k="f3">Gestor processual</span>
+        <span class="chip ops" data-k="f4">Jurídico</span>
+        <span class="chip ops" data-k="f5">Administrativo financeiro</span>
+        <span class="chip ops" data-k="f6">Gestor de leads</span>
+        <span class="chip" data-k="f7">Gestor de obra</span>
+        <span class="chip" data-k="f8">Gestor comercial</span>
+      </div>
+      <p class="diag-cap" id="diagCap" aria-live="polite">Hoje: tudo passa por ti.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEMA -->
+<section class="block" id="problema">
+  <div class="wrap">
+    <h2 class="wide">Tu já tens uma empresa. Só que és tu todos os departamentos.</h2>
+    <div class="read">
+      <p class="lede">Um investidor que faz 5 ou mais transações por ano não faz um trabalho. Faz oito. De manhã procura negócios, à tarde está na obra, à noite trata de faturas, e no fim de semana revê o CPCV que ainda não voltou do advogado.</p>
+      <p>Cada uma destas funções exige competências diferentes. Quando a mesma pessoa as faz todas, faz a maioria delas mal, e sempre à pressa. O resultado é conhecido: negócios bons que passam por falta de tempo para os analisar, escrituras que atrasam, capital parado entre uma venda e a compra seguinte, e um número de transações por ano que não sobe por mais horas que trabalhes.</p>
+    </div>
+    <ul class="fn-list">
+      <li><b>Prospetor de negócios</b><span>encontra e filtra oportunidades</span></li>
+      <li><b>Analista e decisor</b><span>analisa, negoceia e decide onde entra o capital</span></li>
+      <li><b>Gestor processual</b><span>trata da documentação e dos prazos</span></li>
+      <li><b>Jurídico</b><span>protege cada transação no papel</span></li>
+      <li><b>Administrativo financeiro</b><span>fatura, controla despesas e mede a margem</span></li>
+      <li><b>Gestor de leads</b><span>responde a proprietários e investidores de capital</span></li>
+      <li><b>Gestor de obra</b><span>transforma o orçamento num imóvel pronto</span></li>
+      <li><b>Gestor comercial</b><span>leva o imóvel ao mercado e fecha a saída</span></li>
+    </ul>
+    <div class="read">
+      <p class="big-line">A partir de 5 transações por ano, és grande demais para fazer tudo sozinho. E durante muito tempo continuas pequeno demais para montar uma equipa interna completa.</p>
+      <p>É aí que a maioria dos investidores trava. Com duas ou três transações, ainda consegues fazer a operação à mão. A partir de cinco, a operação já te come o tempo que devia ir para liderar a empresa e decidir investimentos. E quanto mais cresces, pior fica: cada função que continua a ser tua pesa em cada nova transação.</p>
+      <p>A solução não é trabalhar mais. É separar estas funções por 3 departamentos e entregar cada uma a alguém da equipa ou a um serviço externo. O teu lugar deixa de ser dentro das funções e passa a ser acima delas: defines critérios, aprovas investimentos e acompanhas os números. É isso que este guia te mostra, função a função.</p>
+      <p class="note">Neste guia, uma transação é uma compra ou uma venda. Um negócio de compra e revenda conta como duas transações. Quatro revendas por ano são oito transações.</p>
+    </div>
+    <div class="jumps" id="departamentos">
+      <div class="jump"><a class="h" href="#pilar1"><i>1</i>Prospeção</a><div class="subs"><a href="#fn-prospetor">Prospetor de negócios</a><a href="#fn-decisor">Analista e decisor</a></div></div>
+      <div class="jump"><a class="h" href="#pilar2"><i>2</i>Operações</a><div class="subs"><a href="#fn-proc">Gestor processual</a><a href="#fn-jur">Jurídico</a><a href="#fn-fin">Administrativo financeiro</a><a href="#fn-leads">Gestor de leads</a></div></div>
+      <div class="jump"><a class="h" href="#pilar3"><i>3</i>Entrega de produto</a><div class="subs"><a href="#fn-obra">Gestor de obra</a><a href="#fn-com">Gestor comercial</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 1 -->
+<section class="block" id="pilar1">
+  <div class="wrap">
+    <div class="pillar-head">
+      <span class="pnum" aria-hidden="true">1</span>
+      <div>
+        <h2 class="wide">Prospeção</h2>
+        <p class="tag">O departamento que alimenta todos os outros. Sem negócios em pipeline, não há compras, obras nem vendas.</p>
+      </div>
+    </div>
+    <div class="read">
+      <p>Prospeção é tudo o que traz oportunidades até à tua mesa: rede de consultores, proprietários diretos, heranças, leilões e tráfego pago dirigido a proprietários e a investidores de capital. Inclui também a análise, a negociação e a estruturação do financiamento, até cada negócio chegar à tua aprovação.</p>
+      <p>O erro mais comum é prospetar só quando o último negócio fecha. Pipeline aos soluços gera capital parado aos soluços. O objetivo deste departamento é ter sempre mais oportunidades para analisar do que capital para investir, para poderes escolher em vez de aceitar o que aparece.</p>
+    </div>
+    <div class="signals"><b>Sinais de que este departamento está a falhar</b>
+      <ul>
+        <li>Só compras quando um consultor te liga com um negócio</li>
+        <li>Analisas negócios à pressa, à noite, entre duas escrituras</li>
+        <li>O capital fica parado semanas entre uma venda e a compra seguinte</li>
+      </ul>
+    </div>
+
+    <article class="fn" id="fn-prospetor">
+      <div class="fn-head"><h3>Prospetor de negócios</h3><small>Encontra e filtra oportunidades</small></div>
+      <p class="read">Transforma o mercado numa lista curta de negócios que cumprem os teus critérios. Não decide nem negoceia. A função termina quando a oportunidade chega ao decisor já filtrada.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Contacto regular com a rede de consultores, que conhecem os teus critérios de compra</li>
+          <li>Acompanhamento de proprietários diretos, heranças, leilões e imóveis há muito tempo no mercado</li>
+          <li>Primeira filtragem: zona, tipologia, estado e preço por metro quadrado face aos comparáveis</li>
+          <li>Visita inicial para confirmar o que os anúncios não dizem</li>
+          <li>Registo de cada oportunidade, incluindo as rejeitadas e porquê</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Oportunidades analisadas por mês, percentagem que cumpre os critérios e propostas feitas.</p></div>
+          <div><h4>Perfil</h4><p>Curioso, persistente e com rede. Conhece bem as zonas onde investes.</p></div>
+          <div><h4>Quando contratar</h4><p>Quando as operações já estão organizadas e o que te trava passa a ser encontrar negócios bons em quantidade.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Pedir ao prospetor que traga tudo. Sem critérios escritos, a tua agenda enche de negócios que nunca ias comprar.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="fn" id="fn-decisor">
+      <div class="fn-head"><h3>Analista e decisor</h3><small>Prepara a decisão, tu aprovas</small></div>
+      <p class="read">Analisa cada negócio, negoceia e estrutura o financiamento até a decisão estar pronta a tomar. Como dono da empresa, aprovas ou recusas. Para isso não precisas de fazer as contas: precisas de critérios escritos e de uma análise em que confies.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Análise de cada negócio: preço de compra, custo de obra, custos de transação e de detenção, valor de saída</li>
+          <li>Escolha da estratégia: revenda, cedência de posição ou arrendamento</li>
+          <li>Negociação da compra com o proprietário ou o consultor</li>
+          <li>Estruturação do financiamento: banco, capital próprio ou investidores de capital</li>
+          <li>Recomendação de avançar ou recusar, sempre com margem de segurança, para a tua aprovação</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Margem prevista face à margem real, duração média do ciclo e retorno sobre o capital investido.</p></div>
+          <div><h4>Perfil</h4><p>Frio com números, rápido a decidir e capaz de recusar um negócio de que gosta.</p></div>
+          <div><h4>Quando contratar</h4><p>Quando passas mais tempo em folhas de cálculo do que a decidir. Podes começar com um analista a tempo parcial ou externo, a trabalhar com os teus critérios.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Decidir pelo preço de compra e esquecer os custos de detenção. Cada mês a mais no ciclo consome margem.</p></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- PILAR 2 -->
+<section class="block" id="pilar2">
+  <div class="wrap">
+    <div class="pillar-head">
+      <span class="pnum" aria-hidden="true">2</span>
+      <div>
+        <h2 class="wide">Operações</h2>
+        <p class="tag">O departamento invisível. Ninguém o vê quando funciona, mas tu sentes imediatamente quando falha.</p>
+      </div>
+    </div>
+    <div class="read">
+      <p>Operações é tudo o que acontece entre a decisão de comprar e o dinheiro na conta: processos, documentação, contratos, faturação, impostos e a resposta às leads que os teus anúncios geram. Nenhuma destas tarefas gera retorno por si. Mas qualquer uma delas, mal feita, pode destruir esse retorno. Um direito de preferência por tratar ou um documento em falta no dia da escritura pode atrasar um negócio semanas, com o capital parado.</p>
+      <p>É também o departamento que mais tempo rouba ao investidor, porque é urgente, repetitivo e cresce com cada transação. Enquanto fores tu a pedir certidões, estás a pôr o dono da empresa a fazer trabalho administrativo.</p>
+    </div>
+    <div class="signals"><b>Sinais de que este departamento está a falhar</b>
+      <ul>
+        <li>Escrituras adiadas por um documento que ninguém pediu a tempo</li>
+        <li>Consultores, advogado, banco e notário a falar contigo cada um no seu canal</li>
+        <li>Só sabes quanto ganhaste num negócio meses depois de o fechar</li>
+      </ul>
+    </div>
+
+    <article class="fn" id="fn-proc">
+      <div class="fn-head"><h3>Gestor processual</h3><small>Da proposta à escritura</small></div>
+      <p class="read">Garante que cada transação chega à escritura sem surpresas, tanto na compra como na venda.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Abertura de processo e checklist documental logo na proposta: caderneta predial, certidão permanente, licença de utilização, certificado energético</li>
+          <li>Identificação precoce de problemas: ónus, heranças por partilhar, áreas que não batem certo</li>
+          <li>Controlo dos prazos do CPCV, do financiamento e da avaliação bancária</li>
+          <li>Agendamento da escritura e coordenação com consultores, bancos, notários e conservatórias</li>
+          <li>Estado de cada processo sempre atualizado, para saberes onde está e quem trata dele</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Tempo entre CPCV e escritura, processos atrasados por falhas documentais e prazos cumpridos.</p></div>
+          <div><h4>Perfil</h4><p>Rigoroso, metódico e organizado. Aguenta vários processos em paralelo sem perder nenhum.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Tratar dos documentos só depois da proposta aceite. Nessa altura, um problema vira uma crise com um prazo a correr.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="fn" id="fn-jur">
+      <div class="fn-head"><h3>Jurídico</h3><small>Contratos e segurança jurídica</small></div>
+      <p class="read">Protege cada transação no papel. Num investidor com vários negócios em curso, um erro contratual não acontece uma vez: aparece em todos.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Elaboração e revisão de CPCV e de contratos de compra, venda e arrendamento</li>
+          <li>Verificação e tratamento dos direitos de preferência antes da escritura</li>
+          <li>Contratos de cedência de posição, quando é esse o modelo do negócio</li>
+          <li>Revisão da documentação do imóvel com olhar jurídico</li>
+          <li>Esclarecimento de dúvidas e coordenação com advogados especializados quando o caso o exige</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Transações sem incidentes contratuais e tempo de resposta a cada pedido.</p></div>
+          <div><h4>Perfil</h4><p>Formação jurídica e experiência em transações imobiliárias.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Usar a mesma minuta para todos os negócios. Uma revenda, uma cedência de posição e um arrendamento têm riscos diferentes.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="fn" id="fn-fin">
+      <div class="fn-head"><h3>Administrativo financeiro</h3><small>Margem real, não margem prevista</small></div>
+      <p class="read">Dá ao investidor uma coisa que a maioria não tem: saber, a qualquer momento, quanto está investido, quanto está para receber e quanto rendeu de facto cada negócio.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Faturação e controlo de pagamentos e recebimentos, negócio a negócio</li>
+          <li>Registo das despesas de cada imóvel, incluindo obra, impostos e custos de detenção</li>
+          <li>Controlo do IVA e dos prazos fiscais, em articulação com o contabilista certificado</li>
+          <li>Relatório mensal: capital investido, escrituras previstas e margem por negócio</li>
+          <li>Comparação entre a margem prevista na análise e a margem real no fecho</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Relatório entregue até ao dia combinado, despesas por classificar e diferença entre margem prevista e real.</p></div>
+          <div><h4>Perfil</h4><p>Rigoroso com números e prazos. Discreto.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Juntar as despesas de todos os negócios no mesmo saco. Sem custos por imóvel, não sabes que negócios vale a pena repetir.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="fn" id="fn-leads">
+      <div class="fn-head"><h3>Gestor de leads</h3><small>Nenhuma lead fica sem resposta</small></div>
+      <p class="read">Se fazes tráfego pago, recebes dois tipos de contacto ao mesmo tempo: proprietários que querem vender e investidores de capital que querem entrar em negócios. Cada um vai para um sítio diferente.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Primeira resposta rápida a todos os pedidos: anúncios, formulários, redes sociais, telefone</li>
+          <li>Qualificação de proprietários: imóvel, motivo da venda, prazo e expectativa de preço</li>
+          <li>Qualificação de investidores de capital: montante, prazo e perfil de risco</li>
+          <li>Encaminhamento: proprietários para a prospeção, investidores de capital para o decisor</li>
+          <li>Acompanhamento de quem ainda não está pronto e CRM atualizado com a origem de cada lead</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Tempo de primeira resposta, percentagem de leads contactadas e custo por lead qualificada, por origem.</p></div>
+          <div><h4>Perfil</h4><p>Rápido, organizado e com boa comunicação escrita e ao telefone.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Pagar anúncios e responder no dia seguinte. O proprietário que não atendes hoje fala com outro investidor amanhã.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <div class="callout">
+      <h3>Contratar ou subcontratar este departamento?</h3>
+      <p>Montar operações internamente significa recrutar, formar e gerir três ou quatro pessoas com salário fixo. Durante muito tempo não há volume para as ocupar a tempo inteiro, mas já há volume para te ocuparem a ti. E quando há, continuas a ter de as recrutar, formar e substituir. A alternativa é subcontratar o departamento a um serviço operacional externo, como a OPERA, e ter a estrutura pronta desde o primeiro negócio, a crescer com o teu volume.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 3 -->
+<section class="block" id="pilar3">
+  <div class="wrap">
+    <div class="pillar-head">
+      <span class="pnum" aria-hidden="true">3</span>
+      <div>
+        <h2 class="wide">Entrega de produto</h2>
+        <p class="tag">Comprar é assumir um compromisso. Entregar o produto é cumprir esse compromisso: o imóvel pronto, no prazo e no orçamento, e a saída feita ao valor certo.</p>
+      </div>
+    </div>
+    <div class="read">
+      <p>O teu produto é o imóvel depois de passar pela tua empresa. Entrega de produto é a obra, a preparação para o mercado e a saída, seja venda, cedência de posição ou arrendamento. É aqui que o valor criado na análise se transforma, ou não, em retorno.</p>
+      <p>É também onde a reputação se constrói. Os consultores que vendem bem os teus imóveis voltam com novos negócios, e isso alimenta o departamento de prospeção.</p>
+    </div>
+    <div class="signals"><b>Sinais de que este departamento está a falhar</b>
+      <ul>
+        <li>Obras que derrapam em prazo e orçamento sem ninguém dar pelo desvio a tempo</li>
+        <li>Imóveis prontos semanas à espera de fotografias, anúncio ou consultor</li>
+        <li>Arrendamentos sem acompanhamento de rendas, contratos e manutenção</li>
+      </ul>
+    </div>
+
+    <article class="fn" id="fn-obra">
+      <div class="fn-head"><h3>Gestor de obra</h3><small>Interno ou externo, à tua escolha</small></div>
+      <p class="read">Transforma o orçamento da análise num imóvel pronto. Não és tu quem deve estar na obra todas as semanas. Pode ser alguém da tua equipa ou um gestor de obra externo, contratado por obra: a escolha é tua e depende do teu volume. Em qualquer dos casos, coordena o <b>arquiteto</b> e o <b>empreiteiro</b> e reporta os desvios de prazo e de custo.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Coordenação com o arquiteto: projeto, licenciamento e alterações</li>
+          <li>Escolha e contratação do empreiteiro e das especialidades, com orçamentos comparáveis</li>
+          <li>Caderno de encargos, calendário e acabamentos alinhados com o produto definido na análise</li>
+          <li>Visitas regulares e relatório de desvios de prazo e de custo</li>
+          <li>Receção da obra e lista de correções antes de ir para o mercado</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Desvio de prazo, desvio de orçamento e correções necessárias depois da entrega.</p></div>
+          <div><h4>Perfil</h4><p>Técnico, presente no terreno e firme com empreiteiros. Muitas vezes, um engenheiro ou arquiteto com experiência em reabilitação.</p></div>
+          <div><h4>Quando contratar</h4><p>Desde a primeira obra que não consegues visitar todas as semanas. Externo, por obra ou por avença, ou interno quando o volume de obras o justifica.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Deixar o empreiteiro controlar a própria obra. Quem executa não deve ser quem mede o prazo e o custo.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="fn" id="fn-com">
+      <div class="fn-head"><h3>Gestor comercial</h3><small>Venda, cedência ou arrendamento</small></div>
+      <p class="read">Leva o produto ao mercado e fecha a saída. É quem garante que o valor criado se transforma em dinheiro na conta.</p>
+      <div class="fn-grid">
+        <div><h4>Dia a dia</h4><ul class="daily">
+          <li>Preparação do imóvel para o mercado: fotografia, home staging quando compensa, documentação pronta</li>
+          <li>Escolha e acompanhamento dos consultores que vão comercializar</li>
+          <li>Na cedência de posição, procura e qualificação do comprador final antes da escritura de compra</li>
+          <li>No arrendamento, seleção de inquilinos, contratos e acompanhamento de rendas e manutenção</li>
+          <li>Negociação final com base em dados de mercado</li>
+        </ul></div>
+        <div class="facts">
+          <div><h4>Como se mede</h4><p>Tempo até à saída, diferença entre valor previsto e valor de saída, e consultores que voltam a trabalhar contigo.</p></div>
+          <div><h4>Perfil</h4><p>Comunicador, conhecedor do mercado e firme a negociar. Pode ser alguém da equipa ou uma rede de consultores de confiança, com um responsável que os acompanha.</p></div>
+          <div class="err"><h4>Erro a evitar</h4><p>Pensar na saída só quando a obra acaba. A saída decides na análise e preparas durante a obra.</p></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- EXTERNOS -->
+<section class="block" id="externos">
+  <div class="wrap">
+    <h2 class="wide">Serviços externos essenciais</h2>
+    <p class="lede">Há funções que raramente compensa ter dentro de casa. Especialização e escala valem mais do que controlo.</p>
+    <div class="ext">
+      <div><h3>Arquiteto</h3><p>Projeto, licenciamento e alterações junto da câmara municipal. Deve entrar ainda na análise, antes da compra, para dizer o que o imóvel pode e não pode vir a ser.</p></div>
+      <div><h3>Empreiteiro</h3><p>Executa a obra com as suas equipas e especialidades. Trabalha melhor com orçamento fechado, caderno de encargos e um gestor de obra que o acompanha.</p></div>
+      <div><h3>Marketing e tráfego pago</h3><p>Gera o fluxo de proprietários e de investidores de capital que alimenta a prospeção e o gestor de leads. Exige competências técnicas que mudam todos os meses.</p></div>
+      <div><h3>Contabilista certificado</h3><p>Assegura a contabilidade oficial, as declarações e as obrigações fiscais da tua empresa. Trabalha melhor quando recebe a informação financeira já organizada.</p></div>
+      <div class="us"><h3>OPERA</h3><p>O departamento de Operações: processual, jurídico e financeiro. E também a gestão de leads. Tu ficas a liderar a empresa e a decidir onde entra o capital.</p></div>
+    </div>
+    <p class="bridge">Agora que conheces cada função, vê como encaixam no teu negócio.</p>
+  </div>
+</section>
+
+<!-- FERRAMENTA 1: MAPA -->
+<section class="tool alt" id="mapa">
+  <div class="wrap">
+    <h2 class="wide">Se tu paras, os teus negócios param.</h2>
+    <p class="lede">O problema não é falta de capital nem de mercado, é falta de estrutura. Primeiro divides o trabalho em 3 departamentos, depois entregas cada função a alguém que não sejas tu.</p>
+    <div class="howto"><b>Como usar</b><ol><li>Escolhe se queres montar as operações com equipa própria ou com a OPERA.</li><li>Toca em qualquer função para ver a missão, as tarefas e o perfil.</li></ol></div>
+    <div class="map-top">
+      <div class="seg" role="group" aria-label="Modelo de operações">
+        <button type="button" data-mode="own" aria-pressed="true">Operações com equipa própria</button>
+        <button type="button" data-mode="opera" aria-pressed="false">Operações com OPERA</button>
+      </div>
+      <p class="hires" id="hires" aria-live="polite"></p>
+    </div>
+    <div class="map">
+      <div class="map-cols" id="mapCols"></div>
+      <div class="panel detail" id="detail" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FERRAMENTA 2: HORAS -->
+<section class="tool" id="horas">
+  <div class="wrap">
+    <h2 class="wide">Cada transação traz horas que não geram retorno.</h2>
+    <p class="lede">São horas que saem da prospeção e da análise, o único departamento que cria retorno. Ajusta aos teus números.</p>
+    <div class="howto"><b>Como usar</b><ol><li>Arrasta cada barra até aos números reais do teu negócio.</li><li>O resultado mostra quanto tempo a operação te tira por ano e o que podias fazer com ele.</li></ol></div>
+    <div class="calc">
+      <div class="panel">
+        <div class="slider"><div class="row"><label for="sT">Transações por ano</label><output id="oT"></output></div><p>Compras e vendas, contadas em separado</p><input type="range" id="sT" min="2" max="30" step="1" value="8"></div>
+        <div class="slider"><div class="row"><label for="sH">Horas de operação por transação</label><output id="oH"></output></div><p>Documentos, contratos, chamadas, deslocações, faturas e respostas a leads</p><input type="range" id="sH" min="5" max="60" step="1" value="20"></div>
+        <div class="slider"><div class="row"><label for="sA">Horas para analisar um negócio</label><output id="oA"></output></div><p>Estudo, visita e decisão de uma oportunidade</p><input type="range" id="sA" min="2" max="20" step="1" value="6"></div>
+        <div class="slider"><div class="row"><label for="sV">Valor da tua hora</label><output id="oV"></output></div><p>Quanto vale uma hora tua dedicada a liderar a empresa e decidir investimentos</p><input type="range" id="sV" min="20" max="250" step="5" value="60"></div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <div class="res-big" id="rH">0 h</div>
+        <p class="res-sub">por ano presos na operação em vez de liderar a empresa e decidir investimentos</p>
+        <div class="weeks" id="weeks" aria-hidden="true"></div>
+        <p class="weeks-cap" id="weeksCap"></p>
+        <div class="stats">
+          <div><span>Semanas de trabalho</span><b id="rW">0</b></div>
+          <div><span>Negócios que podias avaliar</span><b id="rN">0</b></div>
+          <div><span>Valor do teu tempo</span><b id="rV">0 €</b></div>
+        </div>
+        <p class="fine">Simulação indicativa, com semanas de 40 horas. Os resultados dependem das tuas estimativas e do tipo de negócio.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FERRAMENTA 3: FASES -->
+<section class="tool alt" id="fases">
+  <div class="wrap">
+    <h2 class="wide">Por onde começar.</h2>
+    <p class="lede">Não precisas de montar tudo de uma vez. Estrutura na ordem que liberta mais tempo teu para decidir, e só avança quando o sinal aparecer.</p>
+    <div class="howto"><b>Como usar</b><ol><li>Lê o sinal de cada fase e identifica em qual estás hoje.</li><li>Toca na fase para ver quem entra na estrutura nesse momento.</li></ol></div>
+    <div class="phases" id="phases" role="group" aria-label="Fases por volume"></div>
+    <div class="panel phase-body" id="phaseBody" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- FERRAMENTA 4: TESTE -->
+<section class="tool" id="teste">
+  <div class="wrap">
+    <h2 class="wide">És o gargalo da tua empresa de investimento?</h2>
+    <p class="lede">Marca as frases que se aplicam a ti. O resultado atualiza à medida que marcas.</p>
+    <div class="quiz">
+      <div id="qList"></div>
+      <div class="panel verdict" aria-live="polite">
+        <div class="meter"><i id="meter"></i></div>
+        <h3 id="vT">Marca as frases que se aplicam.</h3>
+        <p id="vP">O resultado aparece aqui.</p>
+        <a class="btn primary" id="vB" href="https://cal.com/opera-os/discovery-call" hidden>Agendar chamada de diagnóstico</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ERROS -->
+<section class="block">
+  <div class="wrap">
+    <h2 class="wide">Os 4 erros mais comuns ao crescer como investidor.</h2>
+    <ol class="errors">
+      <li><b>Comprar mais antes de ter operações.</b><span>Mais negócios sem estrutura significa mais prazos em risco, mais processos parados e mais capital à espera.</span></li>
+      <li><b>Fazer tudo porque ninguém faz como tu.</b><span>Cada hora que passas a pedir certidões é uma hora que não passas a fazer crescer a empresa.</span></li>
+      <li><b>Não ter processos escritos.</b><span>Sem checklists e procedimentos, cada negócio recomeça do zero e depende da tua memória.</span></li>
+      <li><b>Olhar para a margem só no fim.</b><span>Quando o negócio fecha, já não há nada a corrigir. A margem controlas durante o ciclo, não depois.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="wrap">
+    <p class="slogan">You invest.<span>We operate.</span></p>
+    <p>A forma mais rápida de libertar horas para liderar a empresa é tirar as operações das tuas mãos. A OPERA é o teu departamento operacional externo: processual, jurídico, financeiro e gestão de leads. Numa chamada de diagnóstico analisamos a estrutura do teu negócio e dizemos se a OPERA faz sentido para ti.</p>
+    <a class="btn primary" href="https://cal.com/opera-os/discovery-call">Agendar chamada de diagnóstico</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap"><a class="logo" href="#top">OPERA<span>.</span></a><span>You invest. We operate.</span></div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Diagrama do topo ---------- */
+  var stage = document.getElementById('stage'), cap = document.getElementById('diagCap');
+  var chips = {}; stage.querySelectorAll('.chip').forEach(function(c){ chips[c.dataset.k] = c; });
+  var keys = ['f1','f2','f3','f4','f5','f6','f7','f8'];
+  function layoutToday(){
+    var pos = {me:[50,50]};
+    keys.forEach(function(k,i){
+      var a = (-90 + i*45) * Math.PI/180;
+      var rx = stage.clientWidth < 520 ? 27 : 34;
+      pos[k] = [50 + Math.cos(a)*rx, 50 + Math.sin(a)*38];
+    });
+    return pos;
+  }
+  var structure = {me:[50,10], f1:[17.5,42], f2:[17.5,58], f3:[50,36], f4:[50,50], f5:[50,64], f6:[50,78], f7:[82.5,42], f8:[82.5,58]};
+  var spokes = document.getElementById('spokes');
+  function drawSpokes(pos){
+    var s = '';
+    keys.forEach(function(k){ s += '<line x1="50" y1="50" x2="'+pos[k][0]+'" y2="'+pos[k][1]+'" stroke="rgba(121,166,255,.35)" stroke-width=".3" vector-effect="non-scaling-stroke" stroke-dasharray="3 3"/>'; });
+    spokes.innerHTML = s;
+  }
+  function setView(v){
+    view = v;
+    var pos = v ? structure : layoutToday();
+    Object.keys(pos).forEach(function(k){ chips[k].style.left = pos[k][0]+'%'; chips[k].style.top = pos[k][1]+'%'; });
+    stage.classList.toggle('on', !!v);
+    cap.textContent = v ? 'Com estrutura: cada função tem um responsável. Tu lideras a empresa.' : 'Hoje: tudo passa por ti.';
+    document.querySelectorAll('[data-view]').forEach(function(b){ b.setAttribute('aria-pressed', String(+b.dataset.view === v)); });
+  }
+  var view = 0;
+  drawSpokes(layoutToday());
+  stage.classList.add('instant');
+  setView(0);
+  void stage.offsetWidth;
+  stage.classList.remove('instant');
+  window.addEventListener('resize', function(){ drawSpokes(layoutToday()); setView(view); });
+  var touched = false;
+  document.querySelectorAll('[data-view]').forEach(function(b){ b.addEventListener('click', function(){ touched = true; setView(+b.dataset.view); }); });
+  function autoPlay(){ setTimeout(function(){ if(!touched) setView(1); }, 1800); }
+  if(!reduce){
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(en){
+        if(en[0].isIntersecting && en[0].intersectionRatio >= .6){ io.disconnect(); autoPlay(); }
+      }, {threshold:[.6]});
+      io.observe(stage);
+    } else { autoPlay(); }
+  }
+
+  /* ---------- Mapa de funções ---------- */
+  var F = [
+    {id:'f1',d:1,n:'Prospetor de negócios',m:'Transformar o mercado numa lista curta de negócios que cumprem os teus critérios.',t:['Rede de consultores e proprietários diretos','Primeira filtragem por zona, estado e preço','Registo de cada oportunidade'],p:'Curioso, persistente e com rede.',own:['Equipa própria','team'],opera:['Equipa própria','team'],hire:0},
+    {id:'f2',d:1,n:'Analista e decisor',m:'Decidir onde entra o capital, com margem de segurança.',t:['Análise de custos e valor de saída','Negociação da compra','Estruturação do financiamento'],p:'Frio com números e capaz de recusar um negócio de que gosta. A aprovação final é tua.',own:['Equipa própria','team'],opera:['Equipa própria','team'],hire:0},
+    {id:'f3',d:2,n:'Gestor processual',m:'Levar cada transação à escritura sem surpresas.',t:['Checklist documental desde a proposta','Controlo dos prazos do CPCV e do financiamento','Agendamento da escritura e coordenação'],p:'Rigoroso, metódico e organizado.',own:['Equipa própria','team'],opera:['OPERA','opera'],hire:1},
+    {id:'f4',d:2,n:'Jurídico',m:'Proteger cada transação no papel.',t:['CPCV e contratos','Direitos de preferência','Contratos de cedência de posição'],p:'Formação jurídica e experiência em transações imobiliárias.',own:['Equipa própria','team'],opera:['OPERA','opera'],hire:1},
+    {id:'f5',d:2,n:'Administrativo financeiro',m:'Saber a margem real de cada negócio, a qualquer momento.',t:['Faturação e pagamentos por negócio','Despesas e custos de detenção por imóvel','Relatório mensal e controlo de IVA'],p:'Rigoroso com números e prazos. Discreto.',own:['Equipa própria','team'],opera:['OPERA','opera'],hire:1},
+    {id:'f6',d:2,n:'Gestor de leads',m:'Responder, qualificar e encaminhar cada proprietário e investidor de capital.',t:['Primeira resposta rápida a todos os pedidos','Qualificação de proprietários e investidores','CRM atualizado com a origem de cada lead'],p:'Rápido, organizado e bom comunicador.',own:['Equipa própria','team'],opera:['OPERA','opera'],hire:1},
+    {id:'f7',d:3,n:'Gestor de obra',m:'Transformar o orçamento da análise num imóvel pronto.',t:['Coordenação do arquiteto e do empreiteiro','Controlo de prazo e custo','Receção da obra'],p:'Técnico, presente no terreno e firme com empreiteiros.',own:['Interno ou externo, à tua escolha','ext'],opera:['Interno ou externo, à tua escolha','ext'],hire:0},
+    {id:'f8',d:3,n:'Gestor comercial',m:'Levar o produto ao mercado e fechar a saída.',t:['Preparação do imóvel para o mercado','Acompanhamento dos consultores','Venda, cedência de posição ou arrendamento'],p:'Comunicador e firme a negociar.',own:['Equipa própria ou consultores','team'],opera:['Equipa própria ou consultores','team'],hire:0}
+  ];
+  var D = {1:'Prospeção',2:'Operações',3:'Entrega de produto'};
+  var mode = 'own', sel = 'f3';
+  var mapCols = document.getElementById('mapCols'), detail = document.getElementById('detail'), hires = document.getElementById('hires');
+  function renderMap(){
+    var h = '';
+    [1,2,3].forEach(function(d){
+      h += '<div class="mcol'+(d===2?' ops':'')+'"><b>'+D[d]+'</b>';
+      F.filter(function(f){return f.d===d;}).forEach(function(f){
+        var o = f[mode];
+        h += '<button type="button" class="mfn" data-f="'+f.id+'" aria-pressed="'+(f.id===sel)+'">'+f.n+'<small class="t-'+o[1]+'">'+o[0]+'</small></button>';
+      });
+      h += '</div>';
+    });
+    mapCols.innerHTML = h;
+    var n = mode==='own' ? F.filter(function(f){return f.hire;}).length : 0;
+    hires.innerHTML = '<b>'+n+'</b> pessoas a recrutar e gerir em Operações';
+    renderDetail();
+  }
+  function renderDetail(){
+    var f = F.filter(function(x){return x.id===sel;})[0], o = f[mode];
+    detail.innerHTML = '<div class="swap"><small>'+D[f.d]+'</small><h3>'+f.n+'</h3><p>'+f.m+'</p><ul>'+f.t.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul><p class="muted">Perfil: '+f.p+'</p><span class="who">Quem faz: '+o[0]+'</span></div>';
+  }
+  mapCols.addEventListener('click', function(e){ var b = e.target.closest('.mfn'); if(!b) return; sel = b.dataset.f; renderMap(); });
+  document.querySelectorAll('[data-mode]').forEach(function(b){
+    b.addEventListener('click', function(){
+      mode = b.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(function(x){ x.setAttribute('aria-pressed', String(x===b)); });
+      renderMap();
+    });
+  });
+  renderMap();
+
+  /* ---------- Calculadora de horas ---------- */
+  var fmt = function(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  var sT=document.getElementById('sT'), sH=document.getElementById('sH'), sA=document.getElementById('sA'), sV=document.getElementById('sV');
+  var weeks = document.getElementById('weeks');
+  weeks.innerHTML = new Array(52).fill('<i></i>').join('');
+  function calc(){
+    var t=+sT.value, h=+sH.value, a=+sA.value, v=+sV.value;
+    document.getElementById('oT').textContent = t;
+    document.getElementById('oH').textContent = h+' h';
+    document.getElementById('oA').textContent = a+' h';
+    document.getElementById('oV').textContent = v+' €';
+    var total = t*h, w = total/40;
+    document.getElementById('rH').textContent = fmt(total)+' h';
+    document.getElementById('rW').textContent = w.toFixed(1).replace('.',',');
+    document.getElementById('rN').textContent = fmt(Math.floor(total/a));
+    document.getElementById('rV').textContent = fmt(total*v)+' €';
+    var on = Math.min(52, Math.round(w));
+    [].forEach.call(weeks.children, function(c,i){ c.classList.toggle('on', i<on); });
+    document.getElementById('weeksCap').textContent = on===1 ? '1 das 52 semanas do teu ano vai para a operação' : on+' das 52 semanas do teu ano vão para a operação';
+  }
+  [sT,sH,sA,sV].forEach(function(s){ s.addEventListener('input', calc); });
+  calc();
+
+  /* ---------- Fases por volume ---------- */
+  var PH = [
+    {r:'Até 4 transações',n:'Aprendizagem',s:'Consegues acompanhar cada processo e ainda tens tempo para procurar o próximo negócio.',x:'É a fase de aprender o negócio por dentro, e faz sentido seres tu o principal executor. É assim que percebes cada função antes de a entregares a alguém. Escreve critérios, checklists e processos à medida que fazes.',roles:[['Tu: principal executor',0],['Arquiteto',1],['Empreiteiro',1],['Advogado pontual',1],['Contabilista certificado',1]]},
+    {r:'5 a 10 transações',n:'Preparar a estrutura',icp:1,s:'Tens vários processos e obras em paralelo, os prazos começam a escapar e já deixaste passar negócios por falta de tempo.',x:'É o momento de montar a estrutura e delegar as primeiras funções, a começar pelas operações, que são as que mais tempo te tiram e menos retorno geram. Ainda não há volume para uma equipa interna completa, mas já há volume para te ocupar a ti.',roles:[['Tu: prospeção, análise e venda',0],['Arquiteto',0],['Empreiteiro',0],['Contabilista certificado',0],['Departamento de Operações',1],['Gestor de obra',1],['Gestor de leads, se fazes tráfego pago',1]]},
+    {r:'11 a 30 transações',n:'Sair das principais funções',s:'As operações já estão delegadas. O que te trava agora é continuares a ser tu a encontrar, analisar e vender cada negócio.',x:'É o momento de sair das principais funções. Entregas a prospeção, a análise e a venda a quem as faz todos os dias, e ficas a definir critérios e a aprovar investimentos.',roles:[['Tu: critérios e aprovação de investimentos',0],['Departamento de Operações',0],['Gestor de obra',0],['Arquiteto e empreiteiro',0],['Gestor de leads',0],['Contabilista certificado',0],['Prospetor de negócios',1],['Analista',1],['Gestor comercial',1]]},
+    {r:'Mais de 30 transações',n:'Visão de helicóptero',s:'Várias obras em simultâneo, capital de terceiros e uma marca que já atrai negócios sozinha.',x:'Tudo está delegado. Passas cerca de 80% do tempo a decidir sobre o negócio, com visão de helicóptero, e 20% a apoiar a gestão. As operações crescem à medida do volume real, com equipa própria ou solução à medida.',roles:[['Tu: 80% decisão, 20% apoio à gestão',0],['Prospeção, obra e comercial',0],['Gestor de leads',0],['Contabilista certificado',0],['Responsáveis por departamento',1],['Operações dimensionadas ao volume',1]]}
+  ];
+  var phases = document.getElementById('phases'), phaseBody = document.getElementById('phaseBody'), ph = 1;
+  phases.innerHTML = PH.map(function(p,i){ return '<button type="button" class="phase'+(p.icp?' icp':'')+'" data-p="'+i+'"><span>'+p.r+'</span><b>'+p.n+'</b></button>'; }).join('');
+  function renderPhase(){
+    [].forEach.call(phases.children, function(b,i){ b.setAttribute('aria-pressed', String(i===ph)); });
+    var p = PH[ph];
+    phaseBody.innerHTML = '<div class="swap"><h3>'+p.n+'</h3><p><b>Sinal: </b>'+p.s+'</p><p class="muted">'+p.x+'</p></div>'+
+      '<div class="swap"><div class="legend"><span><i style="background:var(--blue)"></i>Entra nesta fase</span><span><i style="border:1px solid var(--line2)"></i>Já existia na fase anterior</span></div><div class="roles">'+
+      p.roles.map(function(r){ return '<span class="role'+(r[1]?' new':'')+'">'+r[0]+'</span>'; }).join('')+'</div></div>';
+  }
+  phases.addEventListener('click', function(e){ var b = e.target.closest('.phase'); if(!b) return; ph = +b.dataset.p; renderPhase(); });
+  renderPhase();
+
+  /* ---------- Teste ---------- */
+  var Q = [
+    'Já deixei passar um negócio por não ter tempo para o analisar.',
+    'Sou eu que peço e confirmo cada documento de cada processo.',
+    'Já uma escritura atrasou por falta de um documento ou de uma resposta.',
+    'Não sei a margem real de cada negócio sem abrir várias folhas de cálculo.',
+    'As leads dos meus anúncios ficam horas ou dias sem resposta.',
+    'Se eu parar uma semana, os processos param.',
+    'Trato de faturas e despesas à noite ou ao fim de semana.',
+    'Consultores, advogado, banco e empreiteiro falam comigo cada um no seu canal.'
+  ];
+  var qList = document.getElementById('qList');
+  qList.innerHTML = Q.map(function(q,i){ return '<label class="q"><input type="checkbox" data-q="'+i+'"><span>'+q+'</span></label>'; }).join('');
+  function verdict(){
+    var n = qList.querySelectorAll('input:checked').length, t, p;
+    document.getElementById('meter').style.width = (n/Q.length*100)+'%';
+    if(n===0){ t='Marca as frases que se aplicam.'; p='O resultado aparece aqui.'; }
+    else if(n<=2){ t='A tua estrutura ainda aguenta.'; p='Há sinais pontuais, mas a operação ainda não te trava. Aproveita para escrever processos e checklists antes de o volume crescer.'; }
+    else if(n<=5){ t='Estás a começar a ser o gargalo.'; p='A operação já te tira tempo à prospeção e à análise. Cada transação nova vai pesar mais do que a anterior. É o momento de separar funções.'; }
+    else { t='És o gargalo da tua empresa.'; p='Tudo passa por ti, e o número de negócios que fazes está limitado pelas horas que tens. Tirar as operações das tuas mãos é o passo com mais impacto.'; }
+    document.getElementById('vT').textContent = t;
+    document.getElementById('vP').textContent = p;
+    document.getElementById('vB').hidden = n < 3;
+  }
+  qList.addEventListener('change', verdict);
+})();
+</script>
+</body>
+</html>

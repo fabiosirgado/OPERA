@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quanto tempo te tira a operação? | OPERA</title>
+<meta name="description" content="Calculadora gratuita para consultores, equipas e investidores imobiliários: descobre quantas horas por ano a operação te tira e o que valem.">
+<meta name="theme-color" content="#0A1538">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:site_name" content="OPERA">
+<meta property="og:title" content="Quanto tempo te tira a operação?">
+<meta property="og:description" content="Calculadora gratuita para consultores, equipas e investidores imobiliários.">
+<meta property="og:url" content="https://opera-os.com/calculadora">
+<meta property="og:image" content="https://opera-os.com/calculadora-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050C26; --navy:#0A1538; --deep:#0D1C4D; --blue:#3D7BFF; --blue2:#79A6FF;
+  --ice:#E9EEFF; --mute:#9DAAD2; --dim:#6674A0; --warm:#FF8C78;
+  --line:rgba(140,170,255,.16); --line2:rgba(140,170,255,.34);
+  --font:"Archivo","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:calc(72px + env(safe-area-inset-top,0px))}
+body{margin:0;background:radial-gradient(760px 620px at 90% 0%,rgba(34,74,190,.5),transparent 70%) no-repeat,radial-gradient(640px 560px at 0% 520px,rgba(22,52,150,.3),transparent 70%) no-repeat,var(--bg);color:var(--ice);font-family:var(--font);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue2);outline-offset:3px;border-radius:6px}
+p{margin:0 0 1em}
+ul,ol{margin:0;padding:0;list-style:none}
+h1,h2,h3{margin:0}
+.wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 clamp(20px,5vw,48px)}
+.wide{font-stretch:118%;font-weight:800;letter-spacing:-.01em;line-height:1.02}
+h2{font-size:clamp(28px,4vw,46px);margin-bottom:.45em;max-width:22ch}
+h3{font-size:clamp(19px,1.9vw,23px);font-weight:750;font-stretch:110%;line-height:1.15}
+.lede{font-size:clamp(18px,1.6vw,21px);color:var(--mute);max-width:56ch}
+
+/* Header */
+.top{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top,0px);background:rgba(5,12,38,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{font-weight:900;font-stretch:125%;font-size:22px;text-decoration:none;letter-spacing:.01em}
+.logo span{color:var(--blue)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;border:1px solid var(--line2);background:rgba(40,70,170,.22);border-radius:999px;padding:.72em 1.3em;font-weight:650;font-size:15px;text-decoration:none;transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{background:rgba(61,123,255,.3);border-color:var(--blue2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(61,123,255,.3)}
+.btn.primary:hover{background:#5a8fff}
+.top .btn{margin-left:auto;padding:.55em 1.1em;font-size:14px}
+
+/* Hero */
+.hero{position:relative;padding:clamp(44px,7vh,88px) 0 clamp(28px,4vh,44px);overflow:hidden}
+.eyebrow{display:inline-block;font-size:13px;font-weight:800;font-stretch:120%;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--blue);border-radius:999px;padding:.4em 1em;margin-bottom:22px}
+.hero h1{font-size:clamp(38px,5.6vw,72px);max-width:14ch;margin-bottom:.35em}
+.hero h1 em{font-style:normal;color:var(--blue)}
+
+/* Perfil */
+.who-q{font-weight:750;font-size:16px;margin:30px 0 12px}
+.profiles{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:12px}
+.prof{text-align:left;border:1px solid var(--line2);background:rgba(16,30,80,.6);border-radius:18px;padding:18px 20px;transition:background .25s,border-color .25s,transform .15s}
+.prof:hover{border-color:var(--blue2)}
+.prof:active{transform:scale(.98)}
+.prof b{display:block;font-size:19px;font-stretch:112%;font-weight:800}
+.prof span{display:block;font-size:14px;color:var(--mute);margin-top:4px;line-height:1.35}
+.prof[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.prof[aria-pressed="true"] span{color:rgba(255,255,255,.88)}
+
+/* Calculadora */
+.tool{padding:clamp(20px,3vh,36px) 0 clamp(64px,10vh,110px)}
+.panel{border:1px solid var(--line);border-radius:20px;background:rgba(13,28,77,.5);padding:clamp(18px,2.5vw,28px)}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.calc-title{font-size:14px;font-weight:800;font-stretch:115%;letter-spacing:.06em;text-transform:uppercase;color:var(--blue2);margin-bottom:18px}
+.slider{margin-bottom:22px}
+.slider:last-child{margin-bottom:0}
+.slider .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.slider label{font-weight:700;font-size:15.5px}
+.slider output{font-weight:800;font-stretch:115%;font-size:19px;color:var(--blue2);white-space:nowrap}
+.slider p{margin:2px 0 8px;font-size:13.5px;color:var(--dim);line-height:1.4}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.res-big{font-size:clamp(52px,7.5vw,92px);font-weight:900;font-stretch:120%;line-height:1;margin:4px 0 6px}
+.res-sub{color:var(--mute);margin-bottom:18px}
+.weeks{display:grid;grid-template-columns:repeat(26,1fr);gap:4px;margin-bottom:8px}
+.weeks i{aspect-ratio:1;border-radius:3px;background:rgba(140,170,255,.14);transition:background .3s}
+.weeks i.on{background:var(--warm)}
+.weeks-cap{font-size:13.5px;color:var(--mute);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stats div{border:1px solid var(--line);border-radius:14px;padding:12px}
+.stats span{display:block;font-size:12.5px;color:var(--mute);line-height:1.3;margin-bottom:6px}
+.stats b{font-size:22px;font-stretch:115%}
+.stats.four{grid-template-columns:1fr 1fr}
+.stats b{white-space:nowrap}
+.fine{font-size:13px;color:var(--dim);margin:16px 0 0}
+.swap{animation:swap .4s cubic-bezier(.2,.7,.2,1)}
+@keyframes swap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Como calculamos */
+section.block{padding:clamp(64px,10vh,110px) 0;border-top:1px solid var(--line)}
+.method{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.method li{border:1px solid var(--line);border-radius:18px;padding:22px;background:rgba(13,28,77,.45)}
+.method b{display:block;font-size:17px;margin-bottom:6px}
+.method span{color:var(--mute);font-size:15.5px}
+.method code{font-family:var(--font);font-weight:750;color:var(--blue2)}
+
+/* O que sai das tuas mãos */
+.hands.two{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 28px;margin-top:26px}
+.groups{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
+.group{border:1px solid var(--line);border-radius:18px;padding:20px 20px 8px;background:rgba(13,28,77,.45)}
+.group>b{display:block;font-size:13.5px;font-weight:800;font-stretch:115%;letter-spacing:.06em;text-transform:uppercase;color:var(--blue2);margin-bottom:4px}
+.group .hands li{font-size:15px;padding:10px 0}
+.group .hands li:last-child{border-bottom:0}
+.hands li{display:flex;gap:12px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line)}
+.hands li::before{content:"";flex:none;width:12px;height:7px;border-left:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(-45deg) translateY(-3px)}
+
+/* CTA */
+.cta{padding:clamp(80px,12vh,140px) 0;border-top:1px solid var(--line);position:relative;overflow:hidden}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(700px 480px at 80% 30%,rgba(61,123,255,.38),transparent 65%)}
+.cta p.slogan{color:#fff;font-size:clamp(50px,9vw,120px);font-weight:900;font-stretch:125%;line-height:.92;margin:0 0 .4em}
+.cta .slogan span{display:block;color:transparent;-webkit-text-stroke:1.6px rgba(170,195,255,.75)}
+.cta p{max-width:60ch;color:var(--mute);font-size:18px;margin-bottom:1.6em}
+.cta p b{color:#fff}
+footer{border-top:1px solid var(--line);padding:26px 0 34px;font-size:14px;color:var(--mute)}
+footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+@media (max-width:960px){
+  .calc,.method{grid-template-columns:1fr}
+  .groups{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  .profiles{grid-template-columns:1fr 1fr}
+  .prof{padding:14px 14px}
+  .prof b{font-size:16.5px}
+  .prof span{font-size:12.5px}
+  .hands.two,.groups{grid-template-columns:1fr}
+  .stats b{font-size:18px}
+  .stats.four{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body id="top">
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top">OPERA<span>.</span></a>
+    <a class="btn primary" href="https://cal.com/opera-os/discovery-call">Agendar chamada</a>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Calculadora gratuita</span>
+    <h1 class="wide">Quanto tempo te tira a <em>operação?</em></h1>
+    <p class="lede">Documentos, prazos, chamadas, faturas e leads por responder. Ajusta aos teus números e vê quantas horas por ano ficam presas em trabalho que não gera negócio.</p>
+    <p class="who-q">Escolhe o teu perfil</p>
+    <div class="profiles" role="group" aria-label="Perfil">
+      <button type="button" class="prof" data-p="consultor" aria-pressed="true"><b>Consultor ou equipa</b><span>Angarias e vendes imóveis</span></button>
+      <button type="button" class="prof" data-p="investidor" aria-pressed="false"><b>Investidor</b><span>Compras, reabilitas e vendes ou arrendas</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="tool" id="calculadora">
+  <div class="wrap">
+    <div class="calc">
+      <div class="panel">
+        <p class="calc-title" id="cTitle"></p>
+        <div class="slider"><div class="row"><label for="sT" id="lT"></label><output id="oT"></output></div><p id="pT"></p><input type="range" id="sT"></div>
+        <div class="slider"><div class="row"><label for="sH" id="lH"></label><output id="oH"></output></div><p id="pH"></p><input type="range" id="sH"></div>
+        <div class="slider"><div class="row"><label for="sA" id="lA"></label><output id="oA"></output></div><p id="pA"></p><input type="range" id="sA"></div>
+        <div class="slider" id="wE"><div class="row"><label for="sE" id="lE"></label><output id="oE"></output></div><p id="pE"></p><input type="range" id="sE"></div>
+        <div class="slider"><div class="row"><label for="sV" id="lV"></label><output id="oV"></output></div><p id="pV"></p><input type="range" id="sV"></div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <div class="res-big" id="rH">0 h</div>
+        <p class="res-sub" id="rSub"></p>
+        <div class="weeks" id="weeks" aria-hidden="true"></div>
+        <p class="weeks-cap" id="weeksCap"></p>
+        <div class="stats" id="stats">
+          <div><span>Semanas de trabalho</span><b id="rW">0</b></div>
+          <div id="stE"><span>Angariações possíveis</span><b id="rE">0</b></div>
+          <div><span id="rNl"></span><b id="rN">0</b></div>
+          <div><span id="rVl"></span><b id="rV">0 €</b></div>
+        </div>
+        <p class="fine">Simulação indicativa, com semanas de 40 horas. Os resultados dependem das tuas estimativas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <h2 class="wide">Como calculamos.</h2>
+    <p class="lede">Sem fórmulas escondidas. Três contas simples, feitas com os números que escolheste.</p>
+    <ol class="method">
+      <li><b>Horas por ano</b><span><code id="m1a"></code> vezes <code>horas de operação</code>. É o tempo total que a operação te pede num ano.</span></li>
+      <li><b id="m2t"></b><span>Horas por ano a dividir por <code id="m2a"></code>. É o que farias com o mesmo tempo, se ele voltasse para ti.<span id="m2x"></span></span></li>
+      <li><b id="m3t"></b><span id="m3"></span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <h2 class="wide" id="hTitle"></h2>
+    <p class="lede" id="hLede"></p>
+    <div id="hands"></div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <p class="slogan" id="slogan"></p>
+    <p id="ctaText"></p>
+    <a class="btn primary" href="https://cal.com/opera-os/discovery-call">Agendar chamada de diagnóstico</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap"><a class="logo" href="#top">OPERA<span>.</span></a><span id="footSlogan"></span></div>
+</footer>
+
+<script>
+(function(){
+  var P = {
+    consultor: {
+      title: 'Consultor ou equipa',
+      T: {l:'Negócios fechados por ano', p:'Se tens equipa, soma os negócios de todos os comerciais', min:2, max:120, step:1, v:20, u:''},
+      H: {l:'Horas de operação por negócio', p:'Documentos, certidões, CPCV, crédito, escritura, faturas e respostas a leads', min:5, max:40, step:1, v:15, u:' h'},
+      A: {l:'Horas para fazer uma angariação', p:'Prospeção, avaliação e reunião com o proprietário, até ao contrato de mediação', min:2, max:30, step:1, v:8, u:' h'},
+      E: {l:'Horas para vender um imóvel angariado', p:'Visitas, negociação e acompanhamento do comprador, até ao fecho', min:2, max:60, step:1, v:17, u:' h'},
+      m2x: ' Para as angariações possíveis, divides só pelas <code>horas para fazer uma angariação</code>.',
+      V: {l:'Ticket médio por negócio fechado', p:'Quanto faturas, em média, por cada negócio fechado. Se tens equipa, usa a média', min:500, max:20000, step:250, v:5000, u:' €'},
+      mode: 'ticket', vLabel: 'Faturação extra possível',
+      m3t: 'Faturação extra possível', m3: 'Negócios extra vezes o <code>ticket médio por negócio fechado</code>. É o que podias faturar a mais com o tempo que a operação te tira.',
+      sub: 'por ano presas na operação em vez de angariar e vender',
+      nLabel: 'Negócios extra possíveis',
+      m1: 'negócios por ano', m2t: 'Negócios extra possíveis', m2: 'horas para angariar mais horas para vender',
+      hTitle: 'O que sai das tuas mãos.',
+      hLede: 'Com um back office externo, a operação continua a ser feita, mas deixa de ser feita por ti.',
+      groups: [
+        ['Operations',['Preenchimento de CMIs e inserção de listings','Abertura e acompanhamento de processos','Gestão documental, checklists e controlo de prazos','Coordenação de intervenientes e acompanhamento de escrituras','Seguimento de cada processo, com o estado sempre atualizado']],
+        ['Legal',['Elaboração, validação e revisão de CPCV e contratos','Revisão documental em cada transação','Esclarecimento de dúvidas jurídicas']],
+        ['Finance',['Faturação e controlo de pagamentos','Controlo de despesas e preparação para a contabilidade','Relatório financeiro de gestão mensal','Controlo de IVA e impostos']],
+        ['Leads',['Atendimento das leads de imóveis e de tráfego pago','Qualificação: o quê, onde, quando, quanto e financiamento','Registo no CRM e agendamento de visitas','Campanha mensal de reativação de leads antigas']]
+      ],
+      slogan: 'You sell.<span>We operate.</span>', foot: 'You sell. We operate.',
+      cta: function(h,n,val,e){ return 'São <b>'+h+' horas por ano</b>, o equivalente a <b>'+e+' angariações</b> ou <b>'+n+' negócios fechados</b> e cerca de <b>'+val+' €</b> de faturação que ficam por fazer. A OPERA é o teu back office externo: processual, jurídico, financeiro e gestão de leads. Numa chamada de diagnóstico olhamos para os teus números e dizemos se a OPERA faz sentido para ti.'; }
+    },
+    investidor: {
+      title: 'Investidor',
+      T: {l:'Transações por ano', p:'Compras e vendas, contadas em separado', min:2, max:30, step:1, v:8, u:''},
+      H: {l:'Horas de operação por transação', p:'Documentos, contratos, chamadas, deslocações, faturas e respostas a leads', min:5, max:60, step:1, v:20, u:' h'},
+      A: {l:'Horas para encontrar e fechar um negócio', p:'Prospeção, visitas, análise e negociação, até à compra', min:10, max:120, step:5, v:40, u:' h'},
+      V: {l:'Margem bruta média por negócio', p:'Diferença média entre o valor de saída e o custo total de cada negócio, antes de impostos e estrutura', min:2000, max:150000, step:1000, v:25000, u:' €'},
+      sub: 'por ano presas na operação em vez de liderar a empresa e decidir investimentos',
+      mode: 'ticket', vLabel: 'Margem bruta extra possível',
+      m3t: 'Margem bruta extra possível', m3: 'Negócios extra vezes a <code>margem bruta média por negócio</code>. É o que podias ganhar a mais com o tempo que a operação te tira.',
+      nLabel: 'Negócios extra possíveis',
+      m1: 'transações por ano', m2t: 'Negócios extra possíveis', m2: 'horas para encontrar e fechar um negócio',
+      hTitle: 'O que sai das tuas mãos.',
+      hLede: 'Com um departamento de operações externo, cada transação continua a ser acompanhada, mas deixa de ser acompanhada por ti.',
+      hands: ['Checklist documental desde a proposta','CPCV, contratos e direitos de preferência','Controlo dos prazos do CPCV e do financiamento','Agendamento da escritura','Faturação, despesas e margem por imóvel','Resposta e qualificação das leads que já recebes'],
+      slogan: 'You invest.<span>We operate.</span>', foot: 'You invest. We operate.',
+      cta: function(h,n,val){ return 'São <b>'+h+' horas por ano</b>, o equivalente a <b>'+n+' negócios</b> e cerca de <b>'+val+' €</b> de margem bruta que ficam por fazer. A OPERA é o teu departamento de operações externo: processual, jurídico, financeiro e gestão de leads. Numa chamada de diagnóstico olhamos para a estrutura do teu negócio e dizemos se a OPERA faz sentido para ti.'; }
+    }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); };
+  var S = {T:$('sT'), H:$('sH'), A:$('sA'), E:$('sE'), V:$('sV')};
+  var weeks = $('weeks');
+  weeks.innerHTML = new Array(52).fill('<i></i>').join('');
+  var cur = 'consultor';
+
+  function setProfile(p, keepValues){
+    cur = p; var c = P[p];
+    document.querySelectorAll('.prof').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.p===p)); });
+    $('cTitle').textContent = 'Os teus números: ' + c.title.toLowerCase();
+    $('wE').hidden = !c.E; $('stE').hidden = !c.E; $('stats').classList.toggle('four', !!c.E);
+    $('m2x').innerHTML = c.m2x || '';
+    ['T','H','A','E','V'].forEach(function(k){
+      var d = c[k], s = S[k];
+      if(!d) return;
+      $('l'+k).textContent = d.l; $('p'+k).textContent = d.p;
+      s.min = d.min; s.max = d.max; s.step = d.step;
+      if(!keepValues) s.value = d.v;
+    });
+    $('rSub').textContent = c.sub; $('rNl').textContent = c.nLabel;
+    $('m1a').textContent = c.m1; $('m3t').textContent = c.m3t; $('m3').innerHTML = c.m3; $('rVl').textContent = c.vLabel; $('m2t').textContent = c.m2t; $('m2a').textContent = c.m2;
+    $('hTitle').textContent = c.hTitle; $('hLede').textContent = c.hLede;
+    $('hands').innerHTML = c.groups ? '<div class="groups">'+c.groups.map(function(g){ return '<div class="group"><b>'+g[0]+'</b><ul class="hands">'+g[1].map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul></div>'; }).join('')+'</div>' : '<ul class="hands two">'+c.hands.map(function(t){ return '<li>'+t+'</li>'; }).join('')+'</ul>';
+    $('slogan').innerHTML = c.slogan; $('footSlogan').textContent = c.foot;
+    var panel = document.querySelector('.calc');
+    panel.classList.remove('swap'); void panel.offsetWidth; panel.classList.add('swap');
+    try{ history.replaceState(null,'','?perfil='+p+location.hash); }catch(e){}
+    calc();
+  }
+
+  function calc(){
+    var c = P[cur];
+    var t=+S.T.value, h=+S.H.value, a=+S.A.value, v=+S.V.value;
+    $('oT').textContent = t + c.T.u;
+    $('oH').textContent = h + c.H.u;
+    $('oA').textContent = a + c.A.u;
+    $('oV').textContent = fmt(v) + c.V.u;
+    var e = c.E ? Math.floor(t*h/a) : 0;
+    if(c.E){ $('oE').textContent = S.E.value + c.E.u; $('rE').textContent = fmt(e); }
+    var total = t*h, w = total/40;
+    $('rH').textContent = fmt(total)+' h';
+    $('rW').textContent = w.toFixed(1).replace('.',',');
+    var n = Math.floor(total/(c.E ? a + (+S.E.value) : a)), val = c.mode==='ticket' ? n*v : total*v;
+    $('rN').textContent = fmt(n);
+    $('rV').textContent = fmt(val)+' €';
+    var on = Math.min(52, Math.round(w));
+    [].forEach.call(weeks.children, function(el,i){ el.classList.toggle('on', i<on); });
+    var extra = w > 52 ? ' Passa de um ano inteiro de trabalho de uma pessoa.' : '';
+    $('weeksCap').textContent = (on===1 ? '1 das 52 semanas do ano vai' : on+' das 52 semanas do ano vão') + ' para a operação.' + extra;
+    $('ctaText').innerHTML = c.cta(fmt(total), fmt(n), fmt(val), fmt(e));
+  }
+
+  Object.keys(S).forEach(function(k){ S[k].addEventListener('input', calc); });
+  document.querySelectorAll('.prof').forEach(function(b){ b.addEventListener('click', function(){ if(b.dataset.p!==cur) setProfile(b.dataset.p); }); });
+
+  var q = (location.search.match(/perfil=(\w+)/)||[])[1];
+  setProfile(P[q] ? q : 'consultor');
+})();
+</script>
+</body>
+</html>
