@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OPERA Score | A tua operação está preparada para acompanhar o teu negócio?</title>
+<meta name="description" content="Em 3 minutos, descobre quanto da tua capacidade está realmente disponível para gerar negócio. Score de 0 a 100, principal gargalo e recomendação.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-0:#050B1F; --navy-1:#0A1633; --navy-2:#13234A; --line:#22345F;
+  --blue:#2F7BFF; --blue-soft:#8DB6FF; --white:#FFFFFF; --muted:#9AA8C7;
+  --red:#FF5B5B; --orange:#FF9A3D; --yellow:#F5CF45; --green:#43D49A;
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;font-family:var(--font);color:var(--white);
+  background:radial-gradient(1200px 700px at 15% -10%,#1B3A80 0%,transparent 60%),linear-gradient(180deg,var(--navy-1),var(--navy-0));
+  background-color:var(--navy-0);background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--blue-soft)}
+:focus-visible{outline:3px solid var(--blue-soft);outline-offset:3px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:28px 22px 60px}
+header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+.logo{font-weight:900;font-stretch:125%;letter-spacing:.06em;font-size:20px}
+.logo span{color:var(--blue)}
+.tag{color:var(--muted);font-size:14px}
+
+.hero h1{font-size:clamp(34px,6.4vw,58px);line-height:1.02;font-weight:850;font-stretch:112%;margin:0 0 20px;letter-spacing:-.01em}
+.hero p.lead{font-size:19px;color:#C9D3EA;max-width:56ch;margin:0 0 30px}
+.dims{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:0 0 30px}
+.dims div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(10,22,51,.55);font-weight:700;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.dims small{color:var(--blue-soft);font-weight:600;font-size:12px;letter-spacing:.04em}
+.facts{display:flex;gap:26px;flex-wrap:wrap;color:var(--muted);font-size:15px;margin-top:22px}
+.facts b{color:var(--white)}
+
+.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:750;font-size:17px;
+  background:var(--blue);color:#fff;padding:16px 26px;border-radius:12px;text-decoration:none;display:inline-block;
+  box-shadow:0 10px 30px -10px rgba(47,123,255,.7);transition:transform .15s,background .15s}
+.btn:hover{background:#1F6BF0}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+.screen{display:none}
+.screen.on{display:block}
+.progress{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+.progress .track{flex:1;height:6px;background:var(--navy-2);border-radius:99px;overflow:hidden}
+.progress .fill{height:100%;background:var(--blue);width:0;transition:width .4s}
+.progress small{color:var(--muted);font-size:13px;white-space:nowrap}
+.block-name{color:var(--blue-soft);font-size:15px;font-weight:600;margin:0 0 10px}
+.q h2{font-size:clamp(25px,4.2vw,34px);line-height:1.15;font-weight:800;font-stretch:105%;margin:0 0 10px}
+.q .help{color:var(--muted);margin:0 0 24px;font-size:16px}
+.opts{display:grid;gap:10px;margin-bottom:28px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;width:100%;cursor:pointer;
+  background:rgba(19,35,74,.55);border:1px solid var(--line);color:#E6ECF8;border-radius:12px;padding:15px 16px;font:inherit;font-size:17px;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#3A5694}
+.opt .dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid #4A5F8F}
+.opt[aria-pressed="true"]{border-color:var(--blue);background:rgba(47,123,255,.14)}
+.opt[aria-pressed="true"] .dot{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px var(--navy-1)}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.back{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:10px 4px}
+.back:hover{color:#fff}
+.slider{margin:8px 0 34px}
+.slider output{display:block;font-size:56px;font-weight:850;font-stretch:115%;line-height:1;margin-bottom:18px}
+.slider output small{font-size:20px;color:var(--muted);font-weight:600;font-stretch:100%}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.scale{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+
+/* SCORE */
+.scorehead{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
+.ring{position:relative;width:190px;height:190px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .val strong{font-size:62px;font-weight:900;font-stretch:115%;line-height:1}
+.ring .val span{color:var(--muted);font-size:15px}
+.band{flex:1;min-width:240px}
+.band .pill{display:inline-flex;align-items:center;gap:8px;font-weight:750;font-size:15px;border-radius:99px;padding:6px 14px;border:1px solid currentColor;margin-bottom:12px}
+.band .pill i{width:10px;height:10px;border-radius:50%;background:currentColor}
+.band h3{margin:0 0 8px;font-size:clamp(24px,4vw,30px);font-weight:850;font-stretch:108%;line-height:1.15}
+.band p{margin:0;color:#D3DCEF}
+
+.gate{border:1px solid #2B4A8C;border-radius:18px;padding:24px 22px;background:linear-gradient(160deg,#122858,#0B1A3E);margin-top:8px}
+.gate h3{margin:0 0 6px;font-size:24px;font-weight:850;font-stretch:108%}
+.gate > p{margin:0 0 20px;color:#C9D3EA}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;background:rgba(5,11,31,.55);border:1px solid var(--line);border-radius:10px;color:#fff;font:inherit;font-size:16px;padding:13px}
+.field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.field select option{background:var(--navy-1)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);margin:8px 0 18px}
+.consent input{margin-top:3px;accent-color:var(--blue);width:18px;height:18px;flex:none}
+.err{color:var(--red);font-size:14px;min-height:20px;margin-bottom:10px}
+
+.full h4{font-size:21px;margin:38px 0 12px;font-weight:800}
+.full p{color:#D3DCEF;margin:0 0 14px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:center}
+.radar svg{width:100%;height:auto;display:block}
+.rows{display:grid;gap:12px}
+.row .lab{display:flex;justify-content:space-between;font-size:15px;margin-bottom:5px}
+.row .lab b{font-weight:800}
+.row .tr{height:8px;background:var(--navy-2);border-radius:99px;overflow:hidden}
+.row .tr div{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.row.leak .lab span{color:var(--orange);font-weight:700}
+.leakbox{border-radius:16px;padding:22px;border:1px solid rgba(255,154,61,.5);background:linear-gradient(180deg,rgba(255,154,61,.10),rgba(10,22,51,.7));margin-top:10px}
+.leakbox small{color:var(--orange);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.leakbox h3{margin:6px 0 10px;font-size:26px;font-weight:850;font-stretch:108%;line-height:1.15}
+.leakbox p{margin:0 0 12px;color:#D3DCEF}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.chips span{border:1px solid var(--blue);color:var(--blue-soft);border-radius:99px;padding:6px 12px;font-size:14px;font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.two div{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(10,22,51,.55)}
+.two strong{display:block;font-size:34px;font-weight:850;font-stretch:112%;line-height:1.05}
+.two span{color:var(--muted);font-size:14px}
+.sol{margin-top:14px}
+.sol p{margin:0 0 4px}
+.hours{border:1px solid var(--line);border-radius:16px;padding:20px;background:rgba(10,22,51,.55)}
+.hours strong{font-size:40px;font-weight:850;font-stretch:112%;display:block;line-height:1.1;margin-bottom:6px}
+.cta-box{margin-top:40px;border-radius:18px;padding:28px 24px;background:linear-gradient(160deg,#16306A,#0B1A3E);border:1px solid #2B4A8C}
+.cta-box h3{margin:0 0 10px;font-size:26px;font-weight:850;font-stretch:108%}
+.cta-box p{color:#D3DCEF;margin:0 0 22px}
+.disc{font-size:14px;color:var(--muted)}
+.btn.ghost{background:transparent;border:1px solid #3A5694;box-shadow:none;color:#DCE4F5}
+.btn.ghost:hover{border-color:var(--blue-soft);background:rgba(47,123,255,.08)}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.ring.locked svg{animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(270deg)}}
+.print-only{display:none}
+@media print{
+  @page{margin:12mm}
+  html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:var(--navy-0)!important}
+  :root{padding:0}
+  .screen{display:none!important}
+  #result{display:block!important}
+  .btn,.cta-row,footer,.tag{display:none!important}
+  .print-only{display:block;color:var(--muted);font-size:13px;margin:0 0 18px}
+  header.top{margin-bottom:20px}
+  .wrap{max-width:none;padding:0}
+  .split{grid-template-columns:1fr 1fr}
+  .leakbox,.hours,.cta-box,.split,.scorehead{break-inside:avoid}
+  .full h4{break-after:avoid}
+}
+footer{color:var(--muted);font-size:13px;margin-top:60px;border-top:1px solid var(--line);padding-top:18px}
+/* Relatório PDF (renderizado fora do ecrã) */
+#pdfDoc{width:760px;padding:36px 34px;background:var(--navy-0);color:#fff;font-family:var(--font)}
+#pdfDoc .pdf-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:26px}
+#pdfDoc .pdf-head small{color:var(--muted);font-size:13px;text-align:right;line-height:1.4}
+#pdfDoc .pdf-foot{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px}
+#pdfDoc .cta-row,#pdfDoc .print-only{display:none}
+#pdfDoc .split{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#pdfDoc .two{grid-template-columns:1fr 1fr}
+#pdfDoc .ring{width:190px;height:190px}
+#pdfDoc .ring svg{transform:none}
+#pdfDoc .ring .val strong{font-size:62px}
+#pdfDoc .band h3{font-size:30px}
+
+@media (max-width:600px){
+  .split{grid-template-columns:1fr}
+  .radar{max-width:340px;margin:0 auto}
+}
+@media (max-width:520px){
+  .wrap{padding:22px 18px 48px}
+  header.top{margin-bottom:34px}
+  .btn{width:100%;text-align:center}
+  .nav .btn{width:auto;flex:1}
+  .grid2,.two{grid-template-columns:1fr}
+  .ring{width:160px;height:160px}
+  .ring .val strong{font-size:52px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<form name="opera-score" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="nome"><input name="email"><input name="telefone"><input name="instagram"><input name="bot-field">
+  <input name="producao"><input name="leads_mes"><input name="trafego_pago">
+  <input name="score"><input name="gargalo"><input name="principal_fuga">
+  <textarea name="respostas"></textarea><textarea name="resumo_crm"></textarea>
+</form>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">OPERA<span>.</span></div>
+    <div class="tag">You sell. We operate.</div>
+  </header>
+
+  <!-- INTRO -->
+  <section class="screen on hero" id="intro">
+    <p class="block-name">OPERA Score</p>
+    <h1>A tua operação está preparada para acompanhar o teu negócio?</h1>
+    <p class="lead">Mede quanto da tua capacidade está realmente disponível para gerar negócio. Não é um teste ao consultor, é um diagnóstico da estrutura que te suporta.</p>
+    <div class="dims">
+      <div>Lead Response</div>
+      <div>Lead Management</div>
+      <div>CRM e Informação</div>
+      <div>Backoffice</div>
+      <div>Processual</div>
+      <div>Capacidade Comercial</div>
+    </div>
+    <button class="btn" id="startBtn">Calcular o meu OPERA Score</button>
+    <div class="facts"><span><b>12</b> perguntas</span><span><b>3</b> minutos</span><span><b>Score de 0 a 100</b> e diagnóstico automático</span></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz">
+    <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><small id="count"></small></div>
+    <div class="q" id="qBox"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result">
+    <p id="printHead" class="print-only"></p>
+    <div id="head"></div>
+    <div id="gateWrap"></div>
+    <div id="full" class="full"></div>
+  </section>
+
+  <footer>OPERA. O OPERA Score é uma estimativa com base nas tuas respostas.</footer>
+</div>
+
+<script>
+const CAL_URL = "https://cal.com/opera-os/discovery-call";
+const WEEKS_MONTH = 4.33;
+
+const DIMS = [
+  {id:"lr",  name:"Lead Response",        w:15, area:"SA"},
+  {id:"lm",  name:"Lead Management",      w:20, area:"SA"},
+  {id:"crm", name:"CRM e Informação",     w:10, area:"SA + BO"},
+  {id:"bo",  name:"Backoffice",           w:20, area:"BO"},
+  {id:"pr",  name:"Processual",           w:15, area:"BO"},
+  {id:"cc",  name:"Capacidade Comercial", w:20, area:"BO + SA"}
+];
+
+const Q = [
+ {id:"q1",dim:"Lead Response",title:"Quando entra uma nova lead, quanto tempo demora normalmente até ser contactada?",type:"single",
+  opts:["Menos de 15 minutos","15 a 60 minutos","1 a 4 horas","4 a 24 horas","24 a 48 horas","Mais de 48 horas","Não existe processo definido"],pts:[10,8,6,4,2,1,0]},
+ {id:"q2",dim:"Lead Management",title:"Quando uma lead não responde ao primeiro contacto, o que acontece?",type:"single",
+  opts:["Existe um processo definido de follow up","Faço follow up manualmente","Tento voltar a contactar quando tenho tempo","Normalmente não há acompanhamento estruturado","Não faço follow up"],pts:[10,7,4,1,0]},
+ {id:"q3",dim:"Lead Management",title:"Aproximadamente que percentagem das tuas leads tem acompanhamento estruturado?",type:"single",
+  opts:["90 a 100%","75 a 89%","50 a 74%","25 a 49%","Menos de 25%","Não sei"],pts:[10,8,6,3,1,0]},
+ {id:"q4",dim:"CRM e Informação",title:"Se amanhã alguém tivesse de assumir as tuas leads, conseguiria perceber o estado de cada uma através do CRM?",type:"single",
+  opts:["Sim, sem precisar de me perguntar","Na maioria dos casos","Em alguns casos","Não","Não utilizo CRM"],pts:[10,7,4,1,0]},
+ {id:"q5",dim:"CRM e Informação",title:"Com que frequência o teu CRM fica atualizado?",type:"single",
+  opts:["Automaticamente ou diariamente","Várias vezes por semana","Semanalmente","Quando tenho tempo","Raramente","Não utilizo CRM"],pts:[10,8,6,3,1,0]},
+ {id:"q6",dim:"Backoffice",title:"Quantas horas por semana gastas em tarefas administrativas?",type:"slider",max:30,def:8,unit:"h/semana",
+  help:"Inserir angariações, emails, documentos, inserção de dados, faturação, organização."},
+ {id:"q7",dim:"Backoffice",title:"Se pudesses retirar uma tarefa da tua agenda amanhã, qual seria?",type:"single",
+  opts:["CRM e atualização de informação","Administrativo","Documentação","Organização de processos","Emails e acompanhamento","Outra"]},
+ {id:"q8",dim:"Processual",title:"Quem acompanha normalmente a documentação e os processos dos teus negócios?",type:"single",
+  opts:["Tenho apoio dedicado","Tenho apoio parcial","Faço eu, mas tenho processos","Depende do negócio","Faço praticamente tudo eu"],pts:[10,7,5,3,2]},
+ {id:"q9",dim:"Processual",title:"Tens checklists ou processos definidos para acompanhar um negócio desde a angariação até à escritura?",type:"single",
+  opts:["Sim, para praticamente tudo","Para algumas fases","Tenho algumas notas","Está essencialmente na minha cabeça","Não"],pts:[10,7,4,1,0]},
+ {id:"q10",dim:"Capacidade Comercial",title:"Quantas horas por semana dedicas a atividades que geram negócio?",type:"slider",max:50,def:15,unit:"h/semana",
+  help:"Prospeção, angariação, reuniões, visitas, negociação e relação com clientes."},
+ {id:"q11",dim:"Capacidade Comercial",title:"Quantas horas por semana gastas no total em tarefas operacionais?",type:"slider",max:50,def:15,unit:"h/semana",
+  help:"Tudo o que não gera negócio diretamente: administrativo, CRM, processual, organização e acompanhamento de leads."},
+ {id:"q12",dim:"Escalabilidade",title:"Se amanhã tivesses 50% mais leads e negócios, o que aconteceria?",type:"single",
+  opts:["A estrutura atual absorvia facilmente","Absorvia, mas com alguma pressão","Teria de trabalhar mais horas","Precisaria de contratar","Não conseguiria acompanhar"]}
+];
+
+const A = {};
+let i = 0, D = null, unlocked = false, FIRST = "", NOME = "";
+const $ = s => document.querySelector(s);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("#"+id).classList.add("on"); window.scrollTo({top:0}); };
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt1 = n => n.toFixed(0);
+
+/* ---------- QUIZ ---------- */
+function render(){
+  const q = Q[i];
+  $("#fill").style.width = (i/Q.length*100)+"%";
+  $("#count").textContent = `${i+1} de ${Q.length}`;
+  let h = `<p class="block-name">${q.dim}</p><h2>${q.title}</h2>${q.help?`<p class="help">${q.help}</p>`:"<div style='height:14px'></div>"}`;
+  if(q.type==="single"){
+    h += `<div class="opts" role="group">` + q.opts.map((o,k)=>`<button class="opt" data-k="${k}" aria-pressed="${A[q.id]===k}"><span class="dot"></span>${o}</button>`).join("") + `</div>`;
+  } else {
+    const v = A[q.id] ?? q.def;
+    h += `<div class="slider"><output id="sOut">${v}<small> ${q.unit}</small></output>
+      <input type="range" id="sIn" min="0" max="${q.max}" step="1" value="${v}" aria-label="${esc(q.title)}">
+      <div class="scale"><span>0h</span><span>${q.max}h</span></div></div>`;
+  }
+  h += `<div class="nav"><button class="back" id="bk">${i===0?"Início":"Voltar"}</button>
+        <button class="btn" id="nx" ${q.type==="single"&&A[q.id]==null?"disabled":""}>${i===Q.length-1?"Ver o meu score":"Seguinte"}</button></div>`;
+  $("#qBox").innerHTML = h;
+
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ A[q.id]=+b.dataset.k; render(); setTimeout(next,220); });
+  const si = $("#sIn");
+  if(si){ A[q.id]=+si.value; si.oninput=()=>{A[q.id]=+si.value; $("#sOut").innerHTML=`${si.value}<small> ${q.unit}</small>`;}; }
+  $("#bk").onclick=()=>{ if(i===0) show("intro"); else {i--; render();} };
+  $("#nx").onclick=next;
+}
+function next(){
+  if(A[Q[i].id]==null) return;
+  if(i<Q.length-1){ i++; render(); } else { D = compute(); renderResult(); show("result"); }
+}
+
+/* ---------- CÁLCULO ---------- */
+const pts = id => Q.find(q=>q.id===id).pts[A[id]];
+function adminPts(h){ return h<=3?10:h<=5?8:h<=8?6:h<=12?4:h<=15?2:0; }
+
+function compute(){
+  const s = {};
+  s.lr  = pts("q1")*10;
+  s.lm  = (pts("q2")+pts("q3"))/2*10;
+  s.crm = (pts("q4")+pts("q5"))/2*10;
+  s.bo  = adminPts(A.q6)*10;
+  s.pr  = (pts("q8")+pts("q9"))/2*10;
+  const op = Math.max(A.q11, A.q6);            // o operacional inclui o administrativo
+  const tot = A.q10 + op;
+  const pct = tot ? A.q10/tot : 0;
+  s.cc = Math.min(100, Math.round(pct/0.70*100)); // benchmark OPERA: 70% de tempo comercial
+  Object.keys(s).forEach(k=>s[k]=Math.round(s[k]));
+
+  const total = Math.round(DIMS.reduce((a,d)=>a+s[d.id]*d.w,0)/100);
+  const sa = Math.round((s.lr*15 + s.lm*20)/35);
+  const bo = Math.round((s.bo*20 + s.pr*15)/35);
+  const leak = [...DIMS].sort((a,b)=> s[a.id]-s[b.id] || b.w-a.w)[0];
+  const two = sa<60 && bo<60;
+  const gargalo = two ? "BO + SA" : (leak.area==="SA"?"SA":leak.area==="BO"?"BO":"BO + SA");
+
+  const low = Math.max(0, Math.round(op*0.5)), high = Math.max(low, Math.round(op*0.75));
+  return {s,total,sa,bo,leak,two,gargalo,op,pct,low,high};
+}
+
+function band(t){
+  if(t>=80) return {c:"var(--green)",n:"Operação preparada para crescer",h:"Estrutura sólida",
+    p:"Tens uma operação relativamente bem organizada e uma boa capacidade para manter o foco no negócio. O próximo desafio é perceber se consegues aumentar o volume sem aumentar proporcionalmente o teu trabalho."};
+  if(t>=60) return {c:"var(--yellow)",n:"Operação estruturada, mas com fugas",h:"Boa base, com fugas de tempo",
+    p:"A tua operação suporta o negócio atual, mas há áreas onde o teu próprio tempo continua a ser necessário para manter tudo a funcionar."};
+  if(t>=40) return {c:"var(--orange)",n:"Operação dependente",h:"A operação depende muito de ti",
+    p:"A tua operação consegue suportar o negócio atual, mas grande parte dela só funciona porque és tu a fazê-la. Isso limita o tempo que sobra para gerar negócio."};
+  return {c:"var(--red)",n:"Operação sobrecarregada",h:"A operação está a ocupar o espaço do negócio",
+    p:"Neste momento, manter a operação a funcionar está a consumir a capacidade que devias estar a usar para angariar, prospetar e fechar."};
+}
+
+/* ---------- RESULTADO ---------- */
+function renderLocked(){
+  $("#head").innerHTML = `
+    <p class="block-name">Concluído</p>
+    <div class="scorehead">
+      <div class="ring locked">
+        <svg width="100%" height="100%" viewBox="0 0 190 190" aria-hidden="true">
+          <circle cx="95" cy="95" r="80" fill="none" stroke="var(--navy-2)" stroke-width="14"/>
+          <circle cx="95" cy="95" r="80" fill="none" stroke="var(--blue)" stroke-width="14" stroke-dasharray="6 14" opacity=".55"/>
+        </svg>
+        <div class="val"><strong>?</strong><span>de 100</span></div>
+      </div>
+      <div class="band">
+        <h3>O teu OPERA Score está pronto.</h3>
+        <p>Calculámos o teu score nas 6 áreas da tua operação, a tua principal fuga de tempo e quantas horas por semana podem sair da tua agenda.</p>
+      </div>
+    </div>`;
+}
+
+function renderResult(){
+  if(!unlocked){ renderLocked(); renderGate(); $("#full").innerHTML=""; return; }
+  renderHead(); $("#gateWrap").innerHTML=""; renderFull(FIRST);
+}
+
+function renderHead(){
+  const b = band(D.total);
+  const C = 2*Math.PI*80, off = C*(1-D.total/100);
+  $("#head").innerHTML = `
+    <p class="block-name">O teu OPERA Score</p>
+    <div class="scorehead">
+      <div class="ring">
+        <svg width="100%" height="100%" viewBox="0 0 190 190" aria-hidden="true">
+          <circle cx="95" cy="95" r="80" fill="none" stroke="var(--navy-2)" stroke-width="14"/>
+          <circle id="arc" cx="95" cy="95" r="80" fill="none" stroke="${b.c}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/>
+        </svg>
+        <div class="val"><strong id="num">0</strong><span>de 100</span></div>
+      </div>
+      <div class="band">
+        <div class="pill" style="color:${b.c}"><i></i>${b.n}</div>
+        <h3>${b.h}</h3>
+        <p>${b.p}</p>
+      </div>
+    </div>`;
+  requestAnimationFrame(()=>{ $("#arc").style.strokeDashoffset = off; });
+  let n=0; const st=setInterval(()=>{ n=Math.min(D.total,n+Math.max(1,Math.round(D.total/40))); $("#num").textContent=n; if(n>=D.total) clearInterval(st); },25);
+
+}
+
+function renderGate(){
+  $("#gateWrap").innerHTML = `
+    <div class="gate q">
+      <h3>Queres ver o teu diagnóstico completo?</h3>
+      <p>Diz-nos para onde o enviamos. Vês o resultado já a seguir, neste ecrã.</p>
+      <div class="grid2">
+        <label class="field"><span>Nome</span><input id="fNome" autocomplete="name"></label>
+        <label class="field"><span>Telemóvel</span><input id="fTel" type="tel" autocomplete="tel" inputmode="tel"></label>
+        <label class="field"><span>Email</span><input id="fEmail" type="email" autocomplete="email"></label>
+        <label class="field"><span>Instagram (opcional)</span><input id="fIg" placeholder="@"></label>
+        <label class="field"><span>Produção anual aproximada</span><select id="fProd"><option value="">Escolhe</option><option>Até 50.000€</option><option>50.000€ a 100.000€</option><option>100.000€ a 200.000€</option><option>200.000€ a 300.000€</option><option>Mais de 300.000€</option></select></label>
+        <label class="field"><span>Leads por mês</span><select id="fLeads"><option value="">Escolhe</option><option>1 a 10</option><option>11 a 25</option><option>26 a 50</option><option>51 a 100</option><option>Mais de 100</option></select></label>
+        <label class="field"><span>Investes em tráfego pago?</span><select id="fTraf"><option value="">Escolhe</option><option>Não</option><option>Sim, até 500€/mês</option><option>Sim, mais de 500€/mês</option></select></label>
+      </div>
+      <label class="consent"><input type="checkbox" id="fConsent"><span>Quero receber o meu resultado e recomendações da OPERA.</span></label>
+      <div class="err" id="gateErr" role="alert"></div>
+      <button class="btn" id="gateBtn">Ver o diagnóstico completo</button>
+    </div>`;
+  $("#gateBtn").onclick = submit;
+}
+
+const lbl = id => { const q=Q.find(x=>x.id===id); return q.type==="single" ? q.opts[A[id]] : A[id]+"h/semana"; };
+
+async function submit(){
+  const v = id => $(id).value.trim();
+  const nome=v("#fNome"), email=v("#fEmail"), tel=v("#fTel"), ig=v("#fIg"), prod=v("#fProd"), leads=v("#fLeads"), traf=v("#fTraf");
+  const err=$("#gateErr");
+  if(!nome||!email||!tel){ err.textContent="Preenche o nome, o email e o telemóvel."; return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ err.textContent="O email não parece válido. Confirma se está bem escrito."; return; }
+  if(tel.replace(/\D/g,"").length<9){ err.textContent="O telemóvel precisa de ter pelo menos 9 dígitos."; return; }
+  if(!prod||!leads||!traf){ err.textContent="Escolhe a produção, as leads por mês e o tráfego pago."; return; }
+  if(!$("#fConsent").checked){ err.textContent="Para continuar, confirma que queres receber o resultado."; return; }
+  err.textContent="";
+
+  const s=D.s;
+  const resumo = [
+    `${nome}`,
+    `OPERA Score: ${D.total}`,
+    `Lead Response: ${s.lr}`,
+    `Lead Management: ${s.lm}`,
+    `CRM: ${s.crm}`,
+    `Backoffice: ${s.bo}`,
+    `Processual: ${s.pr}`,
+    `Capacidade Comercial: ${s.cc} (${Math.round(D.pct*100)}% do tempo a gerar negócio)`,
+    `Principal fuga: ${D.leak.name}`,
+    `Principal gargalo: ${D.gargalo}`,
+    `Produção: ${prod}`,
+    `Leads: ${leads}/mês`,
+    `Tráfego pago: ${traf}`,
+    `Tarefa a retirar: ${lbl("q7")}`,
+    `Escalabilidade +50%: ${lbl("q12")}`,
+    `Horas libertáveis: ${D.low} a ${D.high}h/semana`
+  ].join("\n");
+  const respostas={}; Q.forEach(q=>respostas[q.id+" "+q.title]=lbl(q.id));
+
+  const body = new URLSearchParams({"form-name":"opera-score",nome,email,telefone:tel,instagram:ig,producao:prod,leads_mes:leads,trafego_pago:traf,
+    score:String(D.total),gargalo:D.gargalo,principal_fuga:D.leak.name,respostas:JSON.stringify(respostas),resumo_crm:resumo});
+  const btn=$("#gateBtn"); btn.disabled=true; btn.textContent="A preparar o diagnóstico";
+  try{ await fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()}); }catch(e){}
+  unlocked=true; FIRST=nome.split(" ")[0]; NOME=nome;
+  renderResult();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function color(v){ return v>=80?"var(--green)":v>=60?"var(--yellow)":v>=40?"var(--orange)":"var(--red)"; }
+
+function radar(s){
+  const cx=160, cy=150, R=105, n=DIMS.length;
+  const pt=(k,r)=>{ const a=-Math.PI/2+k*2*Math.PI/n; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  let g="";
+  [25,50,75,100].forEach(l=>{ g+=`<polygon points="${DIMS.map((_,k)=>pt(k,R*l/100).join(",")).join(" ")}" fill="none" stroke="var(--line)" stroke-width="1"/>`; });
+  DIMS.forEach((_,k)=>{ const [x,y]=pt(k,R); g+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`; });
+  // benchmark 80
+  g+=`<polygon points="${DIMS.map((_,k)=>pt(k,R*.8).join(",")).join(" ")}" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="4 4" opacity=".7"/>`;
+  g+=`<polygon points="${DIMS.map((d,k)=>pt(k,R*Math.max(4,s[d.id])/100).join(",")).join(" ")}" fill="rgba(47,123,255,.28)" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  DIMS.forEach((d,k)=>{ const [x,y]=pt(k,R*Math.max(4,s[d.id])/100); g+=`<circle cx="${x}" cy="${y}" r="4.5" fill="var(--blue)"/>`; });
+  const short=["Lead Response","Lead Mgmt","CRM","Backoffice","Processual","Capacidade"];
+  DIMS.forEach((d,k)=>{ const [x,y]=pt(k,R+26); const anchor=Math.abs(x-cx)<6?"middle":x>cx?"start":"end";
+    g+=`<text x="${x}" y="${y+4}" text-anchor="${anchor}" fill="#C9D3EA" font-size="12.5" font-family="Archivo,system-ui,sans-serif" font-weight="600">${short[k]}</text>`; });
+  return `<svg viewBox="-55 0 430 300" role="img" aria-label="Gráfico das 6 dimensões do OPERA Score">${g}</svg>`;
+}
+
+const LEAKS = {
+  lr:{t:"Estás a gerar oportunidades, mas o primeiro contacto depende da tua disponibilidade. Uma lead pode entrar enquanto estás numa visita ou numa reunião, e cada hora sem resposta reduz a probabilidade de a converter.",
+      chips:["Primeiro contacto","Qualificação","Agendamento"],sol:"SA",solt:"A OPERA SA assume o primeiro contacto e a qualificação para que entres apenas quando existe uma oportunidade qualificada."},
+  lm:{t:"Estás a gerar oportunidades, mas o acompanhamento ainda depende demasiado da tua disponibilidade. Uma lead pode entrar enquanto estás numa visita, numa reunião ou a tratar de um negócio, e é aí que a operação começa a tornar-se um gargalo.",
+      chips:["Primeiro contacto","Qualificação","Follow up","CRM","Agendamento"],sol:"SA",solt:"A OPERA SA assume esta parte do processo para que entres quando existe uma oportunidade qualificada."},
+  crm:{t:"A informação sobre leads e negócios está sobretudo contigo. Isso torna difícil delegar, acompanhar o funil e perceber onde se perdem oportunidades.",
+      chips:["Atualização do CRM","Registo de leads","Organização da informação"],sol:"BO + SA",solt:"A OPERA mantém o CRM atualizado como parte do serviço, tanto do lado das leads como da operação."},
+  bo:{t:"O principal impacto não é apenas o trabalho administrativo. É o tempo comercial que estás a retirar da tua agenda para manter a operação a funcionar.",
+      chips:["Administrativo","CRM","Organização","Processos"],sol:"BO",solt:"A OPERA BO foi desenhada para assumir este tipo de operação e permitir que te concentres no negócio."},
+  pr:{t:"O acompanhamento dos negócios, da angariação à escritura, depende de ti para avançar. Cada processo aberto ocupa espaço na tua agenda e na tua cabeça.",
+      chips:["Documentação","CPCV e escrituras","Acompanhamento do banco","Checklists de processo"],sol:"BO",solt:"A OPERA BO acompanha os processos de ponta a ponta, com checklists e prazos controlados."},
+  cc:{t:"A maior parte da tua semana está a ser usada para operar, não para vender. Mesmo com tudo a funcionar, sobra pouco tempo para prospetar, angariar e fechar.",
+      chips:["Administrativo","Processual","Follow up","CRM"],sol:"BO + SA",solt:"A OPERA atua nas duas frentes, operação e leads, para devolver horas à tua agenda comercial."}
+};
+
+function renderFull(first){
+  const s=D.s, L=LEAKS[D.leak.id];
+  let h = `<h4>${first?esc(first)+", este é o teu resultado por área":"O teu resultado por área"}</h4>
+  <div class="split">
+    <div class="radar">${radar(s)}</div>
+    <div class="rows">${DIMS.map(d=>`
+      <div class="row ${d.id===D.leak.id?"leak":""}">
+        <div class="lab"><b>${d.name}</b><span>${s[d.id]}</span></div>
+        <div class="tr"><div style="width:${Math.max(3,s[d.id])}%;background:${color(s[d.id])}"></div></div>
+      </div>`).join("")}
+      <p class="disc" style="margin:4px 0 0">A linha verde tracejada no gráfico marca 80, o nível de uma operação preparada para crescer.</p>
+    </div>
+  </div>`;
+
+  if(D.two){
+    h += `<div class="leakbox">
+      <small>Tens dois gargalos</small>
+      <h3>Leads e operação ao mesmo tempo</h3>
+      <div class="two">
+        <div><strong>${D.sa}/100</strong><span>Leads: resposta e acompanhamento</span></div>
+        <div><strong>${D.bo}/100</strong><span>Operação: backoffice e processual</span></div>
+      </div>
+      <p>Estás simultaneamente a ter dificuldade em acompanhar novas oportunidades e em manter a operação organizada. Isso significa que aumentar a geração de leads pode simplesmente aumentar a pressão sobre a tua estrutura.</p>
+      <div class="sol"><p><b>OPERA SA</b></p><div class="chips"><span>Leads</span><span>Qualificação</span><span>Follow up</span><span>CRM</span><span>Agendamento</span></div>
+      <p><b>OPERA BO</b></p><div class="chips"><span>Administrativo</span><span>Processual</span><span>CRM</span><span>Organização</span></div></div>
+    </div>`;
+  } else {
+    h += `<div class="leakbox">
+      <small>${D.total>=80?"Onde ainda podes ganhar capacidade":"A tua principal fuga"}</small>
+      <h3>${D.leak.name}: ${s[D.leak.id]}/100</h3>
+      <p>${L.t}</p>
+      <p style="margin-bottom:4px"><b>O que poderia sair da tua agenda</b></p>
+      <div class="chips">${L.chips.map(c=>`<span>${c}</span>`).join("")}</div>
+      <p style="margin:0">${L.solt}</p>
+    </div>`;
+  }
+
+  const pctTxt = Math.round(D.pct*100);
+  h += `<h4>Horas potencialmente libertáveis</h4>
+  <div class="hours">
+    <strong>${D.low} a ${D.high}h por semana</strong>
+    <p style="margin:0">Com base nas respostas que deste, identificámos entre ${D.low} e ${D.high} horas semanais de tarefas que podem ser candidatas a delegação ou estruturação. Se recuperasses apenas ${D.low} horas por semana, seriam cerca de ${Math.round(D.low*WEEKS_MONTH)} horas por mês para voltares a dedicar ao negócio.</p>
+  </div>
+  <p style="margin-top:14px">Hoje, cerca de <b>${pctTxt}%</b> do teu tempo de trabalho vai para atividades que geram negócio. A referência da OPERA é acima de 70%.</p>`;
+
+  if(A.q12>=2){
+    h += `<p>Disseste também que, com mais 50% de negócio, ${["","",
+      "terias de trabalhar mais horas","precisarias de contratar","não conseguirias acompanhar"][A.q12]}. É o sinal de que o crescimento, hoje, está limitado pela estrutura e não pela procura.</p>`;
+  }
+
+  const ctaT = D.total>=80 ? "Queres perceber onde ainda podes ganhar capacidade?" : D.two ? "Queres analisar a tua operação connosco?" : "Queres perceber como funciona?";
+  const ctaB = D.total>=80 ? "Ver onde posso ganhar capacidade" : D.two ? "Quero analisar a minha operação" : "Quero perceber como funciona";
+  h += `<div class="cta-box">
+    <h3>${ctaT}</h3>
+    <p>Numa reunião de 20 minutos, analisamos o teu OPERA Score e mostramos o que pode ser delegado, acompanhado ou operado por uma estrutura externa.</p>
+    <div class="cta-row"><a class="btn" href="${CAL_URL}" target="_blank" rel="noopener">${ctaB}</a>
+    <button class="btn ghost" id="dlBtn">Descarregar o diagnóstico</button></div>
+  </div>`;
+
+  $("#full").innerHTML = h;
+  $("#printHead").textContent = `Diagnóstico OPERA Score${NOME?" de "+NOME:""} · ${new Date().toLocaleDateString("pt-PT")}`;
+  $("#dlBtn").onclick = () => downloadPDF();
+}
+
+/* ---------- DOWNLOAD PDF ---------- */
+const PDF_LIBS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+];
+const PDF_W = 760, PDF_H = 1075, PDF_PAD = 40, PDF_BG = "#050B1F";
+function loadScript(src){
+  return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); });
+}
+// O SVG é rasterizado como imagem: as variáveis CSS têm de ser resolvidas antes
+function resolveSvgVars(root){
+  const cs=getComputedStyle(document.documentElement);
+  root.querySelectorAll("svg *").forEach(el=>["fill","stroke"].forEach(a=>{
+    const v=el.getAttribute(a); const m=v&&v.match(/^var\((--[\w-]+)\)$/);
+    if(m) el.setAttribute(a,cs.getPropertyValue(m[1]).trim());
+  }));
+  // O anel roda via CSS; no PDF a rotação passa para dentro do SVG
+  root.querySelectorAll(".ring svg").forEach(svg=>{
+    const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("transform","rotate(-90 95 95)");
+    [...svg.childNodes].forEach(n=>g.appendChild(n)); svg.appendChild(g);
+  });
+}
+async function buildPDF(){
+  if(!window.html2canvas) await loadScript(PDF_LIBS[0]);
+  if(!window.jspdf) await loadScript(PDF_LIBS[1]);
+  if(document.fonts) await document.fonts.ready;
+
+  const date=new Date().toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"});
+  const doc=document.createElement("div"); doc.id="pdfDoc";
+  doc.innerHTML=`<div class="pdf-head"><div class="logo">OPERA<span>.</span></div>
+    <small>OPERA Score${NOME?"<br>"+esc(NOME):""}<br>${date}</small></div>
+    ${$("#head").innerHTML}
+    <div class="full">${$("#full").innerHTML}</div>
+    <div class="pdf-foot">O OPERA Score é uma estimativa com base nas tuas respostas. Marca uma análise do teu resultado em ${CAL_URL.replace("https://","")}</div>`;
+  // Estado final do anel, sem a animação
+  const C=2*Math.PI*80;
+  doc.querySelector("#arc")?.setAttribute("stroke-dashoffset",C*(1-D.total/100));
+  doc.querySelector("#arc")?.removeAttribute("style");
+  doc.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id")); doc.id="pdfDoc";
+  doc.querySelector(".ring .val strong").textContent=D.total;
+  resolveSvgVars(doc);
+  const holder=document.createElement("div");
+  holder.style.cssText="position:absolute;left:-10000px;top:0;width:"+PDF_W+"px";
+  holder.appendChild(doc); document.body.appendChild(holder);
+
+  // Pontos onde a página pode cortar: o fim de cada bloco, nunca a meio dele
+  const top0=doc.getBoundingClientRect().top;
+  const cuts=[...doc.querySelectorAll(".pdf-head,.scorehead,.split,.leakbox,.hours,.full > p,.cta-box,.pdf-foot")]
+    .map(el=>Math.ceil(el.getBoundingClientRect().bottom-top0+6)).sort((x,y)=>x-y);
+  const total=doc.offsetHeight;
+
+  // Captura com a janela no topo e à largura atual: evita PDFs em branco e cortes desalinhados
+  const sx=window.scrollX, sy=window.scrollY;
+  window.scrollTo(0,0);
+  let canvas;
+  try{
+    canvas=await html2canvas(doc,{scale:2,backgroundColor:PDF_BG,useCORS:true,scrollX:0,scrollY:0,
+      windowWidth:document.documentElement.clientWidth,width:PDF_W,height:total});
+  } finally {
+    window.scrollTo(sx,sy); holder.remove();
+  }
+  const k=canvas.width/PDF_W;
+
+  const pdf=new jspdf.jsPDF({unit:"pt",format:[PDF_W*.75,PDF_H*.75]});
+  let start=0, page=0;
+  while(start<total-2){
+    const padTop=page?PDF_PAD:0, room=PDF_H-padTop-PDF_PAD;
+    let end=Math.max(0,...cuts.filter(c=>c>start&&c<=start+room));
+    if(!end) end=Math.min(total,start+room);
+    if(total-start<=room) end=total;
+    const slice=document.createElement("canvas");
+    slice.width=canvas.width; slice.height=Math.round((end-start)*k);
+    const ctx=slice.getContext("2d"); ctx.fillStyle=PDF_BG; ctx.fillRect(0,0,slice.width,slice.height);
+    ctx.drawImage(canvas,0,Math.round(start*k),canvas.width,slice.height,0,0,slice.width,slice.height);
+    if(page) pdf.addPage();
+    pdf.setFillColor(PDF_BG); pdf.rect(0,0,PDF_W*.75,PDF_H*.75,"F");
+    pdf.addImage(slice.toDataURL("image/jpeg",.92),"JPEG",0,padTop*.75,PDF_W*.75,(end-start)*.75);
+    start=end; page++;
+  }
+  return pdf;
+}
+async function downloadPDF(){
+  const btn=$("#dlBtn"), label=btn.textContent;
+  btn.disabled=true; btn.textContent="A gerar o PDF";
+  try{
+    const pdf=await buildPDF();
+    const slug=(FIRST||"").normalize("NFD").replace(/[^\w]/g,"").toLowerCase();
+    pdf.save(`opera-score${slug?"-"+slug:""}.pdf`);
+  }catch(e){
+    window.print();
+  }
+  btn.disabled=false; btn.textContent=label;
+}
+
+$("#startBtn").onclick=()=>{ i=0; show("quiz"); render(); };
+</script>
+</body>
+</html>

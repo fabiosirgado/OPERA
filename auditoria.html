@@ -134,6 +134,7 @@ input[type=range]{width:100%;accent-color:var(--blue);height:28px}
 #pdfDoc .pdf-foot{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px}
 #pdfDoc .dl,#pdfDoc .cta-row{display:none}
 #pdfDoc .seg-op{background:#3A4C78}
+#pdfDoc .verdict h3{font-size:30px}
 @media print{
   body{background:var(--navy-0)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   header.top,footer,.dl,.cta-row,#pdfDoc{display:none!important}
@@ -540,7 +541,7 @@ async function buildPDF(first){
   window.scrollTo(0,0);
   let canvas;
   try{
-    canvas=await html2canvas(doc,{scale:2,backgroundColor:PDF_BG,useCORS:true,scrollX:0,scrollY:0,windowWidth:1200,width:PDF_W,height:total});
+    canvas=await html2canvas(doc,{scale:2,backgroundColor:PDF_BG,useCORS:true,scrollX:0,scrollY:0,windowWidth:document.documentElement.clientWidth,width:PDF_W,height:total});
   } finally {
     window.scrollTo(sx,sy); holder.remove();
   }
