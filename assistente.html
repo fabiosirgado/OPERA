@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quando devo contratar uma assistente? | OPERA</title>
+<meta name="description" content="Descobre se já estás no momento certo para contratar apoio, que tipo de função precisas e quanto te pode custar criar essa estrutura.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-0:#050B1F; --navy-1:#0A1633; --navy-2:#13234A; --line:#22345F;
+  --blue:#2F7BFF; --blue-soft:#8DB6FF; --white:#FFFFFF; --muted:#9AA8C7;
+  --red:#FF5B5B; --orange:#FF9A3D; --yellow:#F5CF45; --green:#43D49A;
+  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;font-family:var(--font);color:var(--white);
+  background:radial-gradient(1100px 700px at 50% -15%,#1B3A80 0%,transparent 60%),linear-gradient(180deg,var(--navy-1),var(--navy-0));
+  background-color:var(--navy-0);background-attachment:fixed;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--blue-soft)}
+:focus-visible{outline:3px solid var(--blue-soft);outline-offset:3px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:28px 22px 60px}
+header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+.logo{font-weight:900;font-stretch:125%;letter-spacing:.06em;font-size:20px}
+.logo span{color:var(--blue)}
+.tag{color:var(--muted);font-size:14px}
+
+.hero h1{font-size:clamp(36px,6.8vw,62px);line-height:1.02;font-weight:850;font-stretch:112%;margin:0 0 20px;letter-spacing:-.01em}
+.hero p.lead{font-size:19px;color:#C9D3EA;max-width:56ch;margin:0 0 30px}
+.gets{margin:0 0 30px}
+.gets p{margin:0 0 12px;color:#C9D3EA;font-size:16px}
+.gets-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.gets-row div{border-left:3px solid var(--blue);padding:4px 0 4px 14px}
+.gets-row strong{display:block;font-size:17px;font-weight:800;font-stretch:108%}
+.gets-row span{color:var(--muted);font-size:14px}
+.facts{display:flex;gap:26px;flex-wrap:wrap;color:var(--muted);font-size:15px;margin-top:22px}
+.facts b{color:var(--white)}
+
+.btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:750;font-size:17px;
+  background:var(--blue);color:#fff;padding:16px 26px;border-radius:12px;text-decoration:none;display:inline-block;
+  box-shadow:0 10px 30px -10px rgba(47,123,255,.7);transition:transform .15s,background .15s}
+.btn:hover{background:#1F6BF0}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid #3A5694;box-shadow:none;color:#DCE4F5}
+.btn.ghost:hover{border-color:var(--blue-soft);background:rgba(47,123,255,.08)}
+
+.screen{display:none}
+.screen.on{display:block}
+.progress{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+.progress .track{flex:1;height:6px;background:var(--navy-2);border-radius:99px;overflow:hidden}
+.progress .fill{height:100%;background:var(--blue);width:0;transition:width .4s}
+.progress small{color:var(--muted);font-size:13px;white-space:nowrap}
+.block-name{color:var(--blue-soft);font-size:15px;font-weight:600;margin:0 0 10px}
+.q h2{font-size:clamp(25px,4.2vw,34px);line-height:1.15;font-weight:800;font-stretch:105%;margin:0 0 10px}
+.q .help{color:var(--muted);margin:0 0 24px;font-size:16px}
+.opts{display:grid;gap:10px;margin-bottom:28px}
+.grp{color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:8px 0 -2px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;width:100%;cursor:pointer;
+  background:rgba(19,35,74,.55);border:1px solid var(--line);color:#E6ECF8;border-radius:12px;padding:15px 16px;font:inherit;font-size:17px;transition:border-color .15s,background .15s}
+.opt:hover{border-color:#3A5694}
+.opt .dot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid #4A5F8F}
+.opt.multi .dot{border-radius:5px}
+.opt[aria-pressed="true"]{border-color:var(--blue);background:rgba(47,123,255,.14)}
+.opt[aria-pressed="true"] .dot{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px var(--navy-1)}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.back{background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:10px 4px}
+.back:hover{color:#fff}
+.num{display:flex;align-items:center;gap:10px;background:rgba(19,35,74,.55);border:1px solid var(--line);border-radius:12px;padding:6px 16px;max-width:320px;margin-bottom:28px}
+.num input{flex:1;background:transparent;border:0;color:#fff;font:inherit;font-size:30px;font-weight:800;padding:8px 0;width:100%}
+.num input:focus{outline:none}
+.num:focus-within{border-color:var(--blue)}
+.num span{font-size:22px;color:var(--muted);font-weight:700;white-space:nowrap}
+.slider{margin:8px 0 34px}
+.slider output{display:block;font-size:56px;font-weight:850;font-stretch:115%;line-height:1;margin-bottom:18px}
+.slider output small{font-size:20px;color:var(--muted);font-weight:600;font-stretch:100%}
+input[type=range]{width:100%;accent-color:var(--blue);height:28px}
+.scale{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
+
+/* GATE */
+.lockhead{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
+.lockhead .meter{flex:1;min-width:240px}
+.gate{border:1px solid #2B4A8C;border-radius:18px;padding:24px 22px;background:linear-gradient(160deg,#122858,#0B1A3E)}
+.gate h3{margin:0 0 6px;font-size:24px;font-weight:850;font-stretch:108%}
+.gate > p{margin:0 0 20px;color:#C9D3EA}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;background:rgba(5,11,31,.55);border:1px solid var(--line);border-radius:10px;color:#fff;font:inherit;font-size:16px;padding:13px}
+.field input:focus{outline:none;border-color:var(--blue)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);margin:8px 0 18px}
+.consent input{margin-top:3px;accent-color:var(--blue);width:18px;height:18px;flex:none}
+.err{color:var(--red);font-size:14px;min-height:20px;margin-bottom:10px}
+
+/* RESULT */
+.meter .zones{display:grid;grid-template-columns:30fr 25fr 20fr 25fr;gap:3px;height:14px;border-radius:99px;overflow:hidden;position:relative}
+.meter .zones i:nth-child(1){background:var(--green)}
+.meter .zones i:nth-child(2){background:var(--yellow)}
+.meter .zones i:nth-child(3){background:var(--orange)}
+.meter .zones i:nth-child(4){background:var(--red)}
+.meter .labels{display:grid;grid-template-columns:30fr 25fr 20fr 25fr;gap:3px;font-size:12px;color:var(--muted);margin-top:8px}
+.meter .track{position:relative;padding-top:30px}
+.meter .mark{position:absolute;top:0;transform:translateX(-50%);transition:left 1.2s cubic-bezier(.2,.8,.2,1);text-align:center}
+.meter .mark b{display:block;font-size:18px;font-weight:850;background:#fff;color:var(--navy-0);border-radius:8px;padding:1px 8px}
+.meter .mark::after{content:"";display:block;width:2px;height:22px;background:#fff;margin:0 auto}
+.verdict{border-radius:16px;padding:22px;margin:22px 0 10px;border:1px solid var(--line);background:rgba(10,22,51,.7)}
+.verdict small{font-weight:750;font-size:14px}
+.verdict h3{margin:6px 0 8px;font-size:clamp(25px,4.2vw,32px);font-weight:850;font-stretch:108%;line-height:1.12}
+.verdict p{margin:0 0 10px;color:#D3DCEF}
+.verdict p:last-child{margin:0}
+.full h4{font-size:21px;margin:38px 0 12px;font-weight:800}
+.full p{color:#D3DCEF;margin:0 0 14px}
+.big{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.big div{border:1px solid var(--line);border-radius:14px;padding:18px;background:rgba(10,22,51,.55)}
+.big strong{display:block;font-size:34px;font-weight:850;font-stretch:112%;line-height:1.05}
+.big span{color:var(--muted);font-size:14px}
+.splitbar{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--navy-2);margin:6px 0 8px}
+.splitbar div{display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.chips span{border:1px solid var(--blue);color:var(--blue-soft);border-radius:99px;padding:6px 12px;font-size:14px;font-weight:600}
+.chips.warn span{border-color:rgba(255,154,61,.7);color:#FFC48F}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.role{border:1px solid var(--line);border-radius:16px;padding:20px;background:rgba(10,22,51,.6)}
+.role h5{margin:0 0 4px;font-size:19px;font-weight:800}
+.role .sub{color:var(--muted);font-size:14px;margin:0 0 10px}
+.role .eq{border-top:1px solid var(--line);padding-top:12px;margin-top:6px;font-size:15px;color:#D3DCEF}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:6px 0 16px}
+.vs > div.side{border:1px solid var(--line);border-radius:16px;padding:20px;background:rgba(10,22,51,.6)}
+.vs > div.side.opera{border-color:#2B4A8C;background:linear-gradient(160deg,#16306A,#0B1A3E)}
+.vs .mid{display:flex;align-items:center;font-weight:850;color:var(--muted);font-size:18px}
+.vs h5{margin:0 0 12px;font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.person{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-weight:700}
+.person svg{flex:none}
+.vs .cost{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;font-size:15px;color:#D3DCEF}
+.vs .cost b{font-size:22px;color:#fff}
+.saving{border-radius:16px;padding:22px;border:1px solid rgba(67,212,154,.5);background:linear-gradient(180deg,rgba(67,212,154,.12),rgba(10,22,51,.7))}
+.saving small{color:var(--green);font-weight:750;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.saving strong{display:block;font-size:46px;font-weight:900;font-stretch:115%;line-height:1.05;margin:6px 0}
+.saving p{margin:0;color:#D3DCEF}
+.disc{font-size:14px;color:var(--muted)}
+.cta-box{margin-top:40px;border-radius:18px;padding:28px 24px;background:linear-gradient(160deg,#16306A,#0B1A3E);border:1px solid #2B4A8C}
+.cta-box h3{margin:0 0 10px;font-size:26px;font-weight:850;font-stretch:108%}
+.cta-box p{color:#D3DCEF;margin:0 0 22px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.sim{display:grid;gap:12px}
+.simcard{border:1px solid var(--line);border-radius:16px;padding:20px;background:rgba(10,22,51,.6)}
+.simcard h5{margin:0 0 12px;font-size:18px;font-weight:800}
+.salrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.salrow label{color:var(--muted);font-size:14px}
+.salrow output{font-size:30px;font-weight:850;font-stretch:112%}
+.salrow output small{font-size:14px;color:var(--muted);font-weight:600}
+table.det{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+table.det td{padding:7px 0;border-bottom:1px solid var(--line);color:#D3DCEF}
+table.det td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:#fff;padding-left:10px;white-space:nowrap}
+table.det tr.tot td{border-bottom:0;font-weight:800;font-size:17px;color:#fff;padding-top:10px}
+.print-only{display:none}
+footer{color:var(--muted);font-size:13px;margin-top:60px;border-top:1px solid var(--line);padding-top:18px}
+/* Relatório PDF (renderizado fora do ecrã) */
+#pdfDoc{width:760px;padding:36px 34px;background:var(--navy-0);color:#fff;font-family:var(--font)}
+#pdfDoc .pdf-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:26px}
+#pdfDoc .pdf-head small{color:var(--muted);font-size:13px;text-align:right;line-height:1.4}
+#pdfDoc .pdf-foot{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px}
+#pdfDoc .cta-row,#pdfDoc .print-only,#pdfDoc input[type=range],#pdfDoc .simcard .scale{display:none}
+#pdfDoc .mark{transition:none}
+#pdfDoc .vs{grid-template-columns:1fr auto 1fr}
+#pdfDoc .verdict h3{font-size:32px}
+
+@media (max-width:560px){
+  .vs{grid-template-columns:1fr}
+  .vs .mid{justify-content:center}
+}
+@media (max-width:520px){
+  .wrap{padding:22px 18px 48px}
+  header.top{margin-bottom:34px}
+  .btn{width:100%;text-align:center}
+  .nav .btn{width:auto;flex:1}
+  .grid2{grid-template-columns:1fr}
+  .slider output{font-size:46px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  @page{margin:12mm}
+  html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:var(--navy-0)!important}
+  :root{padding:0}
+  .screen{display:none!important}
+  #result{display:block!important}
+  .btn,.cta-row,footer,.tag{display:none!important}
+  .print-only{display:block;color:var(--muted);font-size:13px;margin:0 0 18px}
+  header.top{margin-bottom:20px}
+  .wrap{max-width:none;padding:0}
+  .verdict,.roles,.vs,.saving,.big,.cta-box,.meter{break-inside:avoid}
+  .full h4{break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<form name="quando-contratar" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="nome"><input name="email"><input name="telefone"><input name="instagram"><input name="bot-field">
+  <input name="indice"><input name="resultado"><input name="funcoes"><input name="custo_interno_mes"><input name="poupanca">
+  <textarea name="respostas"></textarea><textarea name="resumo_crm"></textarea>
+</form>
+<form name="quando-contratar-ajuste" data-netlify="true" hidden>
+  <input name="email"><input name="nome"><input name="salarios"><input name="custo_interno_mes"><input name="poupanca">
+</form>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">OPERA<span>.</span></div>
+    <div class="tag">You sell. We operate.</div>
+  </header>
+
+  <!-- INTRO -->
+  <section class="screen on hero" id="intro">
+    <h1>Quando devo contratar uma assistente?</h1>
+    <p class="lead">Descobre se já estás no momento certo para contratar apoio, que tipo de função precisas e quanto te pode custar criar essa estrutura.</p>
+    <div class="gets">
+      <p>No fim, recebes automaticamente:</p>
+      <div class="gets-row">
+        <div><strong>O teu momento</strong><span>se já faz sentido contratar apoio</span></div>
+        <div><strong>As funções</strong><span>que tipo de apoio precisas e quantas pessoas</span></div>
+        <div><strong>O custo</strong><span>de criar essa estrutura internamente, e a alternativa</span></div>
+      </div>
+    </div>
+    <button class="btn" id="startBtn">Descobrir o meu momento</button>
+    <div class="facts"><span><b id="nQ">11</b> perguntas</span><span><b>3</b> minutos</span><span><b>Diagnóstico automático</b> no final</span></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz">
+    <div class="progress"><div class="track"><div class="fill" id="fill"></div></div><small id="count"></small></div>
+    <div class="q" id="qBox"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result">
+    <p id="printHead" class="print-only"></p>
+    <div id="head"></div>
+    <div id="gateWrap"></div>
+    <div id="full" class="full"></div>
+  </section>
+
+  <footer>OPERA. Os valores apresentados são estimativas com base nas tuas respostas e em referências de mercado.</footer>
+</div>
+
+<script>
+const CAL_URL = "https://cal.com/opera-os/discovery-call";
+const FN_URL = "/.netlify/functions/poupanca";
+const HOURS_YEAR = 1800;
+const SAL_MIN = 920;      // salário mínimo nacional 2026
+const SAL_DEF = 1000;
+const WEEKS_MONTH = 4.33;
+
+/* Referência de custo de contratação interna (custo empresa). Ajustar aqui. */
+const HIRE = {
+  tsu:0.2375,            // TSU entidade empregadora
+  seguroFct:0.02,        // seguro de acidentes de trabalho + FCT/FGCT, aprox.
+  alimDia:6, dias:22, mesesAlim:11,
+  outrosMes:100          // equipamento, software, telefone, formação
+};
+function custoDet(sal){
+  const bruto = sal*14/12, tsu = sal*14*HIRE.tsu/12, seguro = sal*14*HIRE.seguroFct/12;
+  const alim = HIRE.alimDia*HIRE.dias*HIRE.mesesAlim/12, outros = HIRE.outrosMes;
+  return {bruto,tsu,seguro,alim,outros,total:Math.round(bruto+tsu+seguro+alim+outros)};
+}
+const custoMes = sal => custoDet(sal).total;
+
+const BO_TASKS = ["Administrativo","CRM","Gestão de angariações","Inserção e gestão de imóveis","Documentação","Processual","Organização dos negócios"];
+const SA_TASKS = ["Primeiro contacto de leads","Qualificação de leads","Follow up","Agendamento de reuniões e visitas"];
+
+const Q = [
+ {id:"producao",block:"O teu negócio",title:"Quanto produziste, aproximadamente, nos últimos 12 meses?",type:"single",
+  opts:["Até 50.000€","50.000€ a 100.000€","100.000€ a 150.000€","150.000€ a 250.000€","250.000€ a 500.000€","Mais de 500.000€"],mid:[40000,75000,125000,200000,375000,600000]},
+ {id:"negocios",block:"O teu negócio",title:"Quantos negócios fechaste nos últimos 12 meses?",type:"number",unit:"negócios",ph:"18"},
+ {id:"emcurso",block:"O teu negócio",title:"Quantos negócios tens atualmente em curso?",type:"number",unit:"negócios",ph:"5",zeroOk:true},
+ {id:"angariacoes",block:"O teu negócio",title:"Quantas novas angariações fazes, em média, por mês?",type:"single",
+  opts:["0 a 2","3 a 5","6 a 10","11 a 15","Mais de 15"]},
+ {id:"h_admin",block:"O teu tempo",title:"Quantas horas por semana gastas em tarefas administrativas?",type:"slider",max:30,def:8,
+  help:"CRM, emails, inserção de imóveis, portais, documentos, organização, atualização de informação."},
+ {id:"h_proc",block:"O teu tempo",title:"Quantas horas por semana gastas em tarefas processuais?",type:"slider",max:20,def:5,
+  help:"Documentação, acompanhamento de processos, CPCV, escrituras, pedidos, checklists."},
+ {id:"h_leads",block:"O teu tempo",title:"Quantas horas por semana gastas em leads e follow up?",type:"slider",max:20,def:4,
+  help:"Primeiro contacto, qualificação, chamadas, mensagens, follow up e agendamento."},
+ {id:"freq",block:"O que está a ser afetado",title:"Com que frequência o trabalho operacional te impede de fazer atividade comercial?",type:"single",
+  opts:["Nunca","Algumas vezes por mês","Todas as semanas","Várias vezes por semana","Praticamente todos os dias"],pts:[0,2,4,7,10]},
+ {id:"situacoes",block:"O que está a ser afetado",title:"Qual destas situações acontece atualmente?",type:"multi",help:"Escolhe todas as que se aplicam.",none:8,
+  opts:["Tenho leads sem follow up","Demoro demasiado a responder a algumas leads","O CRM nem sempre está atualizado","Tenho documentação ou processos pendentes","Faço administrativo fora do horário","Deixo de fazer prospeção por falta de tempo","Tenho negócios que exigem demasiado acompanhamento","Sinto que estou constantemente a apagar fogos","Nenhuma destas"]},
+ {id:"delegar",block:"O que queres delegar",title:"Se tivesses alguém a trabalhar contigo amanhã, que tarefas passarias primeiro?",type:"delegar",help:"Escolhe todas as que quiseres."},
+ {id:"comissao",block:"O valor do teu tempo",title:"Qual é a tua comissão média por negócio?",type:"number",unit:"€",ph:"8000"}
+];
+
+const A = {};
+let i = 0, R = null, unlocked = false, NOME = "", FIRST = "", EMAIL = "";
+const $ = s => document.querySelector(s);
+const show = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("#"+id).classList.add("on"); window.scrollTo({top:0}); };
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fmtNum(n,d=0){ const [ip,dp]=Math.abs(n).toFixed(d).split("."); const g=ip.replace(/\B(?=(\d{3})+(?!\d))/g,"."); return (n<0?"-":"")+g+(dp?","+dp:""); }
+const eur = (n,d=0) => fmtNum(n,d)+"€";
+const int = n => fmtNum(Math.round(n));
+
+/* ---------- QUIZ ---------- */
+function answered(q){
+  const v=A[q.id];
+  if(q.type==="multi") return Array.isArray(v)&&v.length>0;
+  if(q.type==="delegar") return v && (v.bo.length+v.sa.length)>0;
+  if(q.type==="number") return v!=null && (q.zeroOk ? v>=0 : v>0);
+  return v!=null;
+}
+function render(){
+  const q=Q[i];
+  $("#fill").style.width=(i/Q.length*100)+"%";
+  $("#count").textContent=`${i+1} de ${Q.length}`;
+  let h=`<p class="block-name">${q.block}</p><h2>${q.title}</h2>${q.help?`<p class="help">${q.help}</p>`:"<div style='height:14px'></div>"}`;
+  if(q.type==="single"||q.type==="multi"){
+    h+=`<div class="opts" role="group">`+q.opts.map((o,k)=>{
+      const on=q.type==="single"?A[q.id]===k:(A[q.id]||[]).includes(k);
+      return `<button class="opt ${q.type==="multi"?"multi":""}" data-k="${k}" aria-pressed="${on}"><span class="dot"></span>${o}</button>`;}).join("")+`</div>`;
+  } else if(q.type==="delegar"){
+    const v=A.delegar||{bo:[],sa:[]};
+    h+=`<div class="opts" role="group"><p class="grp">Operação e backoffice</p>`+
+      BO_TASKS.map((o,k)=>`<button class="opt multi" data-g="bo" data-k="${k}" aria-pressed="${v.bo.includes(k)}"><span class="dot"></span>${o}</button>`).join("")+
+      `<p class="grp">Leads e acompanhamento</p>`+
+      SA_TASKS.map((o,k)=>`<button class="opt multi" data-g="sa" data-k="${k}" aria-pressed="${v.sa.includes(k)}"><span class="dot"></span>${o}</button>`).join("")+`</div>`;
+  } else if(q.type==="number"){
+    h+=`<div class="num"><input id="numIn" type="number" inputmode="numeric" min="0" step="1" placeholder="${q.ph}" value="${A[q.id]??""}"><span>${q.unit}</span></div>`;
+  } else if(q.type==="slider"){
+    const v=A[q.id]??q.def;
+    h+=`<div class="slider"><output id="sOut">${v}<small> h/semana</small></output>
+      <input type="range" id="sIn" min="0" max="${q.max}" step="1" value="${v}" aria-label="${esc(q.title)}">
+      <div class="scale"><span>0h</span><span>${q.max}h</span></div></div>`;
+  }
+  const needs=q.type!=="slider";
+  h+=`<div class="nav"><button class="back" id="bk">${i===0?"Início":"Voltar"}</button>
+      <button class="btn" id="nx" ${needs&&!answered(q)?"disabled":""}>${i===Q.length-1?"Ver o meu resultado":"Seguinte"}</button></div>`;
+  $("#qBox").innerHTML=h;
+
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const k=+b.dataset.k;
+    if(q.type==="single"){ A[q.id]=k; render(); setTimeout(next,220); return; }
+    if(q.type==="delegar"){
+      const v=A.delegar||{bo:[],sa:[]}; const g=b.dataset.g;
+      v[g]=v[g].includes(k)?v[g].filter(x=>x!==k):[...v[g],k]; A.delegar=v; render(); return;
+    }
+    let cur=A[q.id]||[];
+    if(k===q.none) cur=cur.includes(k)?[]:[k];
+    else { cur=cur.filter(x=>x!==q.none); cur=cur.includes(k)?cur.filter(x=>x!==k):[...cur,k]; }
+    A[q.id]=cur; render();
+  });
+  const ni=$("#numIn");
+  if(ni){ ni.focus(); ni.oninput=()=>{A[q.id]=ni.value===""?null:Math.max(0,Math.round(+ni.value)); $("#nx").disabled=!answered(q);}; ni.onkeydown=e=>{if(e.key==="Enter"&&answered(q))next();}; }
+  const si=$("#sIn");
+  if(si){ A[q.id]=+si.value; si.oninput=()=>{A[q.id]=+si.value; $("#sOut").innerHTML=`${si.value}<small> h/semana</small>`;}; }
+  $("#bk").onclick=()=>{ if(i===0) show("intro"); else {i--; render();} };
+  $("#nx").onclick=next;
+}
+function next(){
+  if(!answered(Q[i])) return;
+  if(i<Q.length-1){ i++; render(); } else { R=compute(); renderResult(); show("result"); }
+}
+
+/* ---------- CÁLCULO ---------- */
+function compute(){
+  const prodCat = Q[0].mid[A.producao];
+  const prod = A.comissao && A.negocios ? A.comissao*A.negocios : prodCat;
+  const valorHora = prod/HOURS_YEAR;
+  const opW = A.h_admin+A.h_proc+A.h_leads;
+  const opM = opW*WEEKS_MONTH;
+  const boM = (A.h_admin+A.h_proc)*WEEKS_MONTH, saM = A.h_leads*WEEKS_MONTH;
+  const capacidade = opM*valorHora;
+
+  const needBO = A.delegar.bo.length>0, needSA = A.delegar.sa.length>0;
+  const funcoes = (needBO?1:0)+(needSA?1:0);
+  A.salario = A.salario || {bo:SAL_DEF, sa:SAL_DEF};
+  const salBO = A.salario.bo, salSA = A.salario.sa;
+  const custoBO = needBO?custoMes(salBO):0, custoSA = needSA?custoMes(salSA):0;
+  const interno = custoBO+custoSA;
+
+  // Índice de Necessidade de Apoio (interno)
+  const fA = Math.min(100, opW/25*100);
+  const fB = Q.find(q=>q.id==="freq").pts[A.freq]*10;
+  const prodS = prod<50000?10:prod<100000?35:prod<150000?55:prod<250000?75:prod<500000?90:100;
+  const pipeS = Math.min(100, (A.emcurso||0)/8*100);
+  const angS = [10,35,60,85,100][A.angariacoes];
+  const fC = 0.5*prodS+0.25*pipeS+0.25*angS;
+  const nTasks = A.delegar.bo.length+A.delegar.sa.length;
+  const fD = Math.min(100, nTasks/6*100);
+  const indice = Math.round(0.35*fA+0.25*fB+0.25*fC+0.15*fD);
+  const nivel = indice<=30?0:indice<=55?1:indice<=75?2:3;
+
+  return {salBO,salSA,prod,prodCat,valorHora,opW,opM,boM,saM,capacidade,needBO,needSA,funcoes,custoBO,custoSA,interno,indice,nivel,poup:null};
+}
+
+const NIVEIS = [
+  {c:"var(--green)",tag:"Ainda não",h:"Ainda não estás no momento de contratar",
+   p:["O teu volume atual ainda não parece justificar uma estrutura dedicada.","Tens algumas tarefas que poderiam ser delegadas, mas uma contratação pode criar mais custo e complexidade do que valor."]},
+  {c:"var(--yellow)",tag:"Começas a precisar",h:"Começas a precisar de apoio",
+   p:["A carga operacional já está a ocupar uma parte relevante da tua semana, e começa a competir com o tempo comercial.","Ainda não é urgente, mas este é o momento de preparar a estrutura antes de o volume crescer."]},
+  {c:"var(--orange)",tag:"Estás no momento certo",h:"Estás no momento certo para contratar apoio",
+   p:["O teu volume de negócio e a carga operacional que estás a assumir indicam que já existe trabalho suficiente para justificar uma estrutura de apoio.","A questão já não é apenas libertar algumas horas. É criar capacidade para continuares a crescer sem aumentares proporcionalmente o teu próprio trabalho."]},
+  {c:"var(--red)",tag:"Já devias ter apoio",h:"Já devias ter apoio",
+   p:["O teu nível de produção e carga operacional mostram que estás a utilizar demasiado tempo para manter o negócio a funcionar.","O problema já não parece ser quando contratar. É quanto tempo queres continuar a fazer este trabalho pessoalmente."]}
+];
+
+function meter(val, showVal){
+  return `<div class="meter"><div class="track">
+    <div class="mark" id="mark" style="left:0%"><b>${showVal?val:"?"}</b></div>
+    <div class="zones"><i></i><i></i><i></i><i></i></div></div>
+    <div class="labels"><span>Ainda não</span><span>Começas a precisar</span><span>Momento certo</span><span>Já devias ter apoio</span></div></div>`;
+}
+function animateMark(pos){ requestAnimationFrame(()=>requestAnimationFrame(()=>{ const m=$("#mark"); if(m) m.style.left=pos+"%"; })); }
+
+/* ---------- RESULTADO ---------- */
+function renderResult(){
+  if(!unlocked){
+    $("#head").innerHTML=`<p class="block-name">Concluído</p>
+      <div class="q"><h2>O teu resultado está pronto.</h2>
+      <p class="help">Já calculámos o teu momento, as funções que precisas e quanto te custaria criar essa estrutura internamente.</p></div>
+      ${meter(0,false)}`;
+    animateMark(50);
+    $("#full").innerHTML="";
+    renderGate();
+    return;
+  }
+  $("#gateWrap").innerHTML="";
+  const N=NIVEIS[R.nivel];
+  $("#head").innerHTML=`<p class="block-name">${FIRST?esc(FIRST)+", este é o teu resultado":"O teu resultado"}</p>
+    ${meter(R.indice,true)}
+    <div class="verdict" style="border-color:${N.c}"><small style="color:${N.c}">Índice de necessidade de apoio: ${R.indice}/100</small>
+      <h3>${N.h}</h3>${N.p.map(x=>`<p>${x}</p>`).join("")}</div>`;
+  animateMark(Math.min(97,Math.max(3,R.indice)));
+  renderFull();
+}
+
+function renderGate(){
+  $("#gateWrap").innerHTML=`<div class="gate q" style="margin-top:28px">
+    <h3>Queres ver o teu resultado completo?</h3>
+    <p>Diz-nos para onde o enviamos. Vês o resultado já a seguir, neste ecrã.</p>
+    <div class="grid2">
+      <label class="field"><span>Nome</span><input id="fNome" autocomplete="name"></label>
+      <label class="field"><span>Telemóvel</span><input id="fTel" type="tel" autocomplete="tel" inputmode="tel"></label>
+      <label class="field"><span>Email</span><input id="fEmail" type="email" autocomplete="email"></label>
+      <label class="field"><span>Instagram (opcional)</span><input id="fIg" placeholder="@"></label>
+    </div>
+    <label class="consent"><input type="checkbox" id="fConsent"><span>Quero receber o meu resultado e recomendações da OPERA.</span></label>
+    <div class="err" id="gateErr" role="alert"></div>
+    <button class="btn" id="gateBtn">Ver o meu resultado</button></div>`;
+  $("#gateBtn").onclick=submit;
+}
+
+async function fetchPoupanca(){
+  if(!R.funcoes) return null;
+  try{
+    const r=await fetch(FN_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({needBO:R.needBO,needSA:R.needSA,interno:R.interno})});
+    if(!r.ok) return null;
+    const j=await r.json(); return j.error?null:j;
+  }catch(e){ return null; }
+}
+
+const labelOf = id => {
+  if(id==="salario"){ const v=A.salario||{bo:SAL_DEF,sa:SAL_DEF}; return [A.delegar.bo.length?`BO ${v.bo}€`:"",A.delegar.sa.length?`SA ${v.sa}€`:""].filter(Boolean).join(", "); }
+  const q=Q.find(x=>x.id===id), v=A[id];
+  if(q.type==="single") return q.opts[v];
+  if(q.type==="multi") return v.map(k=>q.opts[k]).join(", ");
+  if(q.type==="delegar") return [...v.bo.map(k=>BO_TASKS[k]),...v.sa.map(k=>SA_TASKS[k])].join(", ");
+  if(q.type==="slider") return v+"h/semana";
+  return v; };
+
+async function submit(){
+  const g=id=>$(id).value.trim();
+  const nome=g("#fNome"), email=g("#fEmail"), tel=g("#fTel"), ig=g("#fIg");
+  const err=$("#gateErr");
+  if(!nome||!email||!tel){ err.textContent="Preenche o nome, o email e o telemóvel."; return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ err.textContent="O email não parece válido. Confirma se está bem escrito."; return; }
+  if(tel.replace(/\D/g,"").length<9){ err.textContent="O telemóvel precisa de ter pelo menos 9 dígitos."; return; }
+  if(!$("#fConsent").checked){ err.textContent="Para continuar, confirma que queres receber o resultado."; return; }
+  err.textContent="";
+  const btn=$("#gateBtn"); btn.disabled=true; btn.textContent="A preparar o resultado";
+
+  const p0 = R.nivel>0 ? await fetchPoupanca() : null;
+  R.poup = R.nivel>0 ? (p0 || false) : null;
+  const poupTxt = p0 ? `${p0.pctMin}% a ${p0.pctMax}% com salário de referência` : "n/d";
+  const funcTxt = R.needBO&&R.needSA?"2 funções (BO + SA)":R.needBO?"1 função (BO)":"1 função (SA)";
+  const resumo=[
+    "Tool: Quando devo contratar uma assistente?",
+    `Nome: ${nome}`,
+    `Produção: ${labelOf("producao")} (estimada ${int(R.prod)}€)`,
+    `Negócios/ano: ${A.negocios}`,
+    `Negócios em curso: ${A.emcurso}`,
+    `Angariações/mês: ${labelOf("angariacoes")}`,
+    `Comissão média: ${int(A.comissao)}€`,
+    `Admin: ${A.h_admin}h/semana`,
+    `Processual: ${A.h_proc}h/semana`,
+    `Leads: ${A.h_leads}h/semana`,
+    `Frequência que prejudica o comercial: ${labelOf("freq")}`,
+    `Situações: ${labelOf("situacoes")}`,
+    `Need BO: ${R.needBO?"YES":"NO"}`,
+    `Need SA: ${R.needSA?"YES":"NO"}`,
+    `Tarefas a delegar: ${labelOf("delegar")}`,
+    `Estrutura interna necessária: ${funcTxt}`,
+    `Salário de referência usado: ${labelOf("salario")} (o consultor pode ajustar no resultado)`,
+    `Custo interno estimado: ${int(R.interno)}€/mês`,
+    `Poupança OPERA estimada: ${poupTxt}`,
+    `Índice de necessidade: ${R.indice}/100`,
+    `Resultado: ${NIVEIS[R.nivel].tag}`
+  ].join("\n");
+  const respostas={}; Q.forEach(q=>respostas[q.title]=labelOf(q.id));
+  const body=new URLSearchParams({"form-name":"quando-contratar",nome,email,telefone:tel,instagram:ig,
+    indice:String(R.indice),resultado:NIVEIS[R.nivel].tag,funcoes:funcTxt,custo_interno_mes:String(R.interno),poupanca:poupTxt,
+    respostas:JSON.stringify(respostas),resumo_crm:resumo});
+  try{ await fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()}); }catch(e){}
+
+  unlocked=true; NOME=nome; FIRST=nome.split(" ")[0]; EMAIL=email;
+  renderResult();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+const PERSON = c => `<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="17" fill="${c}" opacity=".18"/><circle cx="17" cy="13" r="5" fill="${c}"/><path d="M8 27c1.5-5 5-7 9-7s7.5 2 9 7" fill="${c}"/></svg>`;
+
+function renderFull(){
+  let h="";
+  const sit=(A.situacoes||[]).filter(k=>k!==8);
+
+  h+=`<h4>O teu cenário</h4>
+  <div class="big">
+    <div><strong>${R.opW}h</strong><span>por semana em tarefas operacionais</span></div>
+    <div><strong>${int(R.opM)}h</strong><span>por mês, aproximadamente</span></div>
+  </div>`;
+  if(R.opM>0){
+    const pBO=Math.round(R.boM/R.opM*100);
+    h+=`<div class="splitbar"><div style="width:${pBO}%;background:#3A5694">${pBO>=18?int(R.boM)+"h":""}</div><div style="width:${100-pBO}%;background:var(--blue)">${100-pBO>=18?int(R.saM)+"h":""}</div></div>
+    <div class="legend"><span><i style="background:#3A5694"></i>Operação e backoffice: ${int(R.boM)}h/mês</span><span><i style="background:var(--blue)"></i>Leads e follow up: ${int(R.saM)}h/mês</span></div>`;
+  }
+
+  h+=`<h4>O valor económico do teu tempo</h4>
+  <div class="big"><div><strong>${eur(R.valorHora,2)}/hora</strong><span>valor económico estimado do teu tempo</span></div>
+  <div><strong>até ${eur(R.capacidade)}</strong><span>de capacidade comercial por mês ocupada por operação</span></div></div>
+  <p>Tens aproximadamente ${int(R.opM)} horas por mês ocupadas por tarefas operacionais. Com base no valor económico estimado do teu tempo, isso representa até ${eur(R.capacidade)} de capacidade comercial potencialmente ocupada por operação.</p>
+  <p class="disc">Estimativa baseada numa produção anual de ${int(R.prod)}€ (comissão média × negócios por ano) e numa referência de 1.800 horas de trabalho por ano. Não é o que ganhas por hora.</p>`;
+
+  if(sit.length){
+    h+=`<h4>O que já está a acontecer</h4>
+    <p>Identificaste ${sit.length===1?"uma situação que mostra":sit.length+" situações que mostram"} que a operação já está a afetar o negócio:</p>
+    <div class="chips warn">${sit.map(k=>`<span>${Q.find(q=>q.id==="situacoes").opts[k]}</span>`).join("")}</div>`;
+  }
+
+  if(R.nivel===0){
+    h+=`<h4>O que podes fazer agora</h4>
+    <p>Existem, no entanto, cerca de <b>${int(R.opM/2)} horas por mês</b> de capacidade que poderias recuperar, sem precisares de criar uma estrutura dedicada.</p>`;
+    h+=cta("Queres perceber como recuperar esse tempo?","Podemos analisar contigo o teu resultado e mostrar-te o que pode ser retirado da tua agenda sem contratares ninguém.","Perceber como");
+  } else {
+    // funções
+    const two=R.needBO&&R.needSA;
+    h+=`<h4>${two?"Precisas de duas funções":R.needBO?"Precisas de Backoffice e Operações":"Precisas de um Sales Assistant"}</h4>
+    ${two?`<p>O teu diagnóstico identificou necessidades em duas áreas diferentes, que exigem perfis e rotinas diferentes. Uma só pessoa dificilmente consegue fazer bem as duas.</p>`:""}
+    <div class="roles">
+      ${R.needBO?`<div class="role"><h5>Backoffice e Operações</h5><p class="sub">Administrativo, processual e organização</p>
+        <div class="chips">${A.delegar.bo.map(k=>`<span>${BO_TASKS[k]}</span>`).join("")}</div>
+        <div class="eq">Estrutura interna equivalente: <b>1 pessoa</b></div></div>`:""}
+      ${R.needSA?`<div class="role"><h5>Sales Assistant</h5><p class="sub">Leads e follow up</p>
+        <div class="chips">${A.delegar.sa.map(k=>`<span>${SA_TASKS[k]}</span>`).join("")}</div>
+        <div class="eq">Estrutura interna equivalente: <b>1 pessoa</b></div></div>`:""}
+    </div>`;
+
+    // custo interno, com salário ajustável
+    h+=`<h4>Quanto custaria criar esta estrutura internamente</h4>
+    <p>Indica quanto pagarias de salário bruto a ${R.funcoes>1?"cada pessoa":"esta pessoa"}. Calculamos o custo total para a empresa e a poupança na hora.</p>
+    <div class="sim">${R.needBO?simCard("bo","Backoffice e Operações"):""}${R.needSA?simCard("sa","Sales Assistant"):""}</div>
+    <div class="big" style="margin-top:12px">
+      <div><strong id="totMes">${eur(R.interno)}/mês</strong><span>custo total estimado para a empresa, ${R.funcoes} ${R.funcoes>1?"funções":"função"}</span></div>
+      <div><strong id="totAno">${eur(R.interno*12)}/ano</strong><span>custo anual estimado</span></div>
+    </div>
+    <p class="disc">Não inclui recrutamento, tempo de formação nem substituição em férias ou baixas.</p>`;
+
+    // comparação
+    h+=`<h4>Estrutura interna ou externalizada</h4>
+    <div class="vs">
+      <div class="side"><h5>Estrutura interna</h5>
+        ${R.needBO?`<div class="person">${PERSON("#9AA8C7")}Backoffice e Operações</div>`:""}
+        ${R.needSA?`<div class="person">${PERSON("#9AA8C7")}Sales Assistant</div>`:""}
+        <div class="cost"><b id="vsCost">${eur(R.interno)}</b>/mês<br>${R.funcoes} ${R.funcoes>1?"contratações":"contratação"}, gestão e substituições contigo</div></div>
+      <div class="mid">vs</div>
+      <div class="side opera"><h5>Estrutura externalizada</h5>
+        <div class="person">${PERSON("#2F7BFF")}OPERA</div>
+        <p style="margin:0;color:#D3DCEF;font-size:15px">${R.needBO&&R.needSA?"Backoffice e Operações, e Sales Assistant, numa só equipa":R.needBO?"Backoffice e Operações":"Sales Assistant"}, sem contratar, formar ou substituir ninguém.</p></div>
+    </div>`;
+    h+=`<div class="saving" id="saving">${savingHTML()}</div>`;
+    h+=cta("Queres perceber qual seria a estrutura mais eficiente para o teu negócio?","Podemos analisar contigo o teu resultado e mostrar-te o que pode ser retirado da tua agenda, que estrutura precisarias e como poderia ser feita essa operação.","Quero analisar o meu resultado");
+  }
+
+  $("#full").innerHTML=h;
+  bindSim();
+  $("#printHead").textContent=`Quando devo contratar uma assistente?${NOME?" Resultado de "+NOME:""} · ${new Date().toLocaleDateString("pt-PT")}`;
+  $("#dlBtn").onclick=()=>downloadPDF();
+}
+
+/* ---------- DOWNLOAD PDF ---------- */
+const PDF_LIBS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+];
+const PDF_W = 760, PDF_H = 1075, PDF_PAD = 40, PDF_BG = "#050B1F";
+function loadScript(src){
+  return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); });
+}
+async function buildPDF(){
+  if(!window.html2canvas) await loadScript(PDF_LIBS[0]);
+  if(!window.jspdf) await loadScript(PDF_LIBS[1]);
+  if(document.fonts) await document.fonts.ready;
+
+  const date=new Date().toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"});
+  const doc=document.createElement("div");
+  doc.innerHTML=`<div class="pdf-head"><div class="logo">OPERA<span>.</span></div>
+    <small>Quando devo contratar uma assistente?${NOME?"<br>"+esc(NOME):""}<br>${date}</small></div>
+    ${$("#head").innerHTML}
+    <div class="full">${$("#full").innerHTML}</div>
+    <div class="pdf-foot">Os valores apresentados são estimativas com base nas tuas respostas e em referências de mercado. Marca uma análise do teu resultado em ${CAL_URL.replace("https://","")}</div>`;
+  doc.querySelectorAll("[id]").forEach(el=>el.removeAttribute("id")); doc.id="pdfDoc";
+  // Posição final do marcador, sem a animação
+  const mk=doc.querySelector(".mark"); if(mk) mk.style.left=Math.min(97,Math.max(3,R.indice))+"%";
+  const holder=document.createElement("div");
+  holder.style.cssText="position:absolute;left:-10000px;top:0;width:"+PDF_W+"px";
+  holder.appendChild(doc); document.body.appendChild(holder);
+
+  // Pontos onde a página pode cortar: o fim de cada bloco, nunca a meio dele
+  const top0=doc.getBoundingClientRect().top;
+  const cuts=[...doc.querySelectorAll(".pdf-head,.meter,.verdict,.big,.legend,.full > p,.full > .chips,.roles,.simcard,.vs,.saving,.cta-box,.pdf-foot")]
+    .map(el=>Math.ceil(el.getBoundingClientRect().bottom-top0+6)).sort((x,y)=>x-y);
+  const total=doc.offsetHeight;
+
+  // Captura com a janela no topo e à largura atual: evita PDFs em branco e cortes desalinhados
+  const sx=window.scrollX, sy=window.scrollY;
+  window.scrollTo(0,0);
+  let canvas;
+  try{
+    canvas=await html2canvas(doc,{scale:2,backgroundColor:PDF_BG,useCORS:true,scrollX:0,scrollY:0,
+      windowWidth:document.documentElement.clientWidth,width:PDF_W,height:total});
+  } finally {
+    window.scrollTo(sx,sy); holder.remove();
+  }
+  const k=canvas.width/PDF_W;
+
+  const pdf=new jspdf.jsPDF({unit:"pt",format:[PDF_W*.75,PDF_H*.75]});
+  let start=0, page=0;
+  while(start<total-2){
+    const padTop=page?PDF_PAD:0, room=PDF_H-padTop-PDF_PAD;
+    let end=Math.max(0,...cuts.filter(c=>c>start&&c<=start+room));
+    if(!end) end=Math.min(total,start+room);
+    if(total-start<=room) end=total;
+    const slice=document.createElement("canvas");
+    slice.width=canvas.width; slice.height=Math.round((end-start)*k);
+    const ctx=slice.getContext("2d"); ctx.fillStyle=PDF_BG; ctx.fillRect(0,0,slice.width,slice.height);
+    ctx.drawImage(canvas,0,Math.round(start*k),canvas.width,slice.height,0,0,slice.width,slice.height);
+    if(page) pdf.addPage();
+    pdf.setFillColor(PDF_BG); pdf.rect(0,0,PDF_W*.75,PDF_H*.75,"F");
+    pdf.addImage(slice.toDataURL("image/jpeg",.92),"JPEG",0,padTop*.75,PDF_W*.75,(end-start)*.75);
+    start=end; page++;
+  }
+  return pdf;
+}
+async function downloadPDF(){
+  const btn=$("#dlBtn"), label=btn.textContent;
+  btn.disabled=true; btn.textContent="A gerar o PDF";
+  try{
+    const pdf=await buildPDF();
+    const slug=(FIRST||"").normalize("NFD").replace(/[^\w]/g,"").toLowerCase();
+    pdf.save(`opera-assistente${slug?"-"+slug:""}.pdf`);
+  }catch(e){
+    window.print();
+  }
+  btn.disabled=false; btn.textContent=label;
+}
+
+function detRows(sal){
+  const d=custoDet(sal);
+  return `<tr><td>Salário bruto (14 meses, valor mensal)</td><td>${eur(d.bruto)}</td></tr>
+    <tr><td>TSU da entidade empregadora (23,75%)</td><td>${eur(d.tsu)}</td></tr>
+    <tr><td>Subsídio de refeição (${fmtNum(HIRE.alimDia)}€/dia)</td><td>${eur(d.alim)}</td></tr>
+    <tr><td>Seguro de acidentes de trabalho e fundos de compensação</td><td>${eur(d.seguro)}</td></tr>
+    <tr><td>Equipamento, software e formação</td><td>${eur(d.outros)}</td></tr>
+    <tr class="tot"><td>Custo total por mês</td><td>${eur(d.total)}</td></tr>`;
+}
+function simCard(g,name){
+  const v=A.salario[g];
+  return `<div class="simcard"><h5>${name}</h5>
+    <div class="salrow"><label for="sal_${g}">Salário bruto mensal</label><output id="out_${g}">${fmtNum(v)}€<small> brutos</small></output></div>
+    <input type="range" id="sal_${g}" data-g="${g}" class="salR" min="${SAL_MIN}" max="2500" step="10" value="${v}">
+    <div class="scale"><span>${fmtNum(SAL_MIN)}€ (salário mínimo)</span><span>2.500€</span></div>
+    <table class="det" id="det_${g}">${detRows(v)}</table></div>`;
+}
+function savingHTML(){
+  if(R.poup===null) return `<small>Poupança potencial estimada</small><p style="margin-top:8px">A calcular...</p>`;
+  if(R.poup===false) return `<small>Poupança potencial</small><p style="margin-top:8px">Analisamos contigo a poupança concreta para o teu caso na reunião.</p>`;
+  if(R.poup.pctMax<=0) return `<small>Poupança potencial</small><p style="margin-top:8px">Com este salário, o custo interno fica próximo do de uma estrutura externalizada. Vale a pena analisar contigo o que cada opção inclui.</p>`;
+  return `<small>Poupança potencial estimada</small>
+    <strong>${R.poup.pctMin}% a ${R.poup.pctMax}%</strong>
+    <p>Ao externalizar esta estrutura, poderias reduzir o custo estimado da operação entre ${R.poup.pctMin}% e ${R.poup.pctMax}%, uma poupança potencial de <b>${int(R.poup.anualMin)}€ a ${int(R.poup.anualMax)}€ por ano</b>.</p>`;
+}
+let poupTimer=null, poupSeq=0;
+async function refreshPoupanca(){
+  const seq=++poupSeq;
+  const r=await fetchPoupanca();
+  if(seq!==poupSeq) return;
+  R.poup = r || false;
+  const box=$("#saving"); if(box) box.innerHTML=savingHTML();
+}
+function bindSim(){
+  document.querySelectorAll(".salR").forEach(inp=>{
+    inp.oninput=()=>{
+      const g=inp.dataset.g, v=+inp.value; A.salario[g]=v;
+      $("#out_"+g).innerHTML=`${fmtNum(v)}€<small> brutos</small>`;
+      $("#det_"+g).innerHTML=detRows(v);
+      R.salBO=A.salario.bo; R.salSA=A.salario.sa;
+      R.custoBO=R.needBO?custoMes(R.salBO):0; R.custoSA=R.needSA?custoMes(R.salSA):0;
+      R.interno=R.custoBO+R.custoSA;
+      $("#totMes").textContent=eur(R.interno)+"/mês"; $("#totAno").textContent=eur(R.interno*12)+"/ano";
+      const vc=$("#vsCost"); if(vc) vc.textContent=eur(R.interno);
+      clearTimeout(poupTimer); poupTimer=setTimeout(refreshPoupanca,250);
+    };
+  });
+  const c=$("#ctaBtn"); if(c) c.onclick=sendAjuste;
+  if(R.poup===null && R.nivel>0) refreshPoupanca();
+}
+function sendAjuste(){
+  const body=new URLSearchParams({"form-name":"quando-contratar-ajuste",email:EMAIL,nome:NOME,
+    salarios:labelOf("salario"),custo_interno_mes:String(R.interno),
+    poupanca:R.poup?`${R.poup.pctMin}% a ${R.poup.pctMax}%`:"n/d"});
+  try{ fetch("/",{method:"POST",keepalive:true,headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()}); }catch(e){}
+}
+
+function cta(t,p,b){
+  return `<div class="cta-box"><h3>${t}</h3><p>${p}</p>
+    <div class="cta-row"><a class="btn" id="ctaBtn" href="${CAL_URL}" target="_blank" rel="noopener">${b}</a>
+    <button class="btn ghost" id="dlBtn">Descarregar o resultado</button></div></div>`;
+}
+
+$("#nQ").textContent=Q.length;
+$("#startBtn").onclick=()=>{ i=0; show("quiz"); render(); };
+</script>
+</body>
+</html>
