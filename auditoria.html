@@ -125,6 +125,19 @@ input[type=range]{width:100%;accent-color:var(--blue);height:28px}
 .cta-box h3{margin:0 0 10px;font-size:26px;font-weight:850;font-stretch:108%}
 .cta-box p{color:#D3DCEF;margin:0 0 22px}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.dl{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:1px dashed var(--line);border-radius:14px;padding:16px 18px;margin:30px 0 0}
+.dl p{margin:0;color:#C9D3EA;font-size:15px}
+/* Relatório PDF (renderizado fora do ecrã) */
+#pdfDoc{width:760px;padding:36px 34px;background:var(--navy-0);color:#fff;font-family:var(--font)}
+#pdfDoc .pdf-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:26px}
+#pdfDoc .pdf-head small{color:var(--muted);font-size:13px;text-align:right;line-height:1.4}
+#pdfDoc .pdf-foot{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px}
+#pdfDoc .dl,#pdfDoc .cta-row{display:none}
+#pdfDoc .seg-op{background:#3A4C78}
+@media print{
+  body{background:var(--navy-0)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header.top,footer,.dl,.cta-row,#pdfDoc{display:none!important}
+}
 footer{color:var(--muted);font-size:13px;margin-top:60px;border-top:1px solid var(--line);padding-top:18px}
 
 @media (max-width:520px){
@@ -481,9 +494,50 @@ function renderResult(d, first){
         ? `<a class="btn" href="${BLUEPRINT_URL}">Conhecer o OPERA Blueprint</a><a class="btn ghost" href="${CAL_URL}" target="_blank" rel="noopener">Analisar o meu resultado</a>`
         : `<a class="btn" href="${CAL_URL}" target="_blank" rel="noopener">Quero analisar o meu resultado</a>`}
     </div>
+  </div>
+  <div class="dl">
+    <p>Guarda uma cópia do teu diagnóstico em PDF.</p>
+    <button class="btn ghost" id="dlBtn">Descarregar diagnóstico</button>
   </div>`;
 
   $("#result").innerHTML = h;
+  $("#dlBtn").onclick = () => downloadPDF(first);
+}
+
+/* ---------- DOWNLOAD PDF ---------- */
+const PDF_LIB = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+function loadScript(src){
+  return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); });
+}
+async function downloadPDF(first){
+  const btn=$("#dlBtn"), label=btn.textContent;
+  btn.disabled=true; btn.textContent="A gerar o PDF";
+  try{
+    if(!window.html2pdf) await loadScript(PDF_LIB);
+    const date=new Date().toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"});
+    const doc=document.createElement("div"); doc.id="pdfDoc"; doc.className="res";
+    doc.innerHTML=`<div class="pdf-head"><div class="logo">OPERA<span>.</span></div>
+      <small>Auditoria OPERA${first?"<br>"+esc(first):""}<br>${date}</small></div>
+      ${$("#result").innerHTML}
+      <div class="pdf-foot">Os valores apresentados são estimativas com base nas tuas respostas. Marca uma análise do teu resultado em ${CAL_URL.replace("https://","")}</div>`;
+    const holder=document.createElement("div");
+    holder.style.cssText="position:fixed;left:-10000px;top:0";
+    holder.appendChild(doc); document.body.appendChild(holder);
+    const slug=(first||"").normalize("NFD").replace(/[^\w]/g,"").toLowerCase();
+    await html2pdf().set({
+      margin:0,
+      filename:`diagnostico-opera${slug?"-"+slug:""}.pdf`,
+      image:{type:"jpeg",quality:.95},
+      html2canvas:{scale:2,backgroundColor:"#050B1F",useCORS:true},
+      jsPDF:{unit:"px",format:[760,1075],hotfixes:["px_scaling"]},
+      pagebreak:{mode:["css"],avoid:[".verdict",".big",".week","h4","p",".flow",".cta-box"]}
+    }).from(doc).save();
+    holder.remove();
+  }catch(e){
+    document.getElementById("pdfDoc")?.parentNode.remove();
+    window.print();
+  }
+  btn.disabled=false; btn.textContent=label;
 }
 
 $("#nQ").textContent = Q.length;
