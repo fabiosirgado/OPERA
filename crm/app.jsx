@@ -1700,8 +1700,8 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
               <select className="op-select" value={novaDespesa.rubrica} onChange={(e) => setNovaDespesa({ ...novaDespesa, rubrica: e.target.value })} style={inputStyle}>
                 {FIN_RUBRICAS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
               </select>
-              <input type="number" step="0.01" placeholder="Valor (€)" value={novaDespesa.amount} onChange={(e) => setNovaDespesa({ ...novaDespesa, amount: e.target.value })} style={inputStyle} />
-              <input type="number" step="0.01" placeholder="IVA incluído (€)" value={novaDespesa.iva} onChange={(e) => setNovaDespesa({ ...novaDespesa, iva: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="Valor sem IVA (€)" value={novaDespesa.amount} onChange={(e) => setNovaDespesa({ ...novaDespesa, amount: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="IVA (€)" value={novaDespesa.iva} onChange={(e) => setNovaDespesa({ ...novaDespesa, iva: e.target.value })} style={inputStyle} />
               <button onClick={submitDespesa} disabled={saving} style={{ background: C.red, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar despesa</button>
             </div>
           </FinSectionCard>
@@ -1709,8 +1709,8 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <input type="date" value={novaReceita.date} onChange={(e) => setNovaReceita({ ...novaReceita, date: e.target.value })} style={inputStyle} />
               <input placeholder="Descrição (ex. Renda — Apartamento X)" value={novaReceita.description} onChange={(e) => setNovaReceita({ ...novaReceita, description: e.target.value })} style={inputStyle} />
-              <input type="number" step="0.01" placeholder="Valor (€)" value={novaReceita.amount} onChange={(e) => setNovaReceita({ ...novaReceita, amount: e.target.value })} style={inputStyle} />
-              <input type="number" step="0.01" placeholder="IVA incluído (€)" value={novaReceita.iva} onChange={(e) => setNovaReceita({ ...novaReceita, iva: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="Valor sem IVA (€)" value={novaReceita.amount} onChange={(e) => setNovaReceita({ ...novaReceita, amount: e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" placeholder="IVA (€)" value={novaReceita.iva} onChange={(e) => setNovaReceita({ ...novaReceita, iva: e.target.value })} style={inputStyle} />
               <button onClick={submitReceita} disabled={saving} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Adicionar receita</button>
             </div>
           </FinSectionCard>
@@ -1729,7 +1729,7 @@ function FinLancamentos({ despesas, receitas, isEquipa, clientId, onAddDespesa, 
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Descrição</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Tipo</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Rubrica</th>
-                  <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor</th>
+                  <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>Valor (s/ IVA)</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500, textAlign: "right" }}>IVA</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}>Estado</th>
                   <th style={{ padding: "4px 8px", fontWeight: 500 }}></th>
@@ -1913,8 +1913,8 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
 
   const importCsv = async (parsedRows) => {
     const despesaByKey = {}, receitaByKey = {};
-    despesas.forEach((d) => { despesaByKey[`${d.date}|${Number(d.amount).toFixed(2)}`] = true; });
-    receitas.forEach((r) => { receitaByKey[`${r.date}|${Number(r.amount).toFixed(2)}`] = true; });
+    despesas.forEach((d) => { despesaByKey[`${d.date}|${(Number(d.amount) + Number(d.iva || 0)).toFixed(2)}`] = true; });
+    receitas.forEach((r) => { receitaByKey[`${r.date}|${(Number(r.amount) + Number(r.iva || 0)).toFixed(2)}`] = true; });
     const rows = parsedRows.map((p) => {
       const key = `${p.date}|${Math.abs(p.amount).toFixed(2)}`;
       const matched = p.amount < 0 ? despesaByKey[key] : receitaByKey[key];
