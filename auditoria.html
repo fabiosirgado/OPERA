@@ -505,36 +505,73 @@ function renderResult(d, first){
 }
 
 /* ---------- DOWNLOAD PDF ---------- */
-const PDF_LIB = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+const PDF_LIBS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+];
+const PDF_W = 760, PDF_H = 1075, PDF_PAD = 40, PDF_BG = "#050B1F";
 function loadScript(src){
   return new Promise((ok,ko)=>{ const s=document.createElement("script"); s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s); });
+}
+async function buildPDF(first){
+  if(!window.html2canvas) await loadScript(PDF_LIBS[0]);
+  if(!window.jspdf) await loadScript(PDF_LIBS[1]);
+  if(document.fonts) await document.fonts.ready;
+
+  const date=new Date().toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"});
+  const doc=document.createElement("div"); doc.id="pdfDoc"; doc.className="res";
+  doc.innerHTML=`<div class="pdf-head"><div class="logo">OPERA<span>.</span></div>
+    <small>Auditoria OPERA${first?"<br>"+esc(first):""}<br>${date}</small></div>
+    ${$("#result").innerHTML}
+    <div class="pdf-foot">Os valores apresentados são estimativas com base nas tuas respostas. Marca uma análise do teu resultado em ${CAL_URL.replace("https://","")}</div>`;
+  const holder=document.createElement("div");
+  holder.style.cssText="position:absolute;left:-10000px;top:0;width:"+PDF_W+"px";
+  holder.appendChild(doc); document.body.appendChild(holder);
+
+  // Pontos onde a página pode cortar: o fim de cada bloco, nunca a meio dele
+  const top0=doc.getBoundingClientRect().top;
+  const cuts=[...doc.querySelectorAll(".pdf-head,.block-name,.verdict,.week,.big,.disc,p,.flow,.cta-box,.pdf-foot")]
+    .filter(el=>!el.nextElementSibling?.classList.contains("flow"))
+    .map(el=>Math.ceil(el.getBoundingClientRect().bottom-top0+6)).sort((x,y)=>x-y);
+  const total=doc.offsetHeight;
+
+  // Captura com a janela no topo: evita PDFs em branco quando a página está em scroll
+  const sx=window.scrollX, sy=window.scrollY;
+  window.scrollTo(0,0);
+  let canvas;
+  try{
+    canvas=await html2canvas(doc,{scale:2,backgroundColor:PDF_BG,useCORS:true,scrollX:0,scrollY:0,windowWidth:1200,width:PDF_W,height:total});
+  } finally {
+    window.scrollTo(sx,sy); holder.remove();
+  }
+  const k=canvas.width/PDF_W;
+
+  const pdf=new jspdf.jsPDF({unit:"pt",format:[PDF_W*.75,PDF_H*.75]});
+  let start=0, page=0;
+  while(start<total-2){
+    const padTop=page?PDF_PAD:0, room=PDF_H-padTop-PDF_PAD;
+    let end=Math.max(0,...cuts.filter(c=>c>start&&c<=start+room));
+    if(!end) end=Math.min(total,start+room);
+    if(total-start<=room) end=total;
+    const slice=document.createElement("canvas");
+    slice.width=canvas.width; slice.height=Math.round((end-start)*k);
+    const ctx=slice.getContext("2d"); ctx.fillStyle=PDF_BG; ctx.fillRect(0,0,slice.width,slice.height);
+    ctx.drawImage(canvas,0,Math.round(start*k),canvas.width,slice.height,0,0,slice.width,slice.height);
+    if(page) pdf.addPage();
+    pdf.setFillColor(PDF_BG); pdf.rect(0,0,PDF_W*.75,PDF_H*.75,"F");
+    pdf.addImage(slice.toDataURL("image/jpeg",.92),"JPEG",0,padTop*.75,PDF_W*.75,(end-start)*.75);
+    start=end; page++;
+  }
+  return pdf;
 }
 async function downloadPDF(first){
   const btn=$("#dlBtn"), label=btn.textContent;
   btn.disabled=true; btn.textContent="A gerar o PDF";
   try{
-    if(!window.html2pdf) await loadScript(PDF_LIB);
-    const date=new Date().toLocaleDateString("pt-PT",{day:"numeric",month:"long",year:"numeric"});
-    const doc=document.createElement("div"); doc.id="pdfDoc"; doc.className="res";
-    doc.innerHTML=`<div class="pdf-head"><div class="logo">OPERA<span>.</span></div>
-      <small>Auditoria OPERA${first?"<br>"+esc(first):""}<br>${date}</small></div>
-      ${$("#result").innerHTML}
-      <div class="pdf-foot">Os valores apresentados são estimativas com base nas tuas respostas. Marca uma análise do teu resultado em ${CAL_URL.replace("https://","")}</div>`;
-    const holder=document.createElement("div");
-    holder.style.cssText="position:fixed;left:-10000px;top:0";
-    holder.appendChild(doc); document.body.appendChild(holder);
+    const pdf=await buildPDF(first);
     const slug=(first||"").normalize("NFD").replace(/[^\w]/g,"").toLowerCase();
-    await html2pdf().set({
-      margin:0,
-      filename:`diagnostico-opera${slug?"-"+slug:""}.pdf`,
-      image:{type:"jpeg",quality:.95},
-      html2canvas:{scale:2,backgroundColor:"#050B1F",useCORS:true},
-      jsPDF:{unit:"px",format:[760,1075],hotfixes:["px_scaling"]},
-      pagebreak:{mode:["css"],avoid:[".verdict",".big",".week","h4","p",".flow",".cta-box"]}
-    }).from(doc).save();
-    holder.remove();
+    pdf.save(`diagnostico-opera${slug?"-"+slug:""}.pdf`);
   }catch(e){
-    document.getElementById("pdfDoc")?.parentNode.remove();
     window.print();
   }
   btn.disabled=false; btn.textContent=label;
