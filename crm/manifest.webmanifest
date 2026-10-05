@@ -1,0 +1,18 @@
+{
+  "name": "OPERA OS",
+  "short_name": "OPERA OS",
+  "description": "Gestão de pedidos, clientes e financeiro da OPERA.",
+  "id": "/crm/",
+  "start_url": "/crm/",
+  "scope": "/crm/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0F1E",
+  "theme_color": "#0A0F1E",
+  "lang": "pt-PT",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

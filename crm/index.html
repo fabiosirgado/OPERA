@@ -2,10 +2,19 @@
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>OPERA OS</title>
+<meta name="theme-color" content="#0A0F1E" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/png" href="icon-192.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="OPERA OS" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <style>
-  html, body { margin: 0; padding: 0; background: #0A0F1E; min-height: 100vh; }
+  html, body { margin: 0; padding: 0; background: #0A0F1E; min-height: 100vh; -webkit-text-size-adjust: 100%; }
+  body { -webkit-tap-highlight-color: transparent; }
   #root { min-height: 100vh; display: flex; }
 </style>
 <script>
@@ -21,5 +30,8 @@
 <script src="config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
 <script type="text/babel" data-presets="react" src="app.jsx"></script>
+<script>
+  if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+</script>
 </body>
 </html>
