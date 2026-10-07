@@ -113,6 +113,12 @@ function withinPeriod(date, days) {
 }
 
 const CAN_DRAG = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+const IS_TOUCH = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+const fotoFile = (f) => {
+  const d = new Date(), p2 = (n) => String(n).padStart(2, "0");
+  const ext = ((f.type || "image/jpeg").split("/")[1] || "jpg").replace("jpeg", "jpg");
+  return new File([f], `foto-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.${ext}`, { type: f.type });
+};
 
 // ---------- Helpers ----------
 const fmtEUR = (n) => Number(n || 0).toLocaleString("pt-PT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -929,10 +935,10 @@ function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
   const sendMessage = (text) => run(() => db.sendMessage(pedido.id, "cliente", text));
   const openAttachment = (a) => db.getAttachmentUrl(a.storagePath).then((url) => window.open(url, "_blank")).catch((e) => alert(e.message));
   const isNewAttachment = (a) => a.uploadedBy === "equipa" && (!previousViewAt || a.createdAt > previousViewAt);
-  const uploadFiles = (e) => {
+  const uploadFiles = (e, isPhoto) => {
     const chosen = Array.from(e.target.files || []);
     e.target.value = "";
-    chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, file, "cliente")));
+    chosen.forEach((file) => run(() => db.uploadAttachment(pedido.id, isPhoto ? fotoFile(file) : file, "cliente")));
   };
   const archivePedido = () => { if (window.confirm("Arquivar este pedido?")) run(() => db.archivePedido(pedido.id)); };
   const unarchivePedido = () => run(() => db.unarchivePedido(pedido.id));
@@ -1012,13 +1018,24 @@ function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
           ))}
         </div>
       )}
-      <label className="op-type-btn" style={{
-        display: "inline-flex", alignItems: "center", gap: 6, border: `1.5px dashed ${C.border}`, borderRadius: 8,
-        padding: "8px 12px", cursor: "pointer", color: C.muted, fontSize: 12, marginBottom: 18,
-      }}>
-        📎 Adicionar ficheiro
-        <input type="file" multiple onChange={uploadFiles} style={{ display: "none" }} />
-      </label>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+        <label className="op-type-btn" style={{
+          display: "inline-flex", alignItems: "center", gap: 6, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+          padding: "8px 12px", cursor: "pointer", color: C.muted, fontSize: 12,
+        }}>
+          📎 Adicionar ficheiro
+          <input type="file" multiple onChange={uploadFiles} style={{ display: "none" }} />
+        </label>
+        {IS_TOUCH && (
+          <label className="op-type-btn" style={{
+            display: "inline-flex", alignItems: "center", gap: 6, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+            padding: "8px 12px", cursor: "pointer", color: C.muted, fontSize: 12,
+          }}>
+            📷 Tirar foto
+            <input type="file" accept="image/*" capture="environment" onChange={(e) => uploadFiles(e, true)} style={{ display: "none" }} />
+          </label>
+        )}
+      </div>
 
       <SectionTitle>Conversa com a OPERA</SectionTitle>
       <ChatThread messages={pedido.messages} onSend={sendMessage} senderRole="cliente" />
@@ -1595,6 +1612,51 @@ function FinVisaoGeral({ granularity, setGranularity, selectedBucketKey, setSele
   );
 }
 
+function FinCameraModal({ onCapture, onClose }) {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError("Este browser não permite usar a câmara.");
+      return undefined;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then((stream) => {
+        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); }
+      })
+      .catch(() => setError("Não foi possível aceder à câmara. Confirma a permissão do browser (ícone da câmara na barra de endereço) e que nenhuma outra aplicação a está a usar."));
+    return () => { cancelled = true; if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop()); };
+  }, []);
+  const snap = () => {
+    const v = videoRef.current;
+    if (!v || !v.videoWidth) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+    canvas.getContext("2d").drawImage(v, 0, 0);
+    canvas.toBlob((blob) => { if (blob) onCapture(new File([blob], `foto-${Date.now()}.jpg`, { type: "image/jpeg" })); }, "image/jpeg", 0.92);
+  };
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(4,7,16,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, width: "100%", maxWidth: 640 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 10 }}>📷 Tirar foto ao documento</div>
+        {error ? (
+          <div style={{ fontSize: 13, color: C.red, padding: "20px 4px" }}>{error}</div>
+        ) : (
+          <video ref={videoRef} playsInline muted style={{ width: "100%", borderRadius: 8, background: "#000", maxHeight: "60vh" }} />
+        )}
+        <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 14px", color: C.muted, fontSize: 13, cursor: "pointer" }}>Cancelar</button>
+          {!error && <button onClick={snap} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Capturar e enviar</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
   const [busy, setBusy] = useState(false);
   const pollStatus = (id) => {
@@ -1613,10 +1675,7 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
       } catch (e2) { clearInterval(interval); setBusy(false); }
     }, 3000);
   };
-  const handle = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
+  const uploadFile = async (file) => {
     setBusy(true);
     try {
       const row = await db.uploadFinanceiroDoc(clientId, tipo, file);
@@ -1624,6 +1683,13 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
       pollStatus(row.id);
     } catch (err) { alert(err.message); setBusy(false); }
   };
+  const handle = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (file) uploadFile(file);
+  };
+  const [camOpen, setCamOpen] = useState(false);
+  const isTouch = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   return (
     <div style={{ display: "flex", gap: 8, flex: "1 1 260px" }}>
       <label className="op-type-btn" style={{
@@ -1634,14 +1700,25 @@ function FinUploadZone({ tipo, label, icon, clientId, onUploaded }) {
         {busy ? "A carregar e a pedir à IA para ler…" : label}
         <input type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handle} disabled={busy} />
       </label>
-      <label className="op-type-btn" title="Tirar foto na hora" style={{
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
-        padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, width: 70, textAlign: "center", flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 20 }}>📷</span>
-        Foto
-        <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handle} disabled={busy} />
-      </label>
+      {isTouch ? (
+        <label className="op-type-btn" title="Tirar foto na hora" style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+          padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, width: 70, textAlign: "center", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 20 }}>📷</span>
+          Foto
+          <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handle} disabled={busy} />
+        </label>
+      ) : (
+        <div className="op-type-btn" title="Tirar foto com a webcam" onClick={() => { if (!busy) setCamOpen(true); }} style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+          padding: "16px 10px", cursor: busy ? "default" : "pointer", color: C.muted, fontSize: 12, width: 70, textAlign: "center", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 20 }}>📷</span>
+          Foto
+        </div>
+      )}
+      {camOpen && <FinCameraModal onClose={() => setCamOpen(false)} onCapture={(f) => { setCamOpen(false); uploadFile(f); }} />}
     </div>
   );
 }
@@ -3080,8 +3157,11 @@ function ClientPortal({ profile }) {
   const resetForm = () => { setStep("idle"); setCreatingType(null); setCustomTitle(""); setDescription(""); setPropertyId(""); setFiles([]); setDueDate(""); setDueTime(""); setFormError(""); };
   const pickType = (type) => { setCreatingType(type); setCustomTitle(""); setStep("form"); };
 
-  const handleFiles = (e) => {
-    const chosen = Array.from(e.target.files || []).map((f) => ({ id: `${f.name}-${f.size}-${f.lastModified}-${Date.now()}`, file: f, name: f.name }));
+  const handleFiles = (e, isPhoto) => {
+    const chosen = Array.from(e.target.files || []).map((f0) => {
+      const f = isPhoto ? fotoFile(f0) : f0;
+      return { id: `${f.name}-${f.size}-${f.lastModified}-${Date.now()}`, file: f, name: f.name };
+    });
     setFiles((prev) => [...prev, ...chosen]);
     e.target.value = "";
   };
@@ -3234,14 +3314,26 @@ function ClientPortal({ profile }) {
             style={{ width: "100%", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "8px 10px", color: C.text, fontSize: 13, marginBottom: 14, boxSizing: "border-box" }} />
 
           <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Anexar fotos ou documentos</div>
-          <label className="op-type-btn" style={{
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
-            padding: "16px 10px", cursor: "pointer", marginBottom: 10, color: C.muted, fontSize: 12,
-          }}>
-            <span style={{ fontSize: 20 }}>📎</span>
-            Clique para escolher ficheiros
-            <input type="file" multiple onChange={handleFiles} style={{ display: "none" }} />
-          </label>
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <label className="op-type-btn" style={{
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+              padding: "16px 10px", cursor: "pointer", color: C.muted, fontSize: 12, flex: 1, textAlign: "center",
+            }}>
+              <span style={{ fontSize: 20 }}>📎</span>
+              Clique para escolher ficheiros
+              <input type="file" multiple onChange={handleFiles} style={{ display: "none" }} />
+            </label>
+            {IS_TOUCH && (
+              <label className="op-type-btn" style={{
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, border: `1.5px dashed ${C.border}`, borderRadius: 8,
+                padding: "16px 10px", cursor: "pointer", color: C.muted, fontSize: 12, width: 84, textAlign: "center", flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 20 }}>📷</span>
+                Tirar foto
+                <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFiles(e, true)} style={{ display: "none" }} />
+              </label>
+            )}
+          </div>
           {files.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
               {files.map((f) => (
