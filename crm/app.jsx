@@ -960,6 +960,10 @@ function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
     <PageBack onClose={onClose} eyebrow={pedido.client} maxWidth={820}>
       <PedidoHeader pedido={pedido} onUpdateHeader={(patch) => run(() => db.updatePedidoFields(pedido.id, patch))} />
 
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 16 }}>
+        👤 Pedido por <strong style={{ color: C.text }}>{pedido.createdByName || "não registado (pedido anterior)"}</strong> · {fmtDateTime(pedido.createdAt)}
+      </div>
+
       <SectionTitle>Estado do pedido</SectionTitle>
       <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 18 }}>
         {OP_STAGES.map((s, i) => {
@@ -992,7 +996,6 @@ function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: STAGE_META[pedido.stage].color }}>{pedido.stage}</div>
           <div style={{ fontSize: 11, color: C.muted }}>Prazo previsto: {fmtDateTime(pedido.due)}</div>
-          {pedido.createdByName && <div style={{ fontSize: 11, color: C.muted }}>Pedido por {pedido.createdByName}</div>}
         </div>
       </div>
 
@@ -2659,6 +2662,7 @@ function EquipaApp({ profile }) {
         due: due.toISOString(),
         seen: true,
         client_seen: false,
+        created_by_name: "Equipa OPERA",
       });
       await reloadPedidos();
       setNewPedido({ clientId: "", type: PRESET_TYPES[0], customTitle: "", description: "", propertyId: "", owner: "Fábio", dueDate: "", dueTime: "" });
@@ -3162,7 +3166,6 @@ function ClientPortal({ profile }) {
     return lastActivity(b) - lastActivity(a);
   });
   const archivedPedidos = pedidos.filter((p) => p.archivedAt).sort((a, b) => b.archivedAt - a.archivedAt);
-  const multiAuthors = new Set(pedidos.map((p) => p.createdByName).filter(Boolean)).size > 1;
   const myPedidos = allMyPedidos.filter((p) => {
     if (filter === "curso" && p.stage === "Concluído") return false;
     if (filter === "concluidos" && p.stage !== "Concluído") return false;
@@ -3450,7 +3453,7 @@ function ClientPortal({ profile }) {
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{pedidoTitle(p)}</div>
-                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}{multiAuthors && p.createdByName ? ` · 👤 ${p.createdByName}` : ""}</div>
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}{p.createdByName ? ` · 👤 ${p.createdByName}` : ""}</div>
                   </div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: meta.color, background: `${meta.color}22`, padding: "5px 10px", borderRadius: 6, whiteSpace: "nowrap" }}>
