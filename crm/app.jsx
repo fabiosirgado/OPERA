@@ -392,18 +392,27 @@ const db = {
     if (error) throw error;
     return data;
   },
-  async inviteClientEmail(clientId, email) {
+  async inviteClientEmail(clientId, email, name) {
     const normalized = email.trim().toLowerCase();
+    const fullName = (name || "").trim();
     const { data: existing, error: findErr } = await sb.from("profiles").select("id, client_id").ilike("email", normalized).maybeSingle();
     if (findErr) throw findErr;
     if (existing) {
-      const { error } = await sb.from("profiles").update({ client_id: clientId }).eq("id", existing.id);
+      const patch = { client_id: clientId };
+      if (fullName) patch.full_name = fullName;
+      const { error } = await sb.from("profiles").update(patch).eq("id", existing.id);
       if (error) throw error;
       return { linked: true };
     }
-    const { error } = await sb.from("client_invites").upsert({ client_id: clientId, email: normalized }, { onConflict: "email" });
+    const row = { client_id: clientId, email: normalized };
+    if (fullName) row.full_name = fullName;
+    const { error } = await sb.from("client_invites").upsert(row, { onConflict: "email" });
     if (error) throw error;
     return { linked: false };
+  },
+  async updateProfileName(id, fullName) {
+    const { error } = await sb.from("profiles").update({ full_name: fullName }).eq("id", id);
+    if (error) throw error;
   },
   async removeClientInvite(id) {
     const { error } = await sb.from("client_invites").delete().eq("id", id);
@@ -2059,6 +2068,7 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
   const [linkedProfiles, setLinkedProfiles] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
   const [inviting, setInviting] = useState(false);
 
   const reloadPortalAccess = () => {
@@ -2080,15 +2090,24 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
     if (!email) return;
     setInviting(true);
     try {
-      const result = await db.inviteClientEmail(client.id, email);
+      const result = await db.inviteClientEmail(client.id, email, inviteName);
       if (result.linked) {
         setLinkedProfiles(await db.listProfilesByClient(client.id));
       } else {
         setPendingInvites(await db.listClientInvites(client.id));
       }
       setInviteEmail("");
+      setInviteName("");
     } catch (e) { alert(e.message); }
     finally { setInviting(false); }
+  };
+  const renameLinkedProfile = async (p) => {
+    const name = window.prompt("Nome desta pessoa:", p.full_name || "");
+    if (name === null) return;
+    try {
+      await db.updateProfileName(p.id, name.trim() || null);
+      setLinkedProfiles((prev) => prev.map((x) => (x.id === p.id ? { ...x, full_name: name.trim() || null } : x)));
+    } catch (e) { alert(e.message); }
   };
 
   const cancelInvite = async (id) => {
@@ -2278,21 +2297,28 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 8 }}>Ainda ninguém tem acesso ao portal para este cliente.</div>
             )}
             {linkedProfiles.map((p) => (
-              <div key={p.id} style={{ fontSize: 13, color: C.text, marginBottom: 6 }}>👤 {p.full_name || p.email || p.id}</div>
+              <div key={p.id} style={{ fontSize: 13, color: C.text, marginBottom: 6 }}>
+                👤 {p.full_name || p.email || p.id}
+                {p.full_name && p.email && <span style={{ color: C.muted }}> · {p.email}</span>}
+                <span onClick={() => renameLinkedProfile(p)} title="Definir nome" style={{ cursor: "pointer", color: C.muted, marginLeft: 8 }}>✎</span>
+              </div>
             ))}
             {pendingInvites.map((inv) => (
               <div key={inv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, color: C.muted, marginBottom: 6 }}>
-                <span>✉️ {inv.email} — convite pendente</span>
+                <span>✉️ {inv.full_name ? `${inv.full_name} · ` : ""}{inv.email} — convite pendente</span>
                 <span onClick={() => cancelInvite(inv.id)} style={{ cursor: "pointer", fontSize: 14 }}>×</span>
               </div>
             ))}
             <div style={{ fontSize: 11, color: C.muted, marginTop: 8, marginBottom: 6 }}>
               Escreve o email do contacto do cliente — quando ele entrar pela primeira vez em /crm/, fica logo ligado a este cliente.
             </div>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendInvite()}
+                placeholder="Nome (ex. Ana Silva)"
+                style={{ flex: "1 1 130px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }} />
               <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendInvite()}
                 placeholder="email@cliente.pt"
-                style={{ flex: 1, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }} />
+                style={{ flex: "2 1 180px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 8px", color: C.text, fontSize: 12 }} />
               <button onClick={sendInvite} disabled={!inviteEmail.trim() || inviting} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", opacity: inviteEmail.trim() && !inviting ? 1 : 0.5 }}>
                 {inviting ? "..." : "Convidar"}
               </button>
