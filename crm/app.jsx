@@ -269,6 +269,7 @@ const db = {
   async updatePedidoFields(id, patch) {
     const dbPatch = {};
     if ("customTitle" in patch) dbPatch.custom_title = patch.customTitle;
+    if ("type" in patch) dbPatch.type = patch.type;
     if ("propertyId" in patch) dbPatch.property_id = patch.propertyId;
     const { error } = await sb.from("pedidos").update(dbPatch).eq("id", id);
     if (error) throw error;
@@ -759,26 +760,40 @@ function PageBack({ onClose, eyebrow, maxWidth = 760, children }) {
 function PedidoHeader({ pedido, onUpdateHeader }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(pedidoTitle(pedido));
+  const [typeDraft, setTypeDraft] = useState(pedido.type);
   const [editingProp, setEditingProp] = useState(false);
   const [propDraft, setPropDraft] = useState(pedido.propertyId);
 
-  const saveTitle = () => { onUpdateHeader({ customTitle: titleDraft.trim() || "Pedido Aberto" }); setEditingTitle(false); };
+  const saveTitle = () => {
+    const isOpen = typeDraft === "Pedido Aberto";
+    onUpdateHeader({ type: typeDraft, customTitle: isOpen ? (titleDraft.trim() || "Pedido Aberto") : null });
+    setEditingTitle(false);
+  };
   const saveProp = () => { onUpdateHeader({ propertyId: propDraft.trim() }); setEditingProp(false); };
 
   return (
     <>
       {editingTitle ? (
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-          <input value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)} autoFocus
-            style={{ flex: 1, background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", color: C.text, fontSize: 15, fontFamily: "Manrope, sans-serif", fontWeight: 700 }} />
-          <button onClick={saveTitle} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "0 12px", color: "#fff", fontSize: 12, cursor: "pointer" }}>OK</button>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Tipo de pedido</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <select value={typeDraft} onChange={(e) => setTypeDraft(e.target.value)}
+              style={{ flex: "1 1 200px", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "7px 10px", color: C.text, fontSize: 14, fontWeight: 700 }}>
+              {[...PRESET_TYPES, "Pedido Aberto"].map((t) => <option key={t} value={t}>{TYPE_ICONS[t] || "📄"} {t}</option>)}
+            </select>
+            {typeDraft === "Pedido Aberto" && (
+              <input value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)} autoFocus placeholder="Título do pedido"
+                style={{ flex: "2 1 200px", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", color: C.text, fontSize: 15, fontFamily: "Manrope, sans-serif", fontWeight: 700 }} />
+            )}
+            <button onClick={saveTitle} style={{ background: C.accent, border: "none", borderRadius: 6, padding: "0 14px", color: "#fff", fontSize: 12, cursor: "pointer" }}>OK</button>
+            <button onClick={() => setEditingTitle(false)} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 6, padding: "0 12px", color: C.muted, fontSize: 12, cursor: "pointer" }}>Cancelar</button>
+          </div>
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
           <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 18, color: C.text }}>{pedidoTitle(pedido)}</div>
-          {pedido.type === "Pedido Aberto" && (
-            <span onClick={() => { setTitleDraft(pedidoTitle(pedido)); setEditingTitle(true); }} style={{ cursor: "pointer", fontSize: 13, color: C.muted }}>✎</span>
-          )}
+          <span onClick={() => { setTitleDraft(pedidoTitle(pedido)); setTypeDraft(pedido.type); setEditingTitle(true); }}
+            title="Mudar o tipo / título do pedido" style={{ cursor: "pointer", fontSize: 13, color: C.muted }}>✎</span>
         </div>
       )}
 
