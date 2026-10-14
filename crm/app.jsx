@@ -172,6 +172,8 @@ function mapPedido(row) {
     clientSeen: row.client_seen !== false,
     lastEquipaViewAt: row.last_equipa_view_at ? new Date(row.last_equipa_view_at) : null,
     lastClientViewAt: row.last_client_view_at ? new Date(row.last_client_view_at) : null,
+    createdBy: row.created_by || null,
+    createdByName: row.created_by_name || "",
     archivedAt: row.archived_at ? new Date(row.archived_at) : null,
     createdAt: row.created_at ? new Date(row.created_at) : today,
     completedAt: row.completed_at ? new Date(row.completed_at) : null,
@@ -570,7 +572,7 @@ function PedidoCard({ pedido, onDragStart, onOpen }) {
           NOVO
         </span>
       )}
-      <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>{pedido.client}</div>
+      <div style={{ fontSize: 11, color: C.muted, marginBottom: 3 }}>{pedido.client}{pedido.createdByName ? ` · 👤 ${pedido.createdByName}` : ""}</div>
       <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
         <span style={{ fontSize: 12 }}>{TYPE_ICONS[pedido.type] || "📄"}</span>{pedidoTitle(pedido)}
       </div>
@@ -833,6 +835,7 @@ function PedidoDetailInternal({ pedido, onClose, onReload, previousViewAt }) {
         <div><div style={{ marginBottom: 2 }}>Estado</div><div style={{ color: C.text }}>{pedido.stage}</div></div>
         <div><div style={{ marginBottom: 2 }}>Responsável</div><div style={{ color: C.text }}>{pedido.owner}</div></div>
         <div><div style={{ marginBottom: 2 }}>Prazo</div><div style={{ color: C.text }}>{fmtDateTime(pedido.due)}</div></div>
+        {pedido.createdByName && <div><div style={{ marginBottom: 2 }}>Pedido por</div><div style={{ color: C.text }}>{pedido.createdByName}</div></div>}
       </div>
 
       {pedido.archivedAt ? (
@@ -980,6 +983,7 @@ function PedidoDetailClient({ pedido, onClose, onReload, previousViewAt }) {
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: STAGE_META[pedido.stage].color }}>{pedido.stage}</div>
           <div style={{ fontSize: 11, color: C.muted }}>Prazo previsto: {fmtDateTime(pedido.due)}</div>
+          {pedido.createdByName && <div style={{ fontSize: 11, color: C.muted }}>Pedido por {pedido.createdByName}</div>}
         </div>
       </div>
 
@@ -3132,6 +3136,7 @@ function ClientPortal({ profile }) {
     return lastActivity(b) - lastActivity(a);
   });
   const archivedPedidos = pedidos.filter((p) => p.archivedAt).sort((a, b) => b.archivedAt - a.archivedAt);
+  const multiAuthors = new Set(pedidos.map((p) => p.createdByName).filter(Boolean)).size > 1;
   const myPedidos = allMyPedidos.filter((p) => {
     if (filter === "curso" && p.stage === "Concluído") return false;
     if (filter === "concluidos" && p.stage !== "Concluído") return false;
@@ -3184,6 +3189,8 @@ function ClientPortal({ profile }) {
         owner: "Equipa OPERA",
         due: due.toISOString(),
         seen: false,
+        created_by: profile.id,
+        created_by_name: profile.full_name || profile.email || null,
       });
       for (const f of files) {
         await db.uploadAttachment(created.id, f.file, "cliente");
@@ -3417,7 +3424,7 @@ function ClientPortal({ profile }) {
                   </div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{pedidoTitle(p)}</div>
-                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}</div>
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>Prazo: {fmtDateTime(p.due)}{p.propertyId ? ` · 🏠 ${p.propertyId}` : ""}{multiAuthors && p.createdByName ? ` · 👤 ${p.createdByName}` : ""}</div>
                   </div>
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 700, color: meta.color, background: `${meta.color}22`, padding: "5px 10px", borderRadius: 6, whiteSpace: "nowrap" }}>
