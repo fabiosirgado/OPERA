@@ -411,6 +411,10 @@ const db = {
     if (error) throw error;
     return { linked: false };
   },
+  async updateProfileResponsavel(id, value) {
+    const { error } = await sb.from("profiles").update({ is_responsavel: value }).eq("id", id);
+    if (error) throw error;
+  },
   async updateProfileName(id, fullName) {
     const { error } = await sb.from("profiles").update({ full_name: fullName }).eq("id", id);
     if (error) throw error;
@@ -2119,6 +2123,11 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
     } catch (e) { alert(e.message); }
     finally { setInviting(false); }
   };
+  const setResponsavel = async (p, value) => {
+    setLinkedProfiles((prev) => prev.map((x) => (x.id === p.id ? { ...x, is_responsavel: value } : x)));
+    try { await db.updateProfileResponsavel(p.id, value); }
+    catch (e) { alert(e.message); setLinkedProfiles(await db.listProfilesByClient(client.id)); }
+  };
   const renameLinkedProfile = async (p) => {
     const name = window.prompt("Nome desta pessoa:", p.full_name || "");
     if (name === null) return;
@@ -2319,6 +2328,10 @@ function ClientDetail({ client, deals, setDeals, setClients, pedidos, extra, onU
                 👤 {p.full_name || p.email || p.id}
                 {p.full_name && p.email && <span style={{ color: C.muted }}> · {p.email}</span>}
                 <span onClick={() => renameLinkedProfile(p)} title="Definir nome" style={{ cursor: "pointer", color: C.muted, marginLeft: 8 }}>✎</span>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: C.muted, marginTop: 4 }}>
+                  <Toggle on={p.is_responsavel !== false} onChange={(v) => setResponsavel(p, v)} />
+                  Responsável (vê Resumo e Financeiro)
+                </label>
               </div>
             ))}
             {pendingInvites.map((inv) => (
@@ -3111,12 +3124,397 @@ function EquipaApp({ profile }) {
   );
 }
 
+// ================= RESUMO DO CLIENTE (dashboard) =================
+const RES_DAY = 86400000;
+const RES_MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const RES_MESL = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const RES_WD = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const RES_STAGES = ["Recebido", "Em Análise", "Em Execução", "Em Validação"];
+const RES_RAMP = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab"];
+const resDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const resAdd = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const resFmt = (d) => `${d.getDate()} ${RES_MES[d.getMonth()]}`;
+const resFmtY = (d) => `${d.getDate()} ${RES_MES[d.getMonth()]} ${d.getFullYear()}`;
+const resNum = (n, dec) => Number(n).toFixed(dec).replace(".", ",");
+
+function resMetrics(list, s, e) {
+  const endEx = resAdd(e, 1);
+  const created = list.filter((p) => p.created >= s && p.created < endEx);
+  const done = list.filter((p) => p.completed && p.completed >= s && p.completed < endEx);
+  const open = list.filter((p) => p.created < endEx && (!p.completed || p.completed >= endEx));
+  const late = open.filter((p) => p.due < endEx);
+  const avg = done.length ? done.reduce((a, p) => a + (p.completed - p.created) / RES_DAY, 0) / done.length : null;
+  const onTime = done.length ? (done.filter((p) => p.completed <= p.due).length / done.length) * 100 : null;
+  return { created, done, open, late, avg, onTime };
+}
+function resBuckets(s, e) {
+  const len = Math.round((e - s) / RES_DAY) + 1;
+  const out = [];
+  let gran;
+  if (len <= 31) {
+    gran = "dia";
+    for (let d = s; d <= e; d = resAdd(d, 1)) out.push({ s: d, e: d, label: len <= 8 ? `${RES_WD[d.getDay()]} ${d.getDate()}` : String(d.getDate()), full: `${RES_WD[d.getDay()]}, ${resFmt(d)}` });
+  } else if (len <= 100) {
+    gran = "semana";
+    for (let d = s; d <= e; d = resAdd(d, 7)) { const be = resAdd(d, 6) > e ? e : resAdd(d, 6); out.push({ s: d, e: be, label: resFmt(d), full: `${resFmt(d)} a ${resFmt(be)}` }); }
+  } else {
+    gran = "mês";
+    for (let m = new Date(s.getFullYear(), s.getMonth(), 1); m <= e; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
+      const bs = m < s ? s : m;
+      const last = resAdd(new Date(m.getFullYear(), m.getMonth() + 1, 1), -1);
+      out.push({ s: bs, e: last > e ? e : last, label: RES_MES[m.getMonth()], full: `${RES_MESL[m.getMonth()]} ${m.getFullYear()}` });
+    }
+  }
+  return { list: out, gran };
+}
+function resNiceMax(m) {
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000];
+  for (const st of steps) if (st * 4 >= m) return { step: st, max: st * 4 };
+  return { step: 1000, max: 4000 };
+}
+function resRoundedTop(x, y, w, h, r) {
+  if (h <= 0) return "";
+  const rr = Math.min(r, w / 2, h);
+  return `M${x} ${y + h} V${y + rr} Q${x} ${y} ${x + rr} ${y} H${x + w - rr} Q${x + w} ${y} ${x + w} ${y + rr} V${y + h} Z`;
+}
+function ResSpark({ vals }) {
+  const n = vals.length;
+  if (n < 2) return null;
+  const w = 72, h = 26;
+  let carry = vals.find((v) => v != null);
+  if (carry == null) carry = 0;
+  const clean = vals.map((v) => { if (v != null) carry = v; return carry; });
+  const max = Math.max(...clean), min = Math.min(...clean), span = max - min || 1;
+  const pts = clean.map((v, i) => [2 + ((w - 4) * i) / (n - 1), h - 4 - ((h - 8) * (v - min)) / span]);
+  const line = pts.map((q, i) => `${i ? "L" : "M"}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(" ");
+  const area = `${line} L${pts[n - 1][0].toFixed(1)} ${h - 2} L${pts[0][0].toFixed(1)} ${h - 2} Z`;
+  const last = pts[n - 1];
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d={area} fill={C.accent} opacity="0.14" />
+      <path d={line} fill="none" stroke={C.accent} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={C.accent} stroke={C.surface} strokeWidth="2" />
+    </svg>
+  );
+}
+
+function ClientResumo({ pedidos }) {
+  const [range, setRange] = useState("30");
+  const [month, setMonth] = useState("");
+  const [person, setPerson] = useState("");
+  const [type, setType] = useState("");
+  const [showTable, setShowTable] = useState(false);
+  const [tip, setTip] = useState(null);
+  const svgRef = useRef(null);
+
+  const base = useMemo(() => resDay(new Date()), []);
+  const NO_AUTHOR = "Sem autor registado";
+  const items = useMemo(() => pedidos.map((p) => {
+    const lastMsg = p.messages.length ? p.messages[p.messages.length - 1] : null;
+    let completed = p.completedAt ? resDay(p.completedAt) : null;
+    if (!completed && p.stage === "Concluído") completed = resDay(lastMsg ? lastMsg.date : p.createdAt);
+    return {
+      id: p.id, type: p.type, title: pedidoTitle(p), propertyId: p.propertyId, stage: p.stage,
+      person: p.createdByName || NO_AUTHOR, created: resDay(p.createdAt), due: resDay(p.due), completed,
+      waiting: !completed && !!lastMsg && lastMsg.sender === "equipa",
+    };
+  }), [pedidos]);
+
+  const people = useMemo(() => [...new Set(items.map((i) => i.person))].sort(), [items]);
+  const types = useMemo(() => [...new Set(items.map((i) => i.type))].sort(), [items]);
+  const list = useMemo(() => items.filter((i) => (!person || i.person === person) && (!type || i.type === type)), [items, person, type]);
+
+  const rg = useMemo(() => {
+    let s, e = base;
+    if (month) {
+      const y = Number(month.slice(0, 4)), m = Number(month.slice(5, 7)) - 1;
+      s = new Date(y, m, 1);
+      e = resAdd(new Date(y, m + 1, 1), -1);
+      if (e > base) e = base;
+    } else {
+      s = resAdd(base, -(Number(range) - 1));
+    }
+    const len = Math.round((e - s) / RES_DAY) + 1;
+    const pe = resAdd(s, -1);
+    return { s, e, pe, ps: resAdd(pe, -(len - 1)) };
+  }, [range, month, base]);
+
+  const cur = useMemo(() => resMetrics(list, rg.s, rg.e), [list, rg]);
+  const prev = useMemo(() => resMetrics(list, rg.ps, rg.pe), [list, rg]);
+  const bk = useMemo(() => resBuckets(rg.s, rg.e), [rg]);
+  const bm = useMemo(() => bk.list.map((b) => resMetrics(list, b.s, b.e)), [list, bk]);
+
+  const KPIS = [
+    { label: "Pedidos criados", get: (m) => m.created.length, fmt: (v) => String(v), good: "neutral" },
+    { label: "Concluídos", get: (m) => m.done.length, fmt: (v) => String(v), good: "up" },
+    { label: "Em curso", get: (m) => m.open.length, fmt: (v) => String(v), good: "neutral" },
+    { label: "Em atraso", get: (m) => m.late.length, fmt: (v) => String(v), good: "down", alert: true },
+    { label: "Tempo médio de resolução", get: (m) => m.avg, fmt: (v) => (v == null ? "—" : `${resNum(v, 1)} dias`), good: "down" },
+    { label: "Concluídos no prazo", get: (m) => m.onTime, fmt: (v) => (v == null ? "—" : `${Math.round(v)}%`), good: "up", pp: true },
+  ];
+  const delta = (k, c, pv) => {
+    if (c == null || pv == null) return { text: "Sem período anterior", color: C.muted };
+    const diff = c - pv;
+    let txt;
+    if (k.pp) {
+      if (Math.round(diff) === 0) return { text: "= igual ao anterior", color: C.muted };
+      txt = `${diff > 0 ? "▲" : "▼"} ${Math.abs(Math.round(diff))} pp`;
+    } else {
+      if (pv === 0) return { text: c === 0 ? "= igual ao anterior" : "▲ novo", color: C.muted };
+      const pct = (diff / Math.abs(pv)) * 100;
+      if (Math.round(pct) === 0) return { text: "= igual ao anterior", color: C.muted };
+      txt = `${pct > 0 ? "▲" : "▼"} ${Math.abs(Math.round(pct))}%`;
+    }
+    let color = C.muted;
+    if (k.good === "up") color = diff > 0 ? C.green : C.red;
+    if (k.good === "down") color = diff < 0 ? C.green : C.red;
+    return { text: `${txt} vs. anterior`, color };
+  };
+
+  const series = { created: bm.map((m) => m.created.length), done: bm.map((m) => m.done.length) };
+  const n = bk.list.length;
+  const W = 760, H = 250, pl = 30, pr = 6, pt = 10, pb = 26;
+  const iw = W - pl - pr, ih = H - pt - pb;
+  const nm = resNiceMax(Math.max(1, ...series.created, ...series.done));
+  const gw = iw / Math.max(n, 1), bw = Math.max(3, Math.min(18, gw * 0.32));
+  const every = Math.ceil(n / 9);
+  const showTip = (i) => {
+    const r = svgRef.current ? svgRef.current.getBoundingClientRect() : null;
+    if (!r) return;
+    const cx = ((pl + gw * i + gw / 2) / W) * r.width;
+    const top = ((pt + ih - (ih * Math.max(series.created[i], series.done[i])) / nm.max) / H) * r.height;
+    setTip({ i, x: Math.max(70, Math.min(r.width - 70, cx)), y: Math.max(50, top) });
+  };
+
+  const stageCounts = RES_STAGES.map((st) => cur.open.filter((p) => p.stage === st).length);
+  const stageMax = Math.max(1, ...stageCounts);
+  const typeRows = types.map((t) => {
+    const c = cur.created.filter((p) => p.type === t);
+    const d = cur.done.filter((p) => p.type === t);
+    const a = d.length ? d.reduce((acc, p) => acc + (p.completed - p.created) / RES_DAY, 0) / d.length : null;
+    return { t, c: c.length, a };
+  }).filter((r) => r.c > 0).sort((x, y) => y.c - x.c);
+  const typeMax = Math.max(1, ...typeRows.map((r) => r.c));
+  const peopleRows = people.map((nm2) => {
+    const m = resMetrics(list.filter((p) => p.person === nm2), rg.s, rg.e);
+    return { n: nm2, c: m.created.length, d: m.done.length, o: m.open.length };
+  }).filter((r) => r.c + r.d + r.o > 0).sort((x, y) => y.c - x.c);
+
+  const nowOpen = list.filter((p) => !p.completed).map((p) => ({ p, late: p.due < resAdd(base, 1), lateDays: Math.round((resAdd(base, 1) - p.due) / RES_DAY) }))
+    .sort((a, b) => (a.late !== b.late ? (a.late ? -1 : 1) : a.p.waiting !== b.p.waiting ? (a.p.waiting ? -1 : 1) : b.lateDays - a.lateDays))
+    .slice(0, 5);
+
+  const panel = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 16, minWidth: 0 };
+  const h2 = { fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 14, color: C.text, margin: 0 };
+  const hint = { color: C.muted, fontSize: 12, margin: "2px 0 0" };
+  const field = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 10px", color: C.text, fontSize: 12.5, fontWeight: 600, minWidth: 0, maxWidth: "100%" };
+  const chip = (bg, fg) => ({ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, whiteSpace: "nowrap", background: bg, color: fg });
+
+  return (
+    <div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 6 }}>
+        <div style={{ display: "inline-flex", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3, flexWrap: "wrap" }}>
+          {[["7", "7 dias"], ["30", "30 dias"], ["90", "90 dias"], ["365", "12 meses"]].map(([k, lbl]) => {
+            const on = !month && range === k;
+            return (
+              <button key={k} onClick={() => { setRange(k); setMonth(""); }} aria-pressed={on}
+                style={{ border: "none", background: on ? C.surfaceRaised : "transparent", boxShadow: on ? `inset 0 0 0 1px ${C.border}` : "none", color: on ? C.text : C.muted, padding: "7px 13px", borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}>
+                {lbl}
+              </button>
+            );
+          })}
+        </div>
+        <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} aria-label="Mês específico"
+          style={{ ...field, colorScheme: C.text === THEMES.dark.text ? "dark" : "light" }} />
+        <select value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Pessoa" style={field}>
+          <option value="">Todas as pessoas</option>
+          {people.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+        <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Tipo de pedido" style={field}>
+          <option value="">Todos os tipos</option>
+          {types.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+      </div>
+      <div style={{ color: C.muted, fontSize: 12, margin: "6px 0 18px" }}>
+        <b style={{ color: C.text, fontWeight: 600 }}>{resFmtY(rg.s)} a {resFmtY(rg.e)}</b> · comparado com {resFmt(rg.ps)} a {resFmt(rg.pe)}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 18 }}>
+        {KPIS.map((k) => {
+          const v = k.get(cur), d = delta(k, v, k.get(prev));
+          return (
+            <div key={k.label} style={{ ...panel, padding: "14px 16px" }}>
+              <div style={{ color: C.muted, fontSize: 12, marginBottom: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                {k.label}
+                {k.alert && cur.late.length > 0 && <span style={chip("rgba(242,97,122,0.16)", C.red)}>⚠ Atenção</span>}
+              </div>
+              <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 800, fontSize: 28, lineHeight: 1.1, color: C.text }}>{k.fmt(v)}</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 8 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: d.color }}>{d.text}</span>
+                <ResSpark vals={bm.map((m) => k.get(m))} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={panel}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+          <div>
+            <h2 style={h2}>Pedidos ao longo do tempo</h2>
+            <p style={hint}>Por {bk.gran} · {n} {n === 1 ? "período" : "períodos"}</p>
+          </div>
+          <div style={{ display: "flex", gap: 14, fontSize: 12, color: C.muted, alignItems: "center", flexWrap: "wrap" }}>
+            <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: C.accent, marginRight: 6 }} />Criados</span>
+            <span><i style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: C.green, marginRight: 6 }} />Concluídos</span>
+            <button onClick={() => setShowTable((v) => !v)} style={{ background: "none", border: "none", color: C.accent, fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>
+              {showTable ? "Ver como gráfico" : "Ver como tabela"}
+            </button>
+          </div>
+        </div>
+        {showTable ? (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12.5 }}>
+              <thead><tr style={{ color: C.muted }}>
+                <th style={{ textAlign: "left", padding: "6px 10px", fontWeight: 500 }}>Período</th>
+                <th style={{ textAlign: "right", padding: "6px 10px", fontWeight: 500 }}>Criados</th>
+                <th style={{ textAlign: "right", padding: "6px 10px", fontWeight: 500 }}>Concluídos</th>
+              </tr></thead>
+              <tbody>{bk.list.map((b, i) => (
+                <tr key={i} style={{ borderTop: `1px solid ${C.border}`, color: C.text }}>
+                  <td style={{ padding: "6px 10px" }}>{b.full}</td>
+                  <td style={{ padding: "6px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{series.created[i]}</td>
+                  <td style={{ padding: "6px 10px", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{series.done[i]}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ position: "relative" }} onPointerLeave={() => setTip(null)}>
+            <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Pedidos criados e concluídos por ${bk.gran}`} style={{ display: "block", width: "100%", height: "auto" }}>
+              {[0, 1, 2, 3, 4].map((t) => {
+                const y = pt + ih - (ih * t) / 4;
+                return (
+                  <g key={t}>
+                    <line x1={pl} x2={W - pr} y1={y} y2={y} stroke={C.border} strokeWidth="1" />
+                    <text x={pl - 6} y={y + 4} textAnchor="end" fontSize="11" fill={C.muted}>{nm.step * t}</text>
+                  </g>
+                );
+              })}
+              {bk.list.map((b, i) => {
+                const cx = pl + gw * i + gw / 2;
+                const hc = (ih * series.created[i]) / nm.max, hd = (ih * series.done[i]) / nm.max;
+                return (
+                  <g key={i}>
+                    {tip && tip.i === i && <rect x={pl + gw * i} y={pt} width={gw} height={ih} fill={C.surfaceRaised} opacity="0.7" />}
+                    <path d={resRoundedTop(cx - bw - 1, pt + ih - hc, bw, hc, 3)} fill={C.accent} />
+                    <path d={resRoundedTop(cx + 1, pt + ih - hd, bw, hd, 3)} fill={C.green} />
+                    {i % every === 0 && <text x={cx} y={H - 8} textAnchor="middle" fontSize="11" fill={C.muted}>{b.label}</text>}
+                    <rect x={pl + gw * i} y={pt} width={gw} height={ih} fill="transparent" onPointerEnter={() => showTip(i)} onPointerDown={() => showTip(i)} />
+                  </g>
+                );
+              })}
+            </svg>
+            {tip && bk.list[tip.i] && (
+              <div style={{ position: "absolute", left: tip.x, top: tip.y, transform: "translate(-50%, -100%)", pointerEvents: "none", background: C.surfaceRaised, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 10px", fontSize: 12, color: C.text, whiteSpace: "nowrap", boxShadow: "0 6px 20px rgba(0,0,0,.25)", zIndex: 5 }}>
+                <b style={{ fontFamily: "Manrope, sans-serif" }}>{bk.list[tip.i].full}</b>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 14, marginTop: 4 }}><span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: C.accent, marginRight: 6 }} />Criados</span><b>{series.created[tip.i]}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 14, marginTop: 3 }}><span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: C.green, marginRight: 6 }} />Concluídos</span><b>{series.done[tip.i]}</b></div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, marginTop: 16 }}>
+        <div style={panel}>
+          <h2 style={h2}>Em que fase estão os pedidos em curso</h2>
+          <p style={{ ...hint, marginBottom: 12 }}>Situação no último dia do período</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {RES_STAGES.map((st, i) => (
+              <div key={st} style={{ display: "grid", gridTemplateColumns: "minmax(100px, 1.2fr) 2fr auto", gap: 12, alignItems: "center", fontSize: 13, color: C.text }}>
+                <span>{st}</span>
+                <div style={{ height: 10, background: C.surfaceRaised, borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${(stageCounts[i] / stageMax) * 100}%`, minWidth: stageCounts[i] ? 2 : 0, background: RES_RAMP[i], borderRadius: "0 4px 4px 0" }} />
+                </div>
+                <b style={{ fontVariantNumeric: "tabular-nums" }}>{stageCounts[i]}</b>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", color: C.muted, fontSize: 12, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+            <span>Total em curso</span><b style={{ color: C.text }}>{cur.open.length}</b>
+          </div>
+        </div>
+
+        <div style={panel}>
+          <h2 style={h2}>Por tipo de pedido</h2>
+          <p style={{ ...hint, marginBottom: 12 }}>Pedidos criados e tempo médio de resolução</p>
+          {typeRows.length === 0 ? <div style={{ color: C.muted, fontSize: 13 }}>Sem pedidos neste período.</div> : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {typeRows.map((r) => (
+                <div key={r.t} style={{ display: "grid", gridTemplateColumns: "minmax(110px, 1.2fr) 2fr auto", gap: 12, alignItems: "center", fontSize: 13, color: C.text }}>
+                  <span style={{ overflowWrap: "anywhere" }}>{r.t}</span>
+                  <div style={{ height: 10, background: C.surfaceRaised, borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${(r.c / typeMax) * 100}%`, minWidth: 2, background: C.accent, borderRadius: "0 4px 4px 0" }} />
+                  </div>
+                  <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}><b>{r.c}</b><small style={{ color: C.muted, marginLeft: 8 }}>{r.a == null ? "—" : `${resNum(r.a, 1)} d`}</small></span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={panel}>
+          <h2 style={h2}>Por pessoa da conta</h2>
+          <p style={{ ...hint, marginBottom: 12 }}>Quem fez os pedidos neste período</p>
+          {peopleRows.length === 0 ? <div style={{ color: C.muted, fontSize: 13 }}>Sem pedidos neste período.</div> : (
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) repeat(3, minmax(56px, auto))", gap: 12, color: C.muted, fontSize: 11, paddingBottom: 6 }}>
+                <span>Pessoa</span><span style={{ textAlign: "right" }}>Pedidos</span><span style={{ textAlign: "right" }}>Concluídos</span><span style={{ textAlign: "right" }}>Em curso</span>
+              </div>
+              {peopleRows.map((r) => (
+                <div key={r.n} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) repeat(3, minmax(56px, auto))", gap: 12, alignItems: "center", padding: "9px 0", borderTop: `1px solid ${C.border}`, fontSize: 13, color: C.text }}>
+                  <span style={{ overflowWrap: "anywhere" }}>{r.n}</span>
+                  <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.c}</span>
+                  <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.d}</span>
+                  <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{r.o}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={panel}>
+          <h2 style={h2}>Precisam da sua atenção</h2>
+          <p style={{ ...hint, marginBottom: 12 }}>Pedidos em curso, por urgência</p>
+          {nowOpen.length === 0 ? <div style={{ color: C.muted, fontSize: 13 }}>Nenhum pedido em curso.</div> : (
+            <div>
+              {nowOpen.map(({ p, late, lateDays }, i) => (
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: "10px 0", borderTop: i ? `1px solid ${C.border}` : "none", flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{p.title}</div>
+                    <div style={{ color: C.muted, fontSize: 12 }}>{p.propertyId ? `Ref. ${p.propertyId} · ` : ""}{p.person} · prazo {resFmt(p.due)}</div>
+                  </div>
+                  {late ? <span style={chip("rgba(242,97,122,0.16)", C.red)}>⚠ Em atraso há {lateDays} {lateDays === 1 ? "dia" : "dias"}</span>
+                    : p.waiting ? <span style={chip("rgba(245,185,66,0.18)", C.amber)}>✋ Aguarda a sua resposta</span>
+                    : <span style={chip(C.accentSoft, C.accent)}>{p.stage}</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ================= CLIENT PORTAL =================
 function ClientPortal({ profile }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [clientName, setClientName] = useState("");
-  const [section, setSection] = useState("pedidos");
+  const isResponsavel = profile.is_responsavel !== false;
+  const [section, setSection] = useState(profile.is_responsavel !== false ? "resumo" : "pedidos");
   const [pedidos, setPedidos] = useState([]);
   const [openPedidoId, setOpenPedidoId] = useState(null);
   const [openPedidoPrevViewAt, setOpenPedidoPrevViewAt] = useState(null);
@@ -3266,7 +3664,7 @@ function ClientPortal({ profile }) {
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>Acompanhe aqui os seus pedidos e fale diretamente com a equipa OPERA.</div>
 
       <div style={{ display: "flex", gap: 4, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 24 }}>
-        {[{ key: "pedidos", label: "Pedidos", icon: "📋" }, { key: "financeiro", label: "Financeiro", icon: "📊" }, { key: "arquivo", label: "Arquivo", icon: "🗄️" }].map((s) => (
+        {[{ key: "resumo", label: "Resumo", icon: "📈", resp: true }, { key: "pedidos", label: "Pedidos", icon: "📋" }, { key: "financeiro", label: "Financeiro", icon: "📊", resp: true }, { key: "arquivo", label: "Arquivo", icon: "🗄️" }].filter((s) => !s.resp || isResponsavel).map((s) => (
           <span key={s.key} onClick={() => setSection(s.key)}
             style={{ padding: "8px 16px", borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: "pointer", color: section === s.key ? "#fff" : C.muted, background: section === s.key ? C.accent : "transparent", display: "flex", alignItems: "center", gap: 6 }}>
             <span>{s.icon}</span>{s.label}
@@ -3274,7 +3672,9 @@ function ClientPortal({ profile }) {
         ))}
       </div>
 
-      {section === "financeiro" && <FinanceiroPanel clientId={profile.client_id} clientName={clientName} isEquipa={false} />}
+      {section === "resumo" && isResponsavel && <ClientResumo pedidos={pedidos} />}
+
+      {section === "financeiro" && isResponsavel && <FinanceiroPanel clientId={profile.client_id} clientName={clientName} isEquipa={false} />}
 
       {section === "arquivo" && (
         <>
