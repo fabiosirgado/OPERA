@@ -1,0 +1,1306 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPERA Leads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0B1B3A; --navy2:#1B2E57; --navyText:#C7D2E6; --navyMute:#93A4C3;
+  --bg:#F4F6FA; --line:#E2E8F0; --line2:#D5DCE8; --col:#E9EDF4;
+  --text:#0F172A; --mute:#475569; --mute2:#64748B;
+  --blue:#2563EB; --blueDark:#1D4ED8; --blueSoft:#F3F7FF;
+  --green:#10B981; --greenSoft:#E8F8EF; --greenText:#14532D;
+  --orangeSoft:#FFF4EB; --orangeLine:#FBD5B5; --orangeText:#9A3412;
+  --redSoft:#FDECEC; --redText:#7F1D1D; --pin:#FEF6D8; --pinLine:#F5D98B; --pinText:#713F12;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;color:var(--text);background:var(--bg);font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--blueDark)}
+.app{display:flex;flex-wrap:wrap;min-height:100vh}
+nav.side{flex:1 1 232px;max-width:100%;background:var(--navy);color:#fff;padding:20px 14px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:baseline;gap:8px;padding:0 8px}
+.brand b{font-size:20px;letter-spacing:.08em}
+.brand span{font-size:13px;color:var(--navyMute)}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--navyText)}
+.nav button.on{background:var(--navy2);color:#fff;font-weight:600}
+.nav .badge{margin-left:auto;background:#F97316;color:#111827;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+.side h4{margin:0;padding:0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--navyMute)}
+.side .clients{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.side .clients button{display:flex;align-items:center;gap:10px;background:transparent;border:0;color:#E2E8F0;padding:8px;border-radius:6px;min-height:36px;text-align:left}
+.side .clients button:hover{background:var(--navy2)}
+.dot{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+.side .clients small{margin-left:auto;color:var(--navyMute)}
+.roleBox{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding:12px 8px;border-top:1px solid var(--navy2)}
+.roleBox label{font-size:12px;color:var(--navyMute)}
+.roleBox select{min-height:40px;border-radius:8px;border:1px solid var(--navy2);background:var(--navy2);color:#fff;padding:0 10px}
+main{flex:999 1 560px;min-width:0;padding:24px 28px;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px}
+.top h1{margin:0;font-size:26px}
+.sub{font-size:14px;color:var(--mute);margin-top:4px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--line2);background:#fff;display:inline-flex;align-items:center;gap:8px;font-size:14px;text-decoration:none;color:var(--text)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.btn.dark{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.btn.green{background:var(--green);border-color:var(--green);color:#052E1F;font-weight:700}
+.btn.sm{min-height:36px;padding:0 12px;font-size:13px}
+.btn.xs{min-height:30px;padding:0 10px;font-size:12px}
+.btn.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{border:0;background:transparent;color:var(--blueDark);font-weight:600;padding:0;min-height:30px;font-size:13px}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:0 12px;min-height:44px;color:var(--mute)}
+.search input{border:0;outline:0;width:230px;background:transparent;color:var(--text)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:#fff;color:#334155;font-size:13px;display:inline-flex;align-items:center;gap:8px}
+.pill.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat span{font-size:12px;color:var(--mute)}
+.stat b{font-size:22px}
+.stat small{font-size:12px;color:var(--mute2)}
+.stat.warn{background:var(--orangeSoft);border-color:var(--orangeLine)}
+.stat.warn span,.stat.warn b{color:var(--orangeText)}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.search input{width:150px}main{padding:18px 16px}}
+.boardWrap{overflow-x:auto;padding-bottom:8px}
+.board{display:flex;gap:14px;align-items:flex-start;min-width:max-content}
+.colm{width:272px;background:var(--col);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+.colm.client{background:#F6EDE4}
+.colm.drop{outline:2px dashed var(--blue);outline-offset:-2px}
+.colm header{display:flex;flex-direction:column;gap:2px;padding:2px 4px}
+.colm header .h{display:flex;align-items:center;gap:8px}
+.colm h2{margin:0;font-size:14px;font-weight:600;flex:1}
+.count{font-size:12px;color:var(--mute);background:#fff;padding:2px 8px;border-radius:999px}
+.owner{font-size:11px;font-weight:600}
+.cardL{display:flex;flex-direction:column;gap:7px;background:#fff;border:1px solid #DDE3EC;border-radius:10px;padding:12px;text-align:left;width:100%;color:var(--text);cursor:pointer}
+.cardL:hover{border-color:#B6C2D4}
+.cardL[draggable=true]{cursor:grab}
+.cardL .pinline{font-size:12px;background:var(--pin);color:var(--pinText);border-radius:6px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px}
+.src{font-size:11px;color:var(--mute);padding:3px 8px;border-radius:6px;background:#F1F5F9}
+.cname{font-size:14px;font-weight:600}
+.cint{font-size:12px;color:var(--mute)}
+.cnext{display:flex;align-items:center;gap:6px;font-size:12px;border-top:1px solid #EEF2F7;padding-top:8px;color:#334155}
+.cnext.late{color:#C2410C}
+.cnext em{font-style:normal;margin-left:auto;color:var(--mute2)}
+.more{border:0;background:transparent;color:var(--blueDark);font-weight:600;min-height:36px}
+.addStage{width:200px;min-height:120px;border:2px dashed #B6C2D4;border-radius:12px;background:transparent;color:var(--mute);font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center}
+.addStage small{font-weight:400}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.panel h3{margin:0;font-size:14px}
+.list{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.item{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #EEF2F7}
+.item:last-child{border-bottom:0}
+.item .t{flex:0 0 64px;font-weight:700}
+.item .ty{flex:0 0 100px;font-size:13px}
+.item .who{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ttag{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px}
+.tt-call{background:#DCE8FF;color:#1E3A8A}.tt-meeting{background:#ECE3FB;color:#5B21B6}.tt-followup{background:#FEF3C7;color:#78350F}
+.grpT{margin:6px 0 0;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.empty{padding:18px;color:var(--mute);font-size:14px}
+.banner{border-radius:12px;padding:14px 18px;font-size:14px}
+.banner.green{background:var(--greenSoft);border:1px solid #A7E3C0;color:var(--greenText)}
+.banner.orange{background:var(--orangeSoft);border:1px solid var(--orangeLine);color:#7C2D12}
+.banner.blue{background:var(--blueSoft);border:1px solid #C7D7F7;color:#1E3A8A}
+.banner.pin{background:var(--pin);border:1px solid var(--pinLine);color:var(--pinText)}
+/* modal */
+.ovl{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;z-index:50}
+.ovl.open{display:flex}
+.modal{width:100%;max-width:640px;background:#fff;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.modal.wide{max-width:1120px;background:var(--bg)}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mh h2{margin:0;font-size:22px}
+.x{width:44px;height:44px;border:0;background:transparent;border-radius:8px;color:var(--mute);font-size:22px}
+.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#334155}
+.f input,.f select,.f textarea{min-height:44px;border:1px solid var(--line2);border-radius:8px;padding:0 12px;font-weight:400;font-size:14px;background:#fff;color:var(--text)}
+.f textarea{padding:10px 12px;resize:vertical;min-height:80px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:560px){.g2{grid-template-columns:1fr}}
+.actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+.stagesBar{display:flex;flex-wrap:wrap;gap:4px}
+.stagesBar button{flex:1 1 110px;min-height:40px;border:0;border-radius:6px;font-size:13px;font-weight:600;background:#EEF2F7;color:var(--mute)}
+.stagesBar button.past{background:#C7D7F7;color:#1E3A8A}
+.stagesBar button.cur{background:var(--blue);color:#fff}
+.det{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.det aside{flex:1 1 280px;display:flex;flex-direction:column;gap:12px}
+.det section{flex:2 1 440px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.kv{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+.kv span{font-size:12px;color:var(--mute)}
+.kv input{border:1px solid transparent;border-radius:6px;padding:4px 6px;margin-left:-6px;min-height:32px;background:transparent}
+.kv input:hover,.kv input:focus{border-color:var(--line2);background:#fff}
+.tl{display:flex;gap:14px;padding:12px 0;border-top:1px solid #EEF2F7}
+.tl .ic{flex:0 0 40px;height:34px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.tl p{margin:4px 0 0;font-size:13px;color:#334155;line-height:1.5;white-space:pre-line}
+.tl .w{font-size:12px;color:var(--mute2);margin-left:8px}
+.tl .tools{display:flex;gap:12px;margin-top:6px}
+.tl textarea{width:100%;min-height:80px;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{min-height:32px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:#fff;font-size:12px}
+.task{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #EEF2F7}
+.task:first-of-type{border-top:0}
+.task .when{font-size:13px;font-weight:600;min-width:110px}
+.task .when.late{color:#C2410C}
+.task .nt{flex:1 1 140px;font-size:13px;color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--mute);background:#F8FAFC;padding:10px 12px;white-space:nowrap}
+td{padding:9px 12px;border-top:1px solid #EEF2F7}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td select{min-height:36px;border:1px solid var(--line2);border-radius:6px;padding:0 8px;background:#fff}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sum div{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column}
+.sum b{font-size:22px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;display:none;z-index:80;max-width:90vw}
+.toast.on{display:block}
+.radio{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border:1px solid var(--line2);border-radius:8px;font-weight:400;font-size:14px}
+.preview{display:flex;gap:6px;flex-wrap:wrap}
+.preview span{padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;background:#EEF2F7;color:#334155}
+.preview span.new{background:#DCE8FF;color:#1E3A8A;outline:2px dashed var(--blue)}
+.foot{font-size:12px;color:var(--mute2);padding-top:8px}
+.vh{position:absolute;left:-9999px}
+/* dashboard */
+.dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.s12{grid-column:span 12}.s8{grid-column:span 8}.s6{grid-column:span 6}.s4{grid-column:span 4}.s3{grid-column:span 3}
+@media (max-width:1000px){.s8,.s6,.s4{grid-column:span 12}.s3{grid-column:span 6}}
+@media (max-width:560px){.s3{grid-column:span 12}}
+.hero{display:flex;flex-direction:column;gap:6px}
+.hero .lbl{font-size:13px;color:var(--mute);font-weight:600}
+.hero .big{font-size:40px;font-weight:700;line-height:1.1}
+.hero .meta{font-size:13px;color:var(--mute)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;width:max-content}
+.st-good{background:var(--greenSoft);color:var(--greenText)}.st-warn{background:var(--orangeSoft);color:var(--orangeText)}.st-bad{background:var(--redSoft);color:var(--redText)}
+.bars{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bar{display:grid;grid-template-columns:minmax(90px,140px) 1fr 56px;gap:10px;align-items:center;font-size:13px}
+.bar .bl{color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .bt{height:14px;background:#EEF2F7;border-radius:4px;overflow:hidden}
+.bar .bf{display:block;height:100%;background:var(--blue);border-radius:0 4px 4px 0;min-width:2px}
+.bar .bf.mute{background:#94A3B8}
+.bar .bv{text-align:right;font-variant-numeric:tabular-nums;color:var(--text);font-weight:600}
+.colsC{display:flex;align-items:flex-end;gap:2px;height:140px;margin-top:14px;border-bottom:1px solid var(--line)}
+.colsC .cc{flex:1;height:100%;display:flex;align-items:flex-end;cursor:default}
+.colsC .cc:hover .cf{background:var(--blueDark)}
+.colsC .cf{display:block;width:100%;background:var(--blue);border-radius:4px 4px 0 0;min-height:2px}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--mute2);margin-top:4px}
+.occ{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid #EEF2F7}
+.occ:first-of-type{border-top:0}
+.occ .hd{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.occ .meter{height:14px;background:#EEF2F7;border-radius:4px;overflow:hidden;display:flex;gap:2px}
+.occ .seg{flex:1;background:#E2E8F0}
+.occ .seg.on{background:var(--blue)}
+.occ .seg.on.full{background:#C2410C}
+.lc{width:100%;height:auto;display:block;margin-top:12px;overflow:visible}
+.lc .gr{stroke:#E2E8F0;stroke-width:1}
+.lc .ax{font-size:11px;fill:#64748B}
+.lc .ar{fill:#2563EB;opacity:.10}
+.lc .ln{fill:none;stroke:#2563EB;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.lc .hit{fill:transparent}
+.lc .cr{stroke:#94A3B8;stroke-width:1;stroke-dasharray:3 3;opacity:0}
+.lc .dt{fill:#2563EB;stroke:#fff;stroke-width:2;opacity:0}
+.lc .tip{font-size:12px;font-weight:600;fill:#0F172A;opacity:0;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.lc .pt:hover .cr,.lc .pt:hover .dt,.lc .pt:hover .tip{opacity:1}
+.gsearch{position:relative;padding:0 4px}
+.gsearch input{width:100%;min-height:42px;border-radius:8px;border:1px solid var(--navy2);background:#13254A;color:#fff;padding:0 12px}
+.gsearch input::placeholder{color:var(--navyMute)}
+.gres{position:absolute;left:4px;top:46px;width:min(420px,calc(100vw - 32px));background:#fff;color:var(--text);border-radius:12px;box-shadow:0 12px 32px rgba(15,23,42,.25);z-index:60;display:none;max-height:70vh;overflow-y:auto}
+.gres.on{display:block}
+.gres .r{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-bottom:1px solid #EEF2F7;cursor:pointer;width:100%;text-align:left;background:#fff;border-left:0;border-right:0;border-top:0}
+.gres .r:hover,.gres .r.act{background:var(--blueSoft)}
+.gres .r small{color:var(--mute);font-size:12px}
+.gres .hint{padding:10px 14px;font-size:12px;color:var(--mute)}
+.gres mark{background:#FEF08A;color:inherit;border-radius:2px}
+.seg2{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg2 button{min-height:42px;padding:0 14px;border:0;background:#fff;font-size:13px}
+.seg2 button.on{background:var(--navy);color:#fff;font-weight:600}
+th button.sort{border:0;background:transparent;font:inherit;font-weight:600;color:var(--mute);padding:0;cursor:pointer;display:inline-flex;gap:4px;align-items:center;min-height:28px}
+th button.sort.on{color:var(--text)}
+tr.rowL{cursor:pointer}tr.rowL:hover td{background:var(--blueSoft)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:12px}
+body.out nav.side{display:none}
+body.out main{padding:0}
+.login{min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:32px 16px;background:linear-gradient(160deg,#0B1B3A,#13254A)}
+.lcard{width:100%;max-width:420px;background:#fff;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:14px}
+.lcard .brand b{color:var(--navy)}
+.demo{background:#F8FAFC;border:1px dashed var(--line2);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.demo button{display:flex;justify-content:space-between;gap:8px;align-items:center;text-align:left;min-height:40px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 12px;font-size:13px}
+.demo button small{color:var(--mute2)}
+.ubox{margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:12px 8px;border-top:1px solid var(--navy2)}
+.ubox .who{display:flex;align-items:center;gap:10px}
+.av{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 32px}
+.ubox small{color:var(--navyMute);font-size:12px}
+.ubox select,.ubox button{min-height:36px;border-radius:8px;border:1px solid var(--navy2);background:var(--navy2);color:#fff;padding:0 10px;font-size:13px}
+.state{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.state.ok{background:var(--greenSoft);color:var(--greenText)}.state.inv{background:#DCE8FF;color:#1E3A8A}.state.off{background:#E5E7EB;color:#374151}.state.del{background:var(--redSoft);color:var(--redText)}
+.danger{border:1px solid #F5C2C2;background:#FFF8F8;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side" aria-label="Menu principal">
+    <div class="brand"><b>OPERA</b><span>Leads</span></div>
+    <div class="gsearch">
+      <label for="gq" class="vh">Procurar leads</label>
+      <input type="search" id="gq" placeholder="Procurar leads  ( / )" autocomplete="off" aria-controls="gres" aria-expanded="false">
+      <div id="gres" class="gres" role="listbox" aria-label="Resultados da pesquisa"></div>
+    </div>
+    <div class="nav" id="nav"></div>
+    <div id="sideClients"></div>
+    <div class="ubox" id="ubox"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div class="ovl" id="ovl" role="dialog" aria-modal="true"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ================= CONFIGURAÇÃO ================= */
+const STORE_KEY='opera_leads_v6';
+const RETENTION_MONTHS=6;
+const ROLE_LABEL={admin:'Admin OPERA',gestor:'Gestor de leads',cliente_admin:'Admin do cliente',cliente:'Utilizador do cliente'};
+const PAGE=50;
+const MAX_CLIENTS_PER_MANAGER=8;
+const TTL_TARGET_MIN=15;
+const BASE_STAGES=[
+  {id:'meta',name:'Nova Lead Meta',color:'#3B6FE0',order:10,clientId:null,owner:'opera',base:true},
+  {id:'imoveis',name:'Nova lead imóveis',color:'#0EA5E9',order:20,clientId:null,owner:'opera',base:true},
+  {id:'bd',name:'Nova Lead BD',color:'#64748B',order:30,clientId:null,owner:'opera',base:true},
+  {id:'followup',name:'Follow Up OPERA',color:'#F59E0B',order:40,clientId:null,owner:'opera',base:true},
+  {id:'qualificada',name:'Lead Qualificada',color:'#10B981',order:50,clientId:null,owner:'ambos',base:true},
+  {id:'desq',name:'Lead desqualificada',color:'#94A3B8',order:999,clientId:null,owner:'ambos',base:true}
+];
+const NEW_STAGES=['meta','imoveis','bd'];
+const PORTALS=['Idealista','Imovirtual','Casa Sapo'];
+const SOURCES=['Meta','Idealista','Imovirtual','Casa Sapo','Base de dados','Referência','Chamada recebida','Evento','Outra'];
+const QUAL_FIELDS=['Objetivo','Budget','Prazo','Financiamento','Tem imóvel para vender','Disponibilidade para visita'];
+const TASK_TYPES={call:'Chamada',meeting:'Reunião',followup:'Follow up'};
+const LABEL_COLORS={vermelho:['#FDE2E2','#991B1B','Vermelho'],laranja:['#FDE4D2','#9A3412','Laranja'],amarelo:['#FEF3C7','#854D0E','Amarelo'],verde:['#DDF3E4','#166534','Verde'],azul:['#DCE8FF','#1E3A8A','Azul'],roxo:['#ECE3FB','#5B21B6','Roxo'],rosa:['#FCE7F3','#9D174D','Rosa'],cinzento:['#E5E7EB','#374151','Cinzento']};
+function defaultLabels(){return [{id:'quente',name:'Quente',color:'vermelho'},{id:'morno',name:'Morno',color:'amarelo'},{id:'frio',name:'Frio',color:'azul'},{id:'comprador',name:'Comprador',color:'verde'},{id:'proprietario',name:'Proprietário',color:'laranja'},{id:'investidor',name:'Investidor',color:'roxo'}]}
+function srcStage(src){return src==='Meta'?'meta':PORTALS.includes(src)?'imoveis':'bd'}
+
+/* ================= DADOS DE EXEMPLO ================= */
+let S;
+function uid(){return Math.random().toString(36).slice(2,10)}
+function seed(){
+  const clients=[
+    {id:'bruno',name:'Bruno Fernandes',dot:'#3B6FE0',tagBg:'#DCE8FF',tagFg:'#1E3A8A',inbox:'bruno@leads.opera-os.com',managerId:'andre'},
+    {id:'tf',name:'Teixeira & Felizardo',dot:'#E07B3B',tagBg:'#FDE4D2',tagFg:'#9A3412',inbox:'tf@leads.opera-os.com',managerId:'andre'},
+    {id:'miguel',name:'Miguel Martins',dot:'#2E9E5B',tagBg:'#DDF3E4',tagFg:'#166534',inbox:'miguel@leads.opera-os.com',managerId:'andre'},
+    {id:'alex',name:'Alexandre',dot:'#8B5CF6',tagBg:'#ECE3FB',tagFg:'#5B21B6',inbox:'alexandre@leads.opera-os.com',managerId:'andre'}
+  ];
+  const managers=[{id:'andre',name:'André Pateira'},{id:'vaga',name:'Novo gestor (vaga em aberto)'}];
+  clients.forEach(c=>{c.status='ativo'});
+  const users=[
+    {id:'u_fabio',name:'Fábio Sirgado',email:'fabio.sirgado@opera-os.com',role:'admin',clientId:null,status:'ativo'},
+    {id:'u_andre',name:'André Pateira',email:'andre@opera-os.com',role:'gestor',managerId:'andre',clientId:null,status:'ativo'},
+    {id:'u_tf1',name:'Responsável T&F',email:'responsavel@exemplo-tf.pt',role:'cliente_admin',clientId:'tf',status:'ativo'},
+    {id:'u_tf2',name:'Consultora T&F',email:'consultora@exemplo-tf.pt',role:'cliente',clientId:'tf',status:'ativo'},
+    {id:'u_tf3',name:'Assistente T&F',email:'assistente@exemplo-tf.pt',role:'cliente',clientId:'tf',status:'convidado'},
+    {id:'u_bruno',name:'Bruno Fernandes',email:'bruno@exemplo.pt',role:'cliente_admin',clientId:'bruno',status:'ativo'},
+    {id:'u_miguel',name:'Miguel Martins',email:'miguel@exemplo.pt',role:'cliente_admin',clientId:'miguel',status:'ativo'},
+    {id:'u_alex',name:'Alexandre',email:'alexandre@exemplo.pt',role:'cliente_admin',clientId:'alex',status:'ativo'}];
+  const first=['Marta','Ricardo','Joana','Paulo','Inês','Sofia','Hugo','Carla','Nuno','Rui','Ana','Tiago','Beatriz','Pedro','Catarina','João','Mariana','Diogo','Rita','Filipe','Sara','Helena','Gonçalo','Leonor','Patrícia','Vasco','Luísa','Bruno','Daniela','Fábio'];
+  const last=['Lopes','Sousa','Pires','Matos','Rocha','Almeida','Neves','Dias','Barros','Teles','Guerra','Costa','Ferreira','Santos','Oliveira','Martins','Gomes','Ribeiro','Carvalho','Pinto','Moreira','Cardoso'];
+  const ints=['T2 Alvalade, 385 000 €','Avaliação de imóvel, Oeiras','Moradia V4 Sintra','Quer vender T3 Amadora','T1 Arroios para investir','Comprar até 300 000 €, Cascais','T2 Benfica, crédito aprovado','Vende T4 Parede','T3 Lumiar','T3 Telheiras, até 450 000 €','Arrendar T2 Lisboa','Terreno em Mafra','T2 Almada com vista rio','Vender casa herdada, Setúbal'];
+  const budgets=['250 000 €','300 000 €','385 000 €','450 000 €','600 000 €','Até 1 200 €/mês'];
+  let r=11;const rnd=n=>{r=(r*9301+49297)%233280;return Math.floor(r/233280*n)};
+  const now=Date.now(),H=3600e3,M=60e3;
+  const speed={bruno:1,tf:0.6,miguel:1.6,alex:2.2};
+  const leads=[];
+  for(let i=0;i<170;i++){
+    const c=clients[[0,0,1,1,1,2,2,3][rnd(8)]];
+    const created=now-rnd(30*24*60)*M;
+    const age=(now-created)/M;
+    let src=SOURCES[rnd(5)];
+    const name=first[rnd(first.length)]+' '+last[rnd(last.length)];
+    const l={id:uid(),clientId:c.id,name,phone:'+351 9'+(1+rnd(6))+rnd(10)+' '+(100+rnd(899))+' '+(100+rnd(899)),
+      email:name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(' ','.')+'@email.pt',
+      source:src,interest:ints[rnd(ints.length)],stageId:srcStage(src),entryStage:srcStage(src),createdAt:created,attempts:0,qual:{},timeline:[],tasks:[],labels:[]};
+    if(rnd(3)!==0)l.labels.push(['quente','morno','frio'][rnd(3)]);if(rnd(2)===0)l.labels.push(['comprador','proprietario','investidor'][rnd(3)]);
+    const ev=(t,title,when,body,by,extra)=>l.timeline.push(Object.assign({id:uid(),t,title,when,body:body||'',by:by||'André'},extra||{}));
+    ev('auto',src==='Meta'?'Lead criada a partir do formulário Meta':PORTALS.includes(src)?'Lead criada a partir do email do portal':'Lead importada da base de dados do cliente',created,
+      src==='Meta'?'Recebida via Make.':PORTALS.includes(src)?'Email reencaminhado para '+c.inbox+'. A IA extraiu nome, contacto, mensagem e imóvel.':'','Automático');
+    const contacted=age<45?rnd(2)===0:rnd(14)!==0;
+    if(!contacted){l.tasks.push({id:uid(),type:'call',due:created+15*M,note:'Primeiro contacto',done:false});leads.push(l);continue}
+    const bucket=rnd(100);let ttl=bucket<55?1+rnd(5):bucket<80?5+rnd(25):bucket<93?30+rnd(150):180+rnd(600);
+    ttl=Math.max(1,Math.round(ttl*speed[c.id]));
+    const fc=Math.min(created+ttl*M,now-M);
+    const answered=rnd(3)!==0;
+    ev('call',answered?'Chamada CloudTalk, atendida':'Chamada CloudTalk, não atendida',fc,answered?'Duração 3:1'+rnd(10)+'.':'Mensagem de voz deixada.');
+    l.attempts=1;
+    ev('stage','Mudou de etapa',fc+M,BASE_STAGES.find(s=>s.id===l.stageId).name+' → Follow Up OPERA','André',{to:'followup'});
+    l.stageId='followup';
+    const extra=rnd(3);
+    for(let k=0;k<extra;k++){const w=fc+(k+1)*(2+rnd(20))*H;if(w<now){ev('call','Chamada CloudTalk, '+(rnd(2)?'atendida':'não atendida'),w,'');l.attempts++}}
+    const doneN=rnd(3);
+    for(let k=0;k<doneN;k++){const w=fc+(1+rnd(48))*H;if(w<now){const ty=['call','followup','meeting'][rnd(3)];l.tasks.push({id:uid(),type:ty,due:w,note:ty==='meeting'?'Reunião por videochamada':ty==='followup'?'Enviar imóveis':'Ligar de novo',done:true,doneAt:w});}}
+    const fate=rnd(100);
+    if(fate<38){l.tasks.push({id:uid(),type:['call','followup'][rnd(2)],due:now+(rnd(40)-12)*H,note:rnd(2)?'Ligar de novo':'Enviar imóveis',done:false})}
+    else{
+      const target=fate<72?'qualificada':'desq';
+      const w=Math.min(fc+(2+rnd(70))*H,now-5*M);
+      ev('stage','Mudou de etapa',w,'Follow Up OPERA → '+(target==='qualificada'?'Lead Qualificada':'Lead desqualificada'),'André',{to:target});
+      l.stageId=target;
+      if(target==='qualificada'){
+        l.qual={'Objetivo':['Comprar habitação própria','Vender imóvel','Investir'][rnd(3)],'Budget':budgets[rnd(budgets.length)],'Prazo':['Até 3 meses','3 a 6 meses','Imediato'][rnd(3)],'Financiamento':['Pré aprovação no banco','Capitais próprios','Por tratar'][rnd(3)]};
+        ev('auto','Cliente notificado',w+M,'Aviso enviado a '+c.name+' com o resumo da lead.','Automático');
+        l.tasks.push({id:uid(),type:'followup',due:w+24*H,note:'Confirmar com o cliente',done:w+24*H<now,doneAt:w+24*H});
+        if(c.id==='tf'&&rnd(2)===0)l.ownerUserId=['u_tf1','u_tf2'][rnd(2)];
+        if(c.id==='tf'&&rnd(3)===0){l.stageId='visita_tf';ev('stage','Mudou de etapa',w+30*H<now?w+30*H:now-M,'Lead Qualificada → Visita marcada',c.name,{to:'visita_tf'})}
+      }
+    }
+    if(rnd(9)===0){ev('note','Nota',fc+20*M,['Só pode falar depois das 18h.','Prefere contacto por WhatsApp.','Já trabalhou com outra agência, cuidado com o preço.'][rnd(3)],'André',{pinned:true})}
+    leads.push(l);
+  }
+  return {clients,managers,users,audit:[],inbound:[],settings:{anonAfter:0},labels:defaultLabels(),stages:BASE_STAGES.map(s=>Object.assign({},s)).concat([{id:'visita_tf',name:'Visita marcada',color:'#E07B3B',order:55,clientId:'tf',owner:'cliente',base:false}]),
+    leads,ui:{view:'pipeline',filter:'all',q:'',role:'opera',shown:{},dashClient:'all',period:'7',label:'all',sort:'next',layout:'board',lsort:{key:'createdAt',dir:-1},userId:null,mine:false}};
+}
+function load(){try{const s=localStorage.getItem(STORE_KEY);if(s){S=JSON.parse(s);S.ui.shown={};if(!S.labels)S.labels=defaultLabels();if(!S.ui.label)S.ui.label='all';if(!S.ui.sort)S.ui.sort='next';if(!S.ui.layout)S.ui.layout='board';if(!S.ui.lsort)S.ui.lsort={key:'createdAt',dir:-1};S.ui.listShown=PAGE;S.leads.forEach(l=>{if(!l.labels)l.labels=[]});return}}catch(e){} S=seed()}
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(S))}catch(e){}}
+
+/* ================= AJUDAS ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const client=id=>S.clients.find(c=>c.id===id);
+const manager=id=>S.managers.find(m=>m.id===id);
+const stage=id=>S.stages.find(s=>s.id===id);
+const leadById=id=>S.leads.find(l=>l.id===id);
+const me=()=>S.users.find(u=>u.id===S.ui.userId);
+const isClient=()=>S.ui.role!=='opera';
+const isAdmin=()=>(me()||{}).role==='admin';
+const isClientAdmin=()=>(me()||{}).role==='cliente_admin';
+const AC=()=>S.clients.filter(c=>c.status!=="inativo");
+const clientActive=id=>{const c=client(id);return c&&c.status!=='inativo'};
+const initials=n=>String(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+function audit(action,detail){S.audit.unshift({when:Date.now(),who:(me()||{name:'Sistema'}).name,action,detail:detail||''});if(S.audit.length>500)S.audit.length=500}
+function addMonths(ts,m){const d=new Date(ts);d.setMonth(d.getMonth()+m);return d.getTime()}
+const fmtDate=ts=>new Date(ts).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'});
+const QUAL_ORDER=()=>stage('qualificada').order;
+const openTasks=l=>l.tasks.filter(t=>!t.done).sort((a,b)=>a.due-b.due);
+const nextTask=l=>openTasks(l)[0];
+const firstCall=l=>{const c=l.timeline.filter(t=>t.t==='call').map(t=>t.when);return c.length?Math.min(...c):null};
+const pinned=l=>l.timeline.filter(t=>t.pinned);
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600)}
+function fmtWhen(ts){const d=new Date(ts),n=new Date();const y=new Date(n);y.setDate(n.getDate()-1);const tm=new Date(n);tm.setDate(n.getDate()+1);
+  const hh=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(d.toDateString()===n.toDateString())return 'Hoje '+hh;if(d.toDateString()===y.toDateString())return 'Ontem '+hh;if(d.toDateString()===tm.toDateString())return 'Amanhã '+hh;
+  return d.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' '+hh}
+function ago(ts){const m=Math.round((Date.now()-ts)/60000);if(m<60)return 'há '+m+' min';const h=Math.round(m/60);if(h<24)return 'há '+h+' h';return 'há '+Math.round(h/24)+' dias'}
+function fmtDur(min){if(min==null||isNaN(min))return '—';if(min<1)return '< 1 min';if(min<60)return Math.round(min)+' min';if(min<1440)return (min/60).toFixed(1).replace('.',',')+' h';return (min/1440).toFixed(1).replace('.',',')+' dias'}
+const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+const median=a=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2};
+function normPhone(p){return String(p||'').replace(/\D/g,'').replace(/^351/,'')}
+function tag(c){return `<span class="tag" style="background:${c.tagBg};color:${c.tagFg}">${esc(c.name)}</span>`}
+function lab(id){const x=S.labels.find(z=>z.id===id);if(!x)return '';const c=LABEL_COLORS[x.color]||LABEL_COLORS.cinzento;return `<span class="tag" style="background:${c[0]};color:${c[1]}">${esc(x.name)}</span>`}
+function labsHTML(l){const h=(l.labels||[]).map(lab).join('');return h?`<div class="tags">${h}</div>`:''}
+function ttag(type){return `<span class="ttag tt-${type}">${TASK_TYPES[type]}</span>`}
+function localInput(ts){const d=new Date(ts);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+const by=()=>(me()||{name:'André'}).name;
+function log(l,t,title,body,extra){l.timeline.push(Object.assign({id:uid(),t,title,when:Date.now(),body:body||'',by:by()},extra||{}))}
+function addTask(l,type,due,note){l.tasks.push({id:uid(),type,due,note:note||'',done:false})}
+const ICON={
+  clock:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  file:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
+  up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>',
+  down:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>',
+  phone:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+  plus:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  search:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  pin:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 17v5M8 3h8l-1 6 3 4H6l3-4z"/></svg>'
+};
+
+function visibleLeads(){
+  let L=S.leads;
+  if(isClient()){L=L.filter(l=>l.clientId===S.ui.role);if(S.ui.mine)L=L.filter(l=>l.ownerUserId===S.ui.userId)}
+  else{L=L.filter(l=>clientActive(l.clientId));if(S.ui.filter!=='all')L=L.filter(l=>l.clientId===S.ui.filter)}
+  if(S.ui.label&&S.ui.label!=='all')L=L.filter(l=>(l.labels||[]).includes(S.ui.label));
+  const q=S.ui.q.trim().toLowerCase();
+  if(q){const qp=normPhone(q);L=L.filter(l=>(l.name+' '+l.interest+' '+l.email).toLowerCase().includes(q)||(qp.length>2&&normPhone(l.phone).includes(qp)))}
+  return L;
+}
+function columns(){
+  const cid=isClient()?S.ui.role:(S.ui.filter==='all'?null:S.ui.filter);
+  return S.stages.filter(s=>s.clientId===null||s.clientId===cid).sort((a,b)=>a.order-b.order);
+}
+function canMoveTo(st){return !isClient()||st.order>=QUAL_ORDER()}
+function dueToday(){
+  if(isClient())return 0;const end=new Date();end.setHours(23,59,59,999);
+  return S.leads.reduce((n,l)=>n+openTasks(l).filter(t=>t.due<=end.getTime()).length,0);
+}
+
+/* ================= RENDER ================= */
+function render(){
+  const u=me();
+  if(!u||u.status!=='ativo'||(u.clientId&&!clientActive(u.clientId))){S.ui.userId=null;document.body.classList.add('out');renderLogin();save();return}
+  document.body.classList.remove('out');
+  S.ui.role=u.clientId?u.clientId:'opera';
+  renderSide();const v=S.ui.view;
+  if(v==='entradas')renderEntradas();else if(v==='clientes')renderClientes();else if(v==='equipa')renderEquipa();else if(v==='privacidade')renderPriv();else
+  if(v==='pipeline')renderPipeline();else if(v==='hoje')renderHoje();else if(v==='io')renderIO();else if(v==='dash')renderDash();
+  save()}
+function renderSide(){
+  const n=dueToday();
+  const items=isClient()?[['pipeline','As vossas leads']].concat(isClientAdmin()?[['equipa','A minha equipa']]:[]):[['pipeline','Pipeline geral'],['hoje','Hoje'],['dash','Dashboard'],['io','Importar e exportar'],['entradas','Entradas automáticas'],['clientes','Clientes e acessos']].concat(isAdmin()?[['privacidade','Privacidade e RGPD']]:[]);
+  $('#nav').innerHTML=items.map(([k,l])=>`<button type="button" class="${S.ui.view===k?'on':''}" data-nav="${k}">${l}${k==='hoje'&&n?`<span class="badge">${n}</span>`:''}</button>`).join('');
+  $('#sideClients').innerHTML=isClient()?'':`<h4>Clientes ativos</h4><div class="clients">${AC().map(c=>`<button type="button" data-client="${c.id}"><span class="dot" style="background:${c.dot}"></span>${esc(c.name)}<small>${S.leads.filter(l=>l.clientId===c.id&&l.stageId!=='desq').length}</small></button>`).join('')}</div>`;
+  const u=me();
+  $('#ubox').innerHTML=`<div class="who"><span class="av">${initials(u.name)}</span><div style="display:flex;flex-direction:column;min-width:0"><b style="font-size:13px">${esc(u.name)}</b><small>${ROLE_LABEL[u.role]}${u.clientId?' · '+esc(client(u.clientId).name):''}</small></div></div>
+    <button type="button" data-act="logout">Terminar sessão</button>
+    <label for="role" style="font-size:11px;color:var(--navyMute);margin-top:4px">Protótipo: trocar de conta</label>
+    <select id="role">${S.users.filter(x=>x.status==='ativo'&&(!x.clientId||clientActive(x.clientId))).map(x=>`<option value="${x.id}" ${x.id===u.id?'selected':''}>${esc(x.name)} (${ROLE_LABEL[x.role]})</option>`).join('')}</select>`;
+}
+function cardHTML(l,canDrag){
+  const c=client(l.clientId),t=nextTask(l),late=t&&t.due<Date.now(),p=pinned(l)[0];
+  return `<div role="button" tabindex="0" class="cardL" data-open="${l.id}" ${canDrag?'draggable="true"':''} data-drag="${l.id}" aria-label="Abrir ${esc(l.name)}">
+    <div class="tags">${isClient()?'':tag(c)}<span class="src">${esc(l.source)}</span></div>
+    <span class="cname">${esc(l.name)}</span><span class="cint">${esc(l.interest||'')}</span>
+    ${labsHTML(l)}
+    ${l.ownerUserId&&S.users.find(u=>u.id===l.ownerUserId)?`<span class="cint">Responsável: ${esc(S.users.find(u=>u.id===l.ownerUserId).name)}</span>`:''}
+    ${p?`<span class="pinline">${ICON.pin} ${esc(p.body)}</span>`:''}
+    <span class="cnext ${late?'late':''}">${ICON.clock}<span>${t?TASK_TYPES[t.type]+' · '+fmtWhen(t.due):'Sem tarefa'}</span><em>${l.attempts?l.attempts+' tent.':ago(l.createdAt)}</em></span>
+  </div>`;
+}
+function clientPills(){return `<div class="pills" role="group" aria-label="Filtrar por cliente">
+  <button type="button" class="pill ${S.ui.filter==='all'?'on':''}" data-filter="all">Todos os clientes</button>
+  ${AC().map(c=>`<button type="button" class="pill ${S.ui.filter===c.id?'on':''}" data-filter="${c.id}"><span class="dot" style="width:8px;height:8px;flex:0 0 8px;background:${c.dot}"></span>${esc(c.name)}</button>`).join('')}</div>`}
+function renderPipeline(){
+  const L=visibleLeads(),cols=columns(),now=Date.now();
+  const today0=new Date();today0.setHours(0,0,0,0);
+  const cl=isClient()?client(S.ui.role):null;
+  const qualWaiting=cl?S.leads.filter(l=>l.clientId===cl.id&&l.stageId==='qualificada').length:0;
+  $('#main').innerHTML=`
+  <div class="top">
+    <div><h1>${cl?'As vossas leads':'Pipeline geral'}</h1><div class="sub">${cl?'Só vêem as leads de '+esc(cl.name)+'. A OPERA trabalha as primeiras etapas por vós.':'Todas as leads de todos os clientes, num só quadro'}</div></div>
+    <div class="row">
+      <label class="search">${ICON.search}<span class="vh">Procurar</span><input type="search" id="q" placeholder="Filtrar nome, telefone ou imóvel" value="${esc(S.ui.q)}"></label>
+      <label class="f" style="flex-direction:row;align-items:center;gap:8px"><span class="vh">Ordenar</span><select id="sortSel" style="min-height:44px">${SORTS.map(([k,v])=>`<option value="${k}" ${S.ui.sort===k?'selected':''}>Ordenar: ${v}</option>`).join('')}</select></label>
+      <div class="seg2" role="group" aria-label="Vista"><button type="button" class="${S.ui.layout!=='list'?'on':''}" data-layout="board" aria-pressed="${S.ui.layout!=='list'}">Quadro</button><button type="button" class="${S.ui.layout==='list'?'on':''}" data-layout="list" aria-pressed="${S.ui.layout==='list'}">Lista</button></div>
+      <label class="f" style="flex-direction:row;align-items:center;gap:8px"><span class="vh">Etiqueta</span><select id="labFilter" style="min-height:44px"><option value="all">Todas as etiquetas</option>${S.labels.map(x=>`<option value="${x.id}" ${S.ui.label===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+      ${cl?`<button type="button" class="btn" data-act="exportClient">${ICON.down}Exportar contactos</button><button type="button" class="btn primary" data-act="newLead">Nova lead</button><label style="display:flex;gap:8px;align-items:center;font-size:13px;min-height:44px"><input type="checkbox" id="mine" ${S.ui.mine?'checked':''}>Só as minhas</label>`:`
+      <button type="button" class="btn" data-nav="io">${ICON.up}Importar Excel</button>
+      <button type="button" class="btn" data-act="quickExport">${ICON.down}Exportar Excel</button>
+      <button type="button" class="btn primary" data-act="newLead">Nova lead</button>`}
+    </div>
+  </div>
+  ${cl?`<div class="banner ${qualWaiting?'green':'blue'}"><b>${qualWaiting?qualWaiting+(qualWaiting>1?' leads qualificadas à vossa espera.':' lead qualificada à vossa espera.'):'Sem leads qualificadas pendentes.'}</b> Recebem aviso por email ou WhatsApp sempre que a OPERA qualifica uma lead. Endereço para reencaminhar os emails dos portais: <b>${esc(cl.inbox)}</b> · <button type="button" class="link" data-fwd="${cl.id}">Como configurar</button></div>`:`
+  ${clientPills()}
+  <div class="stats">
+    <div class="stat"><span>Entraram hoje</span><b>${L.filter(l=>l.createdAt>=today0.getTime()).length}</b></div>
+    <div class="stat"><span>Por contactar</span><b>${L.filter(l=>NEW_STAGES.includes(l.stageId)).length}</b></div>
+    <div class="stat warn"><span>Tarefas atrasadas</span><b>${L.reduce((n,l)=>n+openTasks(l).filter(t=>t.due<now).length,0)}</b></div>
+    <div class="stat"><span>Qualificadas por entregar</span><b>${L.filter(l=>l.stageId==='qualificada').length}</b></div>
+  </div>`}
+  ${S.ui.layout==='list'?listHTML(L):`<div class="boardWrap"><div class="board">
+    ${cols.map(s=>{
+      const items=L.filter(l=>l.stageId===s.id).sort(SORT_FN[S.ui.sort]||SORT_FN.next);
+      const shown=S.ui.shown[s.id]||PAGE;
+      const ownerTxt=s.clientId?'Etapa só de '+esc(client(s.clientId).name):(s.owner==='opera'?'Trabalhado pela OPERA':s.owner==='cliente'?'Etapa do cliente':'OPERA e cliente');
+      const ownerCol=s.clientId?'#9A3412':(s.owner==='opera'?'#1D4ED8':s.owner==='cliente'?'#9A3412':'#166534');
+      return `<section class="colm ${s.clientId?'client':''}" data-col="${s.id}">
+        <header><div class="h"><span style="border-radius:50%;width:8px;height:8px;flex:0 0 8px;background:${s.color}"></span><h2>${esc(s.name)}</h2><span class="count">${items.length}</span></div>
+        <span class="owner" style="color:${ownerCol}">${ownerTxt}</span></header>
+        ${items.slice(0,shown).map(l=>cardHTML(l,canMoveTo(s))).join('')}
+        ${items.length>shown?`<button type="button" class="more" data-more="${s.id}">Mostrar mais ${Math.min(PAGE,items.length-shown)} de ${items.length-shown}</button>`:''}
+      </section>`}).join('')}
+    <button type="button" class="addStage" data-act="newStage">${ICON.plus}Nova etapa<small>${isClient()?'depois de Qualificada':'depois de Qualificada, para todos ou só um cliente'}</small></button>
+  </div></div>`}
+  <div class="foot">Protótipo: os dados ficam guardados só neste browser. <button type="button" class="link" data-act="reset">Repor dados de exemplo</button></div>`;
+  if(S.ui.layout!=='list')bindDnD();
+}
+function renderHoje(){
+  const now=Date.now();const end=new Date();end.setHours(23,59,59,999);const end2=new Date(end);end2.setDate(end.getDate()+1);
+  const rows=[];visibleLeads().forEach(l=>openTasks(l).forEach(t=>{if(t.due<=end2.getTime())rows.push({l,t})}));
+  rows.sort((a,b)=>a.t.due-b.t.due);
+  const groups=[['Atrasadas','#C2410C',rows.filter(x=>x.t.due<now)],['Ainda hoje','#1D4ED8',rows.filter(x=>x.t.due>=now&&x.t.due<=end.getTime())],['Amanhã','#475569',rows.filter(x=>x.t.due>end.getTime())]];
+  $('#main').innerHTML=`<div class="top"><div><h1>Hoje</h1><div class="sub">Todas as tarefas de todos os clientes, por ordem de urgência</div></div>
+    <label class="search">${ICON.search}<span class="vh">Procurar</span><input type="search" id="q" placeholder="Procurar" value="${esc(S.ui.q)}"></label></div>
+  ${clientPills()}
+  ${groups.map(([t,col,items])=>`<h3 class="grpT" style="color:${col}">${t} · ${items.length}</h3>
+    <div class="list">${items.length?items.slice(0,100).map(({l,t:tk})=>`<div class="item">
+      <span class="t" style="color:${col}">${tk.due<now&&new Date(tk.due).toDateString()!==new Date().toDateString()?new Date(tk.due).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'}):new Date(tk.due).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}</span>
+      <span class="ty">${ttag(tk.type)}</span>
+      <div class="who"><div class="tags"><b>${esc(l.name)}</b>${tag(client(l.clientId))}<span class="src">${esc(stage(l.stageId).name)}</span></div><span class="cint">${esc(tk.note||l.interest)}</span></div>
+      <div class="row"><button type="button" class="btn primary sm" data-call="${l.id}">${ICON.phone}Ligar</button><button type="button" class="btn sm" data-open="${l.id}">Abrir</button><button type="button" class="btn sm" data-done="${l.id}|${tk.id}">Feita</button></div>
+    </div>`).join(''):'<div class="empty">Nada aqui.</div>'}</div>`).join('')}`;
+}
+
+
+const lastContact=l=>{const c=l.timeline.filter(t=>t.t==='call').map(t=>t.when);return c.length?Math.max(...c):null};
+const SORTS=[['next','Próxima tarefa'],['recent','Mais recentes'],['old','Mais antigas'],['name','Nome A a Z'],['stale','Mais tempo sem contacto'],['attempts','Mais tentativas']];
+const SORT_FN={
+  next:(a,b)=>((nextTask(a)||{}).due||9e15)-((nextTask(b)||{}).due||9e15),
+  recent:(a,b)=>b.createdAt-a.createdAt,
+  old:(a,b)=>a.createdAt-b.createdAt,
+  name:(a,b)=>a.name.localeCompare(b.name,'pt'),
+  stale:(a,b)=>(lastContact(a)||0)-(lastContact(b)||0),
+  attempts:(a,b)=>b.attempts-a.attempts
+};
+const LIST_COLS=[['name','Nome',l=>l.name],['client','Cliente',l=>client(l.clientId).name],['stage','Etapa',l=>stage(l.stageId).order],['source','Origem',l=>l.source],['createdAt','Entrada',l=>l.createdAt],['next','Próxima tarefa',l=>(nextTask(l)||{}).due||9e15],['last','Último contacto',l=>lastContact(l)||0],['attempts','Tentativas',l=>l.attempts]];
+function listHTML(L){
+  const ls=S.ui.lsort||{key:'createdAt',dir:-1};const col=LIST_COLS.find(c=>c[0]===ls.key)||LIST_COLS[4];
+  const rows=L.slice().sort((a,b)=>{const x=col[2](a),y=col[2](b);return (typeof x==='string'?x.localeCompare(y,'pt'):x-y)*ls.dir});
+  const shown=S.ui.listShown||PAGE;const now=Date.now();
+  const cols=LIST_COLS.filter(c=>!(isClient()&&c[0]==='client'));
+  return `<div class="tbl" style="margin:0;background:#fff"><table><thead><tr>${cols.map(c=>`<th class="${['attempts'].includes(c[0])?'n':''}" aria-sort="${ls.key===c[0]?(ls.dir>0?'ascending':'descending'):'none'}"><button type="button" class="sort ${ls.key===c[0]?'on':''}" data-lsort="${c[0]}">${c[1]}${ls.key===c[0]?(ls.dir>0?' ↑':' ↓'):''}</button></th>`).join('')}<th>Etiquetas</th></tr></thead><tbody>
+  ${rows.slice(0,shown).map(l=>{const t=nextTask(l),lc=lastContact(l);return `<tr class="rowL" data-open="${l.id}" tabindex="0">
+    <td><b>${esc(l.name)}</b>${pinned(l).length?` <span style="color:var(--pinText)" title="Tem nota afixada">${ICON.pin}</span>`:''}<div class="cint">${esc(l.phone)}</div></td>
+    ${isClient()?'':`<td>${tag(client(l.clientId))}</td>`}
+    <td>${esc(stage(l.stageId).name)}</td><td>${esc(l.source)}</td><td style="white-space:nowrap">${fmtWhen(l.createdAt)}</td>
+    <td style="white-space:nowrap;${t&&t.due<now?'color:#C2410C;font-weight:600':''}">${t?TASK_TYPES[t.type]+' · '+fmtWhen(t.due):'<span style="color:var(--mute2)">Sem tarefa</span>'}</td>
+    <td style="white-space:nowrap">${lc?ago(lc):'<span style="color:#C2410C">Nunca</span>'}</td><td class="n">${l.attempts}</td>
+    <td>${(l.labels||[]).map(lab).join(' ')}</td></tr>`}).join('')}
+  </tbody></table></div>
+  <div class="row" style="justify-content:space-between"><span class="sub" style="margin:0">${Math.min(shown,rows.length)} de ${rows.length} leads</span>${rows.length>shown?`<button type="button" class="more" data-lmore="1">Mostrar mais ${Math.min(PAGE,rows.length-shown)}</button>`:''}</div>`;
+}
+/* pesquisa global */
+let GSEL=0;
+function gsearch(q){
+  const box=$('#gres');q=q.trim();if(!q){box.classList.remove('on');$('#gq').setAttribute('aria-expanded','false');return}
+  const n=q.toLowerCase(),np=normPhone(q);
+  const pool=isClient()?S.leads.filter(l=>l.clientId===S.ui.role):S.leads.filter(l=>clientActive(l.clientId));
+  const hits=[];
+  for(const l of pool){let where='';
+    if(l.name.toLowerCase().includes(n))where='nome';else if(np.length>2&&normPhone(l.phone).includes(np))where='telefone';else if((l.email||'').toLowerCase().includes(n))where='email';
+    else if((l.interest||'').toLowerCase().includes(n))where='interesse';else if(Object.values(l.qual).some(v=>String(v).toLowerCase().includes(n)))where='qualificação';
+    else if(l.timeline.some(e=>e.t==='note'&&e.body.toLowerCase().includes(n)))where='notas';
+    else if((l.labels||[]).some(id=>((S.labels.find(x=>x.id===id)||{}).name||'').toLowerCase().includes(n)))where='etiqueta';
+    if(where)hits.push({l,where});if(hits.length>=40)break}
+  hits.sort((a,b)=>(a.where==='nome'?0:1)-(b.where==='nome'?0:1));
+  const hl=t=>{const i=t.toLowerCase().indexOf(n);return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+n.length))+'</mark>'+esc(t.slice(i+n.length))};
+  GSEL=0;
+  box.innerHTML=hits.length?hits.slice(0,10).map((h,i)=>`<button type="button" role="option" class="r ${i===0?'act':''}" data-gopen="${h.l.id}"><span class="tags"><b>${hl(h.l.name)}</b>${isClient()?'':tag(client(h.l.clientId))}<span class="src">${esc(stage(h.l.stageId).name)}</span></span><small>${esc(h.l.phone)} · encontrado em ${h.where}${h.where==='interesse'?': '+hl(h.l.interest):''}</small></button>`).join('')+(hits.length>10?`<div class="hint">Mais resultados: escreve mais para afinar.</div>`:''):'<div class="hint">Nenhuma lead encontrada.</div>';
+  box.classList.add('on');$('#gq').setAttribute('aria-expanded','true');
+}
+
+
+/* ================= SESSÃO E ACESSOS ================= */
+let LOGIN={step:'cred',uid:null,msg:''};
+function renderLogin(){
+  const demo=S.users.map(u=>{const off=u.status!=='ativo'||(u.clientId&&!clientActive(u.clientId));return `<button type="button" data-demo="${u.email}"><span><b>${esc(u.name)}</b><br><small>${ROLE_LABEL[u.role]}${u.clientId?' · '+esc(client(u.clientId).name):''}</small></span><small>${u.status==='convidado'?'convite por aceitar':off?'sem acesso':''}</small></button>`}).join('');
+  $('#main').innerHTML=`<div class="login"><div class="lcard">
+    <div class="brand" style="padding:0"><b style="font-size:22px">OPERA</b><span>Leads</span></div>
+    ${LOGIN.step==='cred'?`<h1 style="margin:0;font-size:22px">Entrar</h1>
+    ${LOGIN.msg?`<div class="banner ${LOGIN.ok?'green':'orange'}" style="padding:10px 14px">${LOGIN.msg}</div>`:''}
+    <form id="lgForm" style="display:flex;flex-direction:column;gap:12px">
+      <label class="f">Email<input name="email" type="email" autocomplete="username" required></label>
+      <label class="f">Palavra passe<input name="pw" type="password" autocomplete="current-password"></label>
+      <button type="submit" class="btn primary" style="justify-content:center">Entrar</button>
+    </form>
+    <div class="row" style="justify-content:space-between"><button type="button" class="link" data-act="magic">Receber link de acesso por email</button><button type="button" class="link" data-act="forgot">Esqueci a palavra passe</button></div>
+    <span class="sub" style="margin:0;font-size:12px">Não há registo público. As contas são criadas por convite da OPERA.</span>`:`
+    <h1 style="margin:0;font-size:22px">Verificação em dois passos</h1>
+    <span class="sub" style="margin:0">As contas da equipa OPERA têm acesso às leads de todos os clientes. Introduz o código de 6 dígitos da tua aplicação de autenticação.</span>
+    <form id="codeForm" style="display:flex;flex-direction:column;gap:12px"><label class="f">Código<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" placeholder="123456"></label><button type="submit" class="btn primary" style="justify-content:center">Confirmar</button></form>
+    <button type="button" class="link" data-act="lgback">Voltar</button>`}
+    <div class="demo"><span style="font-size:12px;font-weight:600;color:var(--mute)">Protótipo: contas de demonstração (qualquer palavra passe; código 2FA qualquer de 6 dígitos)</span>${demo}</div>
+  </div></div>`;
+  const f=$('#lgForm');if(f)f.addEventListener('submit',e=>{e.preventDefault();tryLogin(f.elements.email.value)});
+  const c=$('#codeForm');if(c)c.addEventListener('submit',e=>{e.preventDefault();if(/^\d{6}$/.test(c.elements.code.value)){finishLogin(LOGIN.uid)}else toast('Código inválido')});
+  const fi=document.querySelector('#lgForm input');if(fi)fi.focus();
+}
+function tryLogin(email){
+  const u=S.users.find(x=>x.email.toLowerCase()===String(email).trim().toLowerCase());
+  LOGIN.ok=false;
+  if(!u){LOGIN.msg='Email ou palavra passe incorretos.';renderLogin();return}
+  if(u.status==='convidado'){LOGIN.msg='Esta conta ainda não aceitou o convite. Abre o email de convite para definir a palavra passe.';renderLogin();return}
+  if(u.status!=='ativo'||(u.clientId&&!clientActive(u.clientId))){LOGIN.msg='Este acesso está desativado. Fala com a OPERA.';renderLogin();return}
+  if(u.role==='admin'||u.role==='gestor'){LOGIN={step:'code',uid:u.id,msg:''};renderLogin();return}
+  finishLogin(u.id);
+}
+function finishLogin(uid){const u=S.users.find(x=>x.id===uid);S.ui.userId=uid;S.ui.view='pipeline';S.ui.filter='all';S.ui.q='';S.ui.mine=false;LOGIN={step:'cred',uid:null,msg:''};audit('Início de sessão',u.name);render()}
+function loginAs(uid){closeModal();finishLogin(uid)}
+function logout(){audit('Fim de sessão',(me()||{}).name);S.ui.userId=null;closeModal();render()}
+
+function userRows(list,manage){
+  const st={ativo:'<span class="state ok">Ativo</span>',convidado:'<span class="state inv">Convite enviado</span>',desativado:'<span class="state off">Desativado</span>'};
+  return `<div class="tbl" style="margin:0"><table><thead><tr><th>Nome</th><th>Email</th><th>Papel</th><th>Estado</th>${manage?'<th></th>':''}</tr></thead><tbody>${list.length?list.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.email)}</td><td>${ROLE_LABEL[u.role]}</td><td>${st[u.status]}</td>${manage?`<td style="white-space:nowrap">${u.id===S.ui.userId?'<span class="sub" style="font-size:12px">Tu</span>':u.status==='convidado'?`<button type="button" class="link" data-uaccept="${u.id}">Simular aceitação</button> · <button type="button" class="link" data-uresend="${u.id}">Reenviar convite</button> · <button type="button" class="link" data-uoff="${u.id}" style="color:#B91C1C">Cancelar</button>`:u.status==='ativo'?`<button type="button" class="link" data-uoff="${u.id}" style="color:#B91C1C">Desativar acesso</button>`:`<button type="button" class="link" data-uon="${u.id}">Reativar</button>`}</td>`:''}</tr>`).join(''):`<tr><td colspan="5" class="empty">Sem utilizadores.</td></tr>`}</tbody></table></div>`;
+}
+function inviteForm(clientId,allowAdmin){
+  return `<form class="invForm" data-client="${clientId}" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:12px">
+    <label class="f" style="flex:1 1 160px">Nome<input name="name" required></label>
+    <label class="f" style="flex:1 1 200px">Email<input name="email" type="email" required></label>
+    <label class="f" style="flex:0 1 200px">Papel<select name="role"><option value="cliente">Utilizador do cliente</option>${allowAdmin?'<option value="cliente_admin">Admin do cliente</option>':''}</select></label>
+    <button type="submit" class="btn primary">Enviar convite</button></form>`;
+}
+function bindInvite(after){document.querySelectorAll('.invForm').forEach(f=>f.addEventListener('submit',e=>{e.preventDefault();const E=f.elements;const email=E.email.value.trim().toLowerCase();
+  if(S.users.some(u=>u.email.toLowerCase()===email)){toast('Já existe uma conta com este email');return}
+  const u={id:'u_'+uid(),name:E.name.value.trim(),email,role:E.role.value,clientId:f.dataset.client,status:'convidado'};S.users.push(u);
+  audit('Convite enviado',u.name+' ('+u.email+') para '+client(u.clientId).name);toast('Convite enviado para '+u.email);render();if(after)after()}))}
+function renderClientes(){
+  const now=Date.now();
+  $('#main').innerHTML=`<div class="top"><div><h1>Clientes e acessos</h1><div class="sub">Clientes da OPERA, gestor atribuído e utilizadores com acesso</div></div>
+    <div class="row"><button type="button" class="btn" data-act="assignMgr">Atribuir gestores</button>${isAdmin()?'<button type="button" class="btn primary" data-act="newClient">Novo cliente</button>':''}</div></div>
+  <div class="tbl" style="margin:0;background:#fff"><table><thead><tr><th>Cliente</th><th>Gestor</th><th class="n">Utilizadores</th><th class="n">Leads</th><th>Estado</th></tr></thead><tbody>
+  ${S.clients.map(c=>{const us=S.users.filter(u=>u.clientId===c.id);const inv=us.filter(u=>u.status==='convidado').length;
+    return `<tr class="rowL" data-cmodal="${c.id}" tabindex="0"><td><span class="tags"><span class="dot" style="background:${c.dot}"></span><b>${esc(c.name)}</b></span></td><td>${esc((manager(c.managerId)||{name:'Sem gestor'}).name)}</td><td class="n">${us.filter(u=>u.status==='ativo').length}${inv?` <span class="state inv">+${inv} convite</span>`:''}</td><td class="n">${S.leads.filter(l=>l.clientId===c.id).length}</td>
+    <td>${c.status==='inativo'?`<span class="state del">Desativado · apagado a ${fmtDate(c.deleteAt)}</span>`:'<span class="state ok">Ativo</span>'}</td></tr>`}).join('')}
+  </tbody></table></div>
+  <div class="foot">A equipa OPERA (admin e gestores) entra com verificação em dois passos. Os clientes entram só por convite.</div>`;
+}
+function clientModal(id){
+  const c=client(id);const us=S.users.filter(u=>u.clientId===id);const n=S.leads.filter(l=>l.clientId===id).length;
+  openModal(`<div class="mh"><h2>${esc(c.name)}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="row"><span class="sub" style="margin:0">Gestor: <b>${esc((manager(c.managerId)||{name:'Sem gestor'}).name)}</b> · ${n} leads · emails dos portais para <b>${esc(c.inbox)}</b></span></div>
+  ${c.status==='inativo'?`<div class="banner orange">Cliente desativado a ${fmtDate(c.deactivatedAt)}. Ninguém deste cliente consegue entrar. Os dados são apagados automaticamente a <b>${fmtDate(c.deleteAt)}</b>.</div>`:''}
+  <h3 style="margin:0;font-size:15px">Utilizadores</h3>
+  ${userRows(us,c.status!=='inativo')}
+  ${c.status!=='inativo'?inviteForm(id,true):''}
+  ${isAdmin()?`<div class="danger">${c.status!=='inativo'?`<b>Desativar cliente</b><span class="sub" style="margin:0;font-size:13px">Usar quando o cliente deixa de trabalhar com a OPERA. Todos os acessos são bloqueados já. As leads deixam de aparecer no pipeline e ficam guardadas ${RETENTION_MONTHS} meses; depois são apagadas automaticamente. Entrega primeiro a exportação ao cliente.</span>
+    <div class="row"><button type="button" class="btn sm" data-cexport="${id}">${ICON.down}Exportar leads deste cliente</button><button type="button" class="btn sm" data-cdeact="${id}" style="color:#B91C1C;border-color:#F5C2C2">Desativar cliente</button></div>`:
+    `<b>Cliente desativado</b><div class="row"><button type="button" class="btn sm" data-creact="${id}">Reativar cliente</button><button type="button" class="btn sm" data-cexport="${id}">${ICON.down}Exportar leads</button><button type="button" class="btn sm" data-cdel="${id}" style="color:#B91C1C;border-color:#F5C2C2">Apagar já todos os dados</button></div>`}</div>`:''}
+  <div class="actions"><button type="button" class="btn primary" data-act="close">Fechar</button></div>`,true);
+  bindInvite(()=>clientModal(id));
+}
+function newClientModal(){
+  const dots=['#3B6FE0','#E07B3B','#2E9E5B','#8B5CF6','#DB2777','#0EA5E9','#CA8A04','#475569'];
+  const soft={'#3B6FE0':['#DCE8FF','#1E3A8A'],'#E07B3B':['#FDE4D2','#9A3412'],'#2E9E5B':['#DDF3E4','#166534'],'#8B5CF6':['#ECE3FB','#5B21B6'],'#DB2777':['#FCE7F3','#9D174D'],'#0EA5E9':['#E0F2FE','#075985'],'#CA8A04':['#FEF3C7','#854D0E'],'#475569':['#E5E7EB','#374151']};
+  openModal(`<div class="mh"><h2>Novo cliente</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <form id="ncForm" style="display:flex;flex-direction:column;gap:14px">
+    <div class="g2"><label class="f">Nome do cliente *<input name="name" required></label><label class="f">Alias do email dos portais *<input name="alias" required pattern="[a-z0-9]+" placeholder="ex.: joana"></label></div>
+    <div class="f">Cor<div class="chips">${dots.map((d,i)=>`<label style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:${soft[d][0]};color:${soft[d][1]};font-size:12px;font-weight:600;min-height:32px"><input type="radio" name="dot" value="${d}" ${i===0?'checked':''}>Cor ${i+1}</label>`).join('')}</div></div>
+    <label class="f">Gestor de leads<select name="manager">${S.managers.map(m=>{const n=AC().filter(c=>c.managerId===m.id).length;return `<option value="${m.id}" ${n>=MAX_CLIENTS_PER_MANAGER?'disabled':''}>${esc(m.name)} (${n}/${MAX_CLIENTS_PER_MANAGER})</option>`}).join('')}</select></label>
+    <div class="panel" style="padding:14px"><b style="font-size:14px">Primeiro utilizador (admin do cliente)</b><span class="sub" style="display:block;margin:4px 0 10px;font-size:12px">Recebe o convite por email e pode convidar o resto da sua equipa.</span>
+    <div class="g2"><label class="f">Nome *<input name="uname" required></label><label class="f">Email *<input name="uemail" type="email" required></label></div></div>
+    <div class="actions"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn primary">Criar cliente e enviar convite</button></div>
+  </form>`);
+  const f=$('#ncForm');f.addEventListener('submit',e=>{e.preventDefault();const E=f.elements;const alias=E.alias.value.trim().toLowerCase();
+    if(S.clients.some(c=>c.inbox===alias+'@leads.opera-os.com')){toast('Esse alias já está em uso');return}
+    if(S.users.some(u=>u.email.toLowerCase()===E.uemail.value.trim().toLowerCase())){toast('Já existe uma conta com esse email');return}
+    const d=E.dot.value;const c={id:'c_'+uid(),name:E.name.value.trim(),dot:d,tagBg:soft[d][0],tagFg:soft[d][1],inbox:alias+'@leads.opera-os.com',managerId:E.manager.value,status:'ativo'};
+    S.clients.push(c);S.users.push({id:'u_'+uid(),name:E.uname.value.trim(),email:E.uemail.value.trim().toLowerCase(),role:'cliente_admin',clientId:c.id,status:'convidado'});
+    audit('Cliente criado',c.name);audit('Convite enviado',E.uemail.value.trim()+' para '+c.name);toast('Cliente criado e convite enviado');closeModal();render()});
+}
+function renderEquipa(){
+  const c=client(S.ui.role);
+  $('#main').innerHTML=`<div class="top"><div><h1>A minha equipa</h1><div class="sub">Quem da ${esc(c.name)} tem acesso às vossas leads. Todos os utilizadores veem todas as leads do cliente; o responsável de cada lead é quem recebe os avisos.</div></div></div>
+  <div class="panel">${userRows(S.users.filter(u=>u.clientId===c.id),true)}${inviteForm(c.id,true)}</div>`;
+  bindInvite();
+}
+function purgeClient(c,why){
+  const n=S.leads.filter(l=>l.clientId===c.id).length;
+  S.leads=S.leads.filter(l=>l.clientId!==c.id);S.users=S.users.filter(u=>u.clientId!==c.id);S.stages=S.stages.filter(st=>st.clientId!==c.id);S.clients=S.clients.filter(x=>x!==c);
+  audit('Dados apagados',c.name+': '+n+' leads e respetivos utilizadores ('+why+')');
+}
+function retentionSweep(){
+  const now=Date.now();
+  S.clients.filter(c=>c.status==='inativo'&&c.deleteAt<=now).forEach(c=>purgeClient(c,'fim do prazo de '+RETENTION_MONTHS+' meses'));
+  const m=(S.settings||{}).anonAfter||0;
+  if(m){const lim=addMonths(now,-m);S.leads.filter(l=>l.stageId==='desq'&&!l.erased&&Math.max(l.createdAt,...l.timeline.map(e=>e.when))<lim).forEach(l=>eraseLead(l,'anonimização automática'))}
+}
+function eraseLead(l,why){
+  l.name='Titular apagado';l.phone='';l.email='';l.interest='';l.qual={};l.labels=[];l.ownerUserId=null;
+  l.timeline=l.timeline.filter(e=>e.t==='call'||e.t==='stage').map(e=>Object.assign(e,{body:'',pinned:false}));
+  l.tasks=l.tasks.filter(t=>t.done).map(t=>Object.assign(t,{note:''}));l.erased=true;
+  if(l.stageId!=='desq')l.stageId='desq';
+  l.timeline.push({id:uid(),t:'auto',title:'Dados pessoais apagados',when:Date.now(),body:'Motivo: '+why+'. Mantidos só os registos sem dados pessoais, para as estatísticas.',by:(me()||{name:'Sistema'}).name});
+  audit('Lead anonimizada',why);
+}
+function renderPriv(){
+  const m=S.settings.anonAfter||0;const lim=m?addMonths(Date.now(),-m):0;
+  const cand=m?S.leads.filter(l=>l.stageId==='desq'&&!l.erased&&Math.max(l.createdAt,...l.timeline.map(e=>e.when))<lim).length:0;
+  $('#main').innerHTML=`<div class="top"><div><h1>Privacidade e RGPD</h1><div class="sub">Só o admin vê este ecrã</div></div></div>
+  <div class="dgrid">
+   <div class="panel s6" style="display:flex;flex-direction:column;gap:12px"><h3>Conservação de dados</h3>
+     <div class="kv" style="margin:0"><span>Depois de um cliente sair</span><b>${RETENTION_MONTHS} meses, depois apagado automaticamente</b></div>
+     <label class="f">Anonimizar leads desqualificadas sem atividade há mais de
+       <select id="anonSel"><option value="0" ${!m?'selected':''}>Desligado</option><option value="12" ${m===12?'selected':''}>12 meses</option><option value="24" ${m===24?'selected':''}>24 meses</option></select></label>
+     <span class="sub" style="margin:0;font-size:13px">${m?cand+' leads seriam anonimizadas agora.':'Desligado: as leads desqualificadas ficam guardadas enquanto o cliente estiver ativo.'} A anonimização mantém as chamadas e mudanças de etapa sem dados pessoais, para o dashboard continuar certo.</span>
+   </div>
+   <div class="panel s6" style="display:flex;flex-direction:column;gap:8px"><h3>O que fica fora desta ferramenta</h3>
+     <span class="sub" style="margin:0;font-size:13px">A ferramenta cobre a parte técnica. Para estarem em conformidade faltam também:</span>
+     <ol style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:#334155">
+      <li>Contrato de subcontratação (artigo 28.º do RGPD) assinado com cada cliente: o cliente é o responsável pelos dados das leads e a OPERA trata os por conta dele.</li>
+      <li>Política de privacidade do cliente indicada nos formulários do Meta e nos anúncios dos portais.</li>
+      <li>Aviso no início das chamadas de que podem ser gravadas, se a gravação da CloudTalk estiver ligada.</li>
+      <li>Registo das atividades de tratamento da OPERA e lista de subcontratantes (Supabase, Netlify, CloudTalk, Make, Anthropic).</li>
+      <li>Procedimento para violações de dados: comunicar à CNPD em 72 horas.</li>
+     </ol>
+   </div>
+   <div class="panel s12"><h3>Registo de atividade</h3><div class="sub" style="margin:4px 0 0;font-size:13px">Inícios de sessão, convites, exportações, desativações e apagamentos</div>
+     <div class="tbl"><table><thead><tr><th>Quando</th><th>Quem</th><th>Ação</th><th>Detalhe</th></tr></thead><tbody>${S.audit.length?S.audit.slice(0,100).map(a=>`<tr><td style="white-space:nowrap">${fmtWhen(a.when)}</td><td>${esc(a.who)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Sem registos.</td></tr>'}</tbody></table></div></div>
+  </div>`;
+}
+
+
+/* ================= ENTRADAS AUTOMÁTICAS ================= */
+const SAMPLE_EMAIL={
+  Idealista:`De: idealista <noreply@idealista.com>
+Assunto: Novo contacto para o teu anúncio T2 Alvalade (ref. 3345921)
+
+Nome: Carolina Matias
+Telefone: 912 345 670
+Email: carolina.matias@email.pt
+Mensagem: Olá, tenho interesse no T2 em Alvalade. Ainda está disponível? Gostava de marcar visita esta semana.`,
+  Imovirtual:`De: Imovirtual <contactos@imovirtual.com>
+Assunto: Pedido de informação, Moradia V4 Sintra
+
+O utilizador Tiago Moreira enviou uma mensagem.
+Contacto: +351 936 112 908
+Email: tiago.moreira@email.pt
+"Bom dia, qual o valor de condomínio? Posso visitar no sábado?"`,
+  'Casa Sapo':`De: Casa Sapo <noreply@casa.sapo.pt>
+Assunto: Nova mensagem sobre o imóvel T1 Arroios
+
+Mensagem de: Inês Valente
+Mensagem: Gostava de saber mais sobre o T1. Obrigada.`
+};
+function parsePortal(txt,portal){
+  const g=re=>{const m=txt.match(re);return m?m[1].trim():''};
+  const phone=g(/(?:Telefone|Contacto|Telemóvel)\s*:?\s*(\+?[\d\s]{9,16})/i)||g(/(\+351\s?9\d[\d\s]{7,9}|9\d{2}\s?\d{3}\s?\d{3})/);
+  const email=g(/(?:E\W?mail)\s*:?\s*([\w.+]+@[\w.]+\.\w+)/i)||g(/([\w.+]+@(?!idealista|imovirtual|casa\.sapo)[\w.]+\.\w+)/i);
+  const name=g(/(?:Nome|Mensagem de)\s*:\s*([^\n]+)/i)||g(/utilizador\s+([A-ZÀ-Ú][^\n]+?)\s+enviou/);
+  const subj=g(/Assunto:\s*([^\n]+)/i);
+  const interest=(subj.match(/(T\d[^,(]*|Moradia[^,(]*)/i)||[''])[0].replace(/\s+$/,'')||subj;
+  const ref=g(/ref\.\s*([\w]+)/i);
+  const msg=g(/Mensagem:\s*([^\n]+)/i)||g(/"([^"]+)"/);
+  return {name,phone,email,interest,ref,msg,portal};
+}
+function inboundLog(clientId,channel,result,leadId,detail){S.inbound.unshift({id:uid(),when:Date.now(),clientId,channel,result,leadId,detail:detail||''});if(S.inbound.length>300)S.inbound.length=300}
+function ingest(clientId,channel,d){
+  const now=Date.now();const c=client(clientId);
+  const ex=(d.phone||d.email)&&S.leads.find(l=>l.clientId===clientId&&((d.phone&&normPhone(l.phone)===normPhone(d.phone))||(d.email&&l.email&&l.email.toLowerCase()===d.email.toLowerCase())));
+  if(ex){ex.timeline.push({id:uid(),t:'auto',title:'Novo contacto recebido ('+channel+')',when:now,body:d.msg||'',by:'Automático'});
+    if(!openTasks(ex).length&&stage(ex.stageId).order<QUAL_ORDER())addTask(ex,'call',now+15*60e3,'Voltou a contactar');
+    inboundLog(clientId,channel,'Duplicada, juntada à existente',ex.id);return ex}
+  const stageId=channel==='Meta'?'meta':'imoveis';
+  const l={id:uid(),clientId,name:d.name||'Sem nome',phone:d.phone||'',email:d.email||'',source:channel==='Meta'?'Meta':d.portal,interest:d.interest||'',stageId,entryStage:stageId,createdAt:now,sourceCreatedAt:d.sourceAt||now,attempts:0,qual:{},tasks:[],labels:[],
+    timeline:[{id:uid(),t:'auto',title:channel==='Meta'?'Lead criada a partir do formulário Meta':'Lead criada a partir do email do '+d.portal,when:now,body:channel==='Meta'?'Recebida via Make.':'Email reencaminhado para '+c.inbox+'. Dados extraídos pela IA.'+(d.ref?' Referência do anúncio: '+d.ref+'.':''),by:'Automático'}]};
+  if(d.msg)l.timeline.push({id:uid(),t:'note',title:'Mensagem da lead',when:now,body:d.msg,by:'Automático'});
+  const review=!d.phone&&!d.email;
+  if(review)l.timeline.push({id:uid(),t:'note',title:'Nota',when:now,body:'Precisa de revisão: a IA não encontrou telefone nem email. Ver o email original.',by:'Automático',pinned:true});
+  addTask(l,'call',now+15*60e3,'Primeiro contacto');
+  S.leads.push(l);inboundLog(clientId,channel,review?'Criada, precisa de revisão':'Criada',l.id);return l;
+}
+function renderEntradas(){
+  const st=r=>/revis/.test(r)?'<span class="state inv" style="background:var(--orangeSoft);color:var(--orangeText)">'+r+'</span>':/Duplicada/.test(r)?'<span class="state off">'+r+'</span>':/Erro/.test(r)?'<span class="state del">'+r+'</span>':'<span class="state ok">'+r+'</span>';
+  const last=(cid,ch)=>{const x=S.inbound.find(i=>i.clientId===cid&&(ch==='Meta'?i.channel==='Meta':i.channel!=='Meta'));return x?fmtWhen(x.when):'Ainda sem entradas'};
+  $('#main').innerHTML=`<div class="top"><div><h1>Entradas automáticas</h1><div class="sub">Como as leads chegam sozinhas a cada cliente: formulários Meta (via Make) e emails dos portais imobiliários (lidos por IA)</div></div></div>
+  <div class="dgrid">
+  ${AC().map(c=>`<div class="panel s6" style="display:flex;flex-direction:column;gap:12px">
+    <div class="tags"><span class="dot" style="background:${c.dot}"></span><b style="font-size:15px">${esc(c.name)}</b></div>
+    <div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:10px"><b style="font-size:13px">Formulários Meta</b>
+      <span class="sub" style="margin:0;font-size:13px">Cenário do Make envia cada lead do formulário para a OPERA Leads, já com este cliente. Entram em <b>Nova Lead Meta</b>. Última entrada: ${last(c.id,'Meta')}.</span>
+      <div class="row"><button type="button" class="btn sm" data-simmeta="${c.id}">Simular lead Meta</button></div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:10px"><b style="font-size:13px">Emails dos portais</b>
+      <span class="sub" style="margin:0;font-size:13px">O cliente reencaminha os emails do Idealista, Imovirtual e Casa Sapo para <b>${esc(c.inbox)}</b>. A IA lê o email e cria a lead em <b>Nova lead imóveis</b>. Última entrada: ${last(c.id,'portal')}.</span>
+      <div class="row"><button type="button" class="btn sm" data-simmail="${c.id}">Simular email de portal</button><button type="button" class="link" data-fwd="${c.id}">Instruções para o cliente</button></div></div>
+  </div>`).join('')}
+  <div class="panel s12"><h3>Últimas entradas</h3><div class="sub" style="margin:4px 0 0;font-size:13px">Cada entrada fica registada, mesmo quando falha, para nenhuma lead se perder</div>
+   <div class="tbl"><table><thead><tr><th>Quando</th><th>Cliente</th><th>Canal</th><th>Resultado</th><th>Lead</th></tr></thead><tbody>
+   ${S.inbound.length?S.inbound.slice(0,50).map(i=>{const l=leadById(i.leadId);return `<tr><td style="white-space:nowrap">${fmtWhen(i.when)}</td><td>${esc((client(i.clientId)||{name:'?'}).name)}</td><td>${esc(i.channel)}</td><td>${st(i.result)}</td><td>${l?`<button type="button" class="link" data-open="${l.id}">${esc(l.name)}</button>`:'—'}</td></tr>`}).join(''):'<tr><td colspan="5" class="empty">Ainda sem entradas. Usa os botões de simulação para ver o fluxo.</td></tr>'}
+   </tbody></table></div></div>
+  </div>`;
+}
+function simMailModal(cid){
+  const c=client(cid);
+  openModal(`<div class="mh"><h2>Simular email de portal</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <span class="sub" style="margin:0">Email recebido em <b>${esc(c.inbox)}</b>. No sistema real é a IA que extrai os dados; aqui é uma simulação simples.</span>
+  <div class="chips">${Object.keys(SAMPLE_EMAIL).map(k=>`<button type="button" class="chip" data-sample="${k}">${k}</button>`).join('')}</div>
+  <input type="hidden" id="simPortal" value="Idealista">
+  <label class="f">Conteúdo do email<textarea id="simTxt" style="min-height:200px;font-family:ui-monospace,monospace;font-size:12px">${esc(SAMPLE_EMAIL.Idealista)}</textarea></label>
+  <div id="simPrev"></div>
+  <div class="actions"><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn" data-simparse="1">Ver o que a IA extrai</button><button type="button" class="btn primary" data-simgo="${cid}">Processar email</button></div>`);
+}
+function fwdModal(cid){
+  const c=client(cid);
+  openModal(`<div class="mh"><h2>Reencaminhar emails dos portais</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <span class="sub" style="margin:0">Basta fazer isto uma vez. A partir daí, cada contacto dos portais chega sozinho à OPERA.</span>
+  <div class="panel"><h3>Gmail</h3><ol style="margin:8px 0 0;padding-left:18px;line-height:1.7;font-size:14px">
+    <li>Definições, Ver todas as definições, Encaminhamento e POP/IMAP: <b>Adicionar um endereço de encaminhamento</b> e escrever <b>${esc(c.inbox)}</b>.</li>
+    <li>O Gmail envia um código de confirmação para esse endereço. <b>A OPERA recebe esse código e envia ao cliente</b> (aparece nas Entradas automáticas).</li>
+    <li>Em Filtros, criar um filtro com De: <b>idealista.com OR imovirtual.com OR casa.sapo.pt</b> e escolher <b>Reencaminhar para ${esc(c.inbox)}</b>.</li></ol></div>
+  <div class="panel"><h3>Outlook</h3><ol style="margin:8px 0 0;padding-left:18px;line-height:1.7;font-size:14px">
+    <li>Definições, Correio, Regras: <b>Adicionar nova regra</b>.</li>
+    <li>Condição: o remetente contém <b>idealista.com</b>, <b>imovirtual.com</b> ou <b>casa.sapo.pt</b>.</li>
+    <li>Ação: <b>Reencaminhar para ${esc(c.inbox)}</b>. O cliente continua a receber os emails normalmente.</li></ol></div>
+  <div class="actions"><button type="button" class="btn primary" data-act="close">Fechar</button></div>`);
+}
+
+/* ================= DASHBOARD ================= */
+function periodStart(p){if(p==='1'){const d=new Date();d.setHours(0,0,0,0);return d.getTime()}if(p==='0')return 0;return Date.now()-(+p)*864e5}
+function bars(items,fmt,muteLast){const m=Math.max(1,...items.map(i=>i.v));
+  return `<div class="bars">${items.map((i,k)=>`<div class="bar" title="${esc(i.l)}: ${esc(fmt?fmt(i.v):i.v)}"><span class="bl">${esc(i.l)}</span><span class="bt"><span class="bf ${muteLast&&k===items.length-1?'mute':''}" style="width:${i.v/m*100}%"></span></span><span class="bv">${esc(fmt?fmt(i.v):i.v)}</span></div>`).join('')}</div>`}
+
+function lineChart(arr){
+  const W=900,H=220,L=36,R=12,T=14,B=28,n=arr.length;
+  const raw=Math.max(1,...arr.map(a=>a.v));const step=raw<=4?1:raw<=10?2:raw<=20?5:10;const m=Math.ceil(raw/step)*step;
+  const x=i=>L+(n===1?0:i*(W-L-R)/(n-1)),y=v=>T+(H-T-B)*(1-v/m);
+  const pts=arr.map((a,i)=>[x(i),y(a.v)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=line+` L${x(n-1).toFixed(1)} ${y(0)} L${x(0).toFixed(1)} ${y(0)} Z`;
+  const grid=[];for(let v=0;v<=m;v+=step)grid.push(v);
+  const fmtD=d=>d.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'});
+  const every=Math.ceil(n/8);const slot=(W-L-R)/Math.max(1,n-1);
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Leads por dia, de ${fmtD(arr[0].d)} a hoje">
+    ${grid.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" class="gr"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" class="ax">${v}</text>`).join('')}
+    <path d="${area}" class="ar"/><path d="${line}" class="ln"/>
+    ${arr.map((a,i)=>(i%every===0&&n-1-i>=Math.ceil(every*0.7))||i===n-1?`<text x="${x(i)}" y="${H-8}" text-anchor="${i===0?'start':i===n-1?'end':'middle'}" class="ax">${i===n-1?'Hoje':fmtD(a.d)}</text>`:'').join('')}
+    ${arr.map((a,i)=>`<g class="pt"><rect x="${x(i)-slot/2}" y="${T}" width="${slot}" height="${H-T-B}" class="hit"/><line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${y(0)}" class="cr"/><circle cx="${x(i)}" cy="${y(a.v)}" r="4.5" class="dt"/><text x="${Math.min(Math.max(x(i),L+40),W-R-40)}" y="${Math.max(y(a.v)-12,T+10)}" text-anchor="middle" class="tip">${fmtD(a.d)}: ${a.v} ${a.v===1?'lead':'leads'}</text></g>`).join('')}
+  </svg>`;
+}
+function metrics(LL,from,to){
+  const inP=t=>t>=from&&t<=to;
+  const leadsIn=LL.filter(l=>inP(l.createdAt));
+  const ttl=[];const pending=[];
+  leadsIn.filter(l=>l.entryStage!=='bd').forEach(l=>{const f=firstCall(l);if(f)ttl.push((f-l.createdAt)/60000);else if(l.stageId!=='desq')pending.push(l)});
+  const bdIn=LL.filter(l=>l.entryStage==='bd');let recovered=0;
+  let calls=0,answered=0;const acts={call:0,meeting:0,followup:0};let qual=0,desq=0;const tq=[];
+  LL.forEach(l=>{
+    l.timeline.forEach(e=>{if(!inP(e.when))return;if(e.t==='call'){calls++;if(/atendida/.test(e.title)&&!/não atendida/.test(e.title))answered++}
+      if(e.t==='stage'&&e.to==='qualificada'){qual++;tq.push((e.when-l.createdAt)/60000);if(l.entryStage==='bd')recovered++}if(e.t==='stage'&&e.to==='desq')desq++});
+    l.tasks.forEach(t=>{if(t.done&&t.doneAt&&inP(t.doneAt))acts[t.type]=(acts[t.type]||0)+1});
+  });
+  const overdue=LL.reduce((n,l)=>n+openTasks(l).filter(t=>t.due<Date.now()).length,0);
+  const bdWorked=bdIn.filter(l=>l.timeline.some(e=>e.t==='call'&&inP(e.when))).length;
+  return {leadsIn,bdIn,bdWorked,recovered,ttl,pending,calls,answered,acts,qual,desq,tq,overdue,
+    ttlMed:median(ttl),ttlAvg:ttl.length?ttl.reduce((a,b)=>a+b,0)/ttl.length:null,
+    in5:ttl.filter(x=>x<=TTL_TARGET_MIN).length,in60:ttl.filter(x=>x<=60).length};
+}
+function ttlStatus(m){if(m==null)return '';if(m<=TTL_TARGET_MIN)return '<span class="status st-good">✓ Dentro do objetivo</span>';if(m<=60)return '<span class="status st-warn">! Acima do objetivo</span>';return '<span class="status st-bad">! Lento</span>'}
+function renderDash(){
+  const cf=S.ui.dashClient,p=S.ui.period,from=periodStart(p),now=Date.now();
+  const LL=S.leads.filter(l=>clientActive(l.clientId)&&(cf==='all'||l.clientId===cf));
+  const M=metrics(LL,from,now);
+  const totalActs=M.acts.call+M.acts.meeting+M.acts.followup;
+  const days=p==='1'?1:p==='0'?30:+p;
+  const ttlBuckets=[['Até 15 min',x=>x<=15],['15 a 30 min',x=>x>15&&x<=30],['30 a 60 min',x=>x>30&&x<=60],['1 a 4 h',x=>x>60&&x<=240],['Mais de 4 h',x=>x>240]].map(([l,f])=>({l,v:M.ttl.filter(f).length})).concat([{l:'Por contactar',v:M.pending.length}]);
+  const bySrc={};M.leadsIn.forEach(l=>bySrc[l.source]=(bySrc[l.source]||0)+1);
+  const srcItems=Object.entries(bySrc).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v}));
+  let perDay='';
+  if(p!=='1'){const n=p==='0'?30:+p;const arr=[];for(let i=n-1;i>=0;i--){const d0=new Date();d0.setHours(0,0,0,0);d0.setDate(d0.getDate()-i);const d1=d0.getTime()+864e5;arr.push({d:d0,v:LL.filter(l=>l.createdAt>=d0.getTime()&&l.createdAt<d1).length})}
+    perDay=`<div class="panel s12"><div class="top" style="gap:8px"><h3>Leads que entraram por dia</h3><span class="sub" style="margin:0;font-size:13px">Total ${arr.reduce((a,b)=>a+b.v,0)} · média ${(arr.reduce((a,b)=>a+b.v,0)/arr.length).toFixed(1).replace('.',',')} por dia · máximo ${Math.max(...arr.map(a=>a.v))}</span></div>${lineChart(arr)}</div>`}
+  const occ=S.managers.map(m=>{const cl=AC().filter(c=>c.managerId===m.id);const n=cl.length;const r=n/MAX_CLIENTS_PER_MANAGER;
+    const st=r>=1?'<span class="status st-bad">■ Cheio</span>':r>=.75?'<span class="status st-warn">▲ Quase cheio</span>':'<span class="status st-good">● Com capacidade</span>';
+    const act=S.leads.filter(l=>cl.some(c=>c.id===l.clientId)&&l.stageId!=='desq'&&stage(l.stageId).order<QUAL_ORDER()).length;
+    const od=S.leads.filter(l=>cl.some(c=>c.id===l.clientId)).reduce((k,l)=>k+openTasks(l).filter(t=>t.due<now).length,0);
+    return `<div class="occ"><div class="hd"><b style="flex:1">${esc(m.name)}</b>${st}<b style="font-variant-numeric:tabular-nums">${Math.round(r*100)}%</b></div>
+      <div class="meter" role="img" aria-label="${n} de ${MAX_CLIENTS_PER_MANAGER} clientes">${Array.from({length:MAX_CLIENTS_PER_MANAGER},(_,i)=>`<span class="seg ${i<n?'on':''} ${r>=1?'full':''}"></span>`).join('')}</div>
+      <div class="sub" style="margin:0;font-size:13px">${n} de ${MAX_CLIENTS_PER_MANAGER} clientes${n?': '+cl.map(c=>esc(c.name)).join(', '):''} · ${act} leads em trabalho · ${od} tarefas atrasadas</div></div>`}).join('');
+  const perClient=AC().map(c=>{const m=metrics(S.leads.filter(l=>l.clientId===c.id),from,now);return {c,m}});
+  $('#main').innerHTML=`<div class="top"><div><h1>Dashboard</h1><div class="sub">Desempenho da OPERA na gestão de leads${cf!=='all'?' · '+esc(client(cf).name):''}</div></div>
+    <div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:8px">Cliente<select id="dashClient" style="min-height:40px"><option value="all">Todos os clientes</option>${AC().map(c=>`<option value="${c.id}" ${cf===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
+    <div class="pills" role="group" aria-label="Período">${[['1','Hoje'],['7','7 dias'],['30','30 dias'],['0','Tudo']].map(([v,l])=>`<button type="button" class="pill ${p===v?'on':''}" data-period="${v}">${l}</button>`).join('')}</div></div></div>
+  <div class="dgrid">
+    <div class="panel s6 hero"><span class="lbl">Time to Lead (mediana)</span><span class="big">${fmtDur(M.ttlMed)}</span>${ttlStatus(M.ttlMed)}
+      <span class="meta">Tempo entre a chegada da lead ao sistema e a primeira chamada, atendida ou não. Conta só leads Meta e de portais; as leads BD ficam de fora. Objetivo: até ${TTL_TARGET_MIN} min. Média ${fmtDur(M.ttlAvg)}.</span>
+      <span class="meta"><b>${pct(M.in5,M.ttl.length)}</b> contactadas em até ${TTL_TARGET_MIN} min · <b>${pct(M.in60,M.ttl.length)}</b> em até 1 h · <b>${M.pending.length}</b> ainda por contactar</span>
+      ${bars(ttlBuckets,null,true)}</div>
+    <div class="panel s6"><h3>Taxa de ocupação por gestor de leads</h3><div class="sub" style="margin:4px 0 4px;font-size:13px">Máximo de ${MAX_CLIENTS_PER_MANAGER} clientes por gestor</div>${occ}
+      <div class="row" style="margin-top:8px"><button type="button" class="btn sm" data-act="assignMgr">Atribuir clientes a gestores</button><button type="button" class="btn sm" data-act="addMgr">Adicionar gestor</button></div></div>
+    <div class="stat s3"><span>Leads que entraram</span><b>${M.leadsIn.length}</b><small>${(M.leadsIn.length/days).toFixed(1).replace('.',',')} por dia</small></div>
+    <div class="stat s3"><span>Chamadas feitas</span><b>${M.calls}</b><small>${pct(M.answered,M.calls)} atendidas · ${M.leadsIn.length?(M.calls/M.leadsIn.length).toFixed(1).replace('.',','):'0'} por lead</small></div>
+    <div class="stat s3"><span>Atividades concluídas</span><b>${totalActs}</b><small>${M.acts.call} chamadas · ${M.acts.meeting} reuniões · ${M.acts.followup} follow ups</small></div>
+    <div class="stat s3 ${M.overdue?'warn':''}"><span>Tarefas atrasadas agora</span><b>${M.overdue}</b><small>Independente do período</small></div>
+    <div class="stat s3"><span>Leads qualificadas</span><b>${M.qual}</b><small>Tempo até qualificar: ${fmtDur(median(M.tq))}</small></div>
+    <div class="stat s3"><span>Leads desqualificadas</span><b>${M.desq}</b><small>No período</small></div>
+    <div class="stat s3"><span>Taxa de qualificação</span><b>${pct(M.qual,M.qual+M.desq)}</b><small>Qualificadas sobre decididas</small></div>
+    <div class="stat s3" style="border-color:#A7E3C0;background:var(--greenSoft)"><span style="color:var(--greenText)">Leads recuperadas</span><b style="color:var(--greenText)">${M.recovered}</b><small style="color:var(--greenText)">Leads BD que passaram a qualificadas · ${pct(M.recovered,M.bdWorked)} das leads BD trabalhadas</small></div>
+    ${perDay}
+    <div class="panel s6"><h3>Leads por origem</h3>${srcItems.length?bars(srcItems):'<div class="empty">Sem leads no período.</div>'}</div>
+    <div class="panel s6"><h3>Atividades concluídas por tipo</h3>${bars([{l:'Chamada',v:M.acts.call},{l:'Reunião',v:M.acts.meeting},{l:'Follow up',v:M.acts.followup}])}</div>
+    ${cf==='all'?`<div class="panel s12"><h3>Por cliente</h3><div class="tbl"><table><thead><tr><th>Cliente</th><th>Gestor</th><th class="n">Leads</th><th class="n">Time to Lead</th><th class="n">Até ${TTL_TARGET_MIN} min</th><th class="n">Chamadas</th><th class="n">Qualificadas</th><th class="n">Desqualificadas</th><th class="n">Taxa</th><th class="n">Recuperadas</th><th class="n">Atrasadas</th></tr></thead><tbody>
+      ${perClient.map(({c,m})=>`<tr><td><button type="button" class="link" data-dclient="${c.id}">${esc(c.name)}</button></td><td>${esc((manager(c.managerId)||{name:'Sem gestor'}).name)}</td><td class="n">${m.leadsIn.length}</td><td class="n">${fmtDur(m.ttlMed)}</td><td class="n">${pct(m.in5,m.ttl.length)}</td><td class="n">${m.calls}</td><td class="n">${m.qual}</td><td class="n">${m.desq}</td><td class="n">${pct(m.qual,m.qual+m.desq)}</td><td class="n">${m.recovered}</td><td class="n">${m.overdue}</td></tr>`).join('')}
+    </tbody></table></div></div>`:''}
+  </div>
+  <div class="foot">Os números são calculados a partir do histórico de cada lead: chamadas registadas, mudanças de etapa e tarefas concluídas.</div>`;
+}
+function assignModal(){
+  openModal(`<div class="mh"><h2>Clientes por gestor</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="tbl" style="margin:0"><table><thead><tr><th>Cliente</th><th>Gestor de leads</th></tr></thead><tbody>
+  ${AC().map(c=>`<tr><td>${esc(c.name)}</td><td><select data-assign="${c.id}" aria-label="Gestor de ${esc(c.name)}"><option value="">Sem gestor</option>${S.managers.map(m=>{const n=AC().filter(x=>x.managerId===m.id&&x.id!==c.id).length;return `<option value="${m.id}" ${c.managerId===m.id?'selected':''} ${n>=MAX_CLIENTS_PER_MANAGER?'disabled':''}>${esc(m.name)} (${n+(c.managerId===m.id?1:0)}/${MAX_CLIENTS_PER_MANAGER})</option>`}).join('')}</select></td></tr>`).join('')}
+  </tbody></table></div><span class="sub" style="margin:0;font-size:13px">Um gestor com ${MAX_CLIENTS_PER_MANAGER} clientes deixa de aparecer como opção.</span>
+  <div class="actions"><button type="button" class="btn primary" data-act="close">Fechar</button></div>`);
+}
+
+/* ================= IMPORTAR / EXPORTAR ================= */
+let IMP=null;
+const FIELD_MAP={name:['nome','name','cliente final','contacto nome'],phone:['telemovel','telefone','contacto','phone','tel','numero'],email:['email','mail','e mail','correio'],source:['origem','fonte','source','canal'],interest:['interesse','imovel','procura'],budget:['budget','orcamento','valor'],stage:['etapa','estado','fase','stage'],labels:['etiqueta','etiquetas','label','labels','tags'],note:['nota','notas','obs','observacoes','comentario'],client:['cliente','consultor','conta'],date:['data','criado','data de entrada']};
+const FIELD_LABEL={name:'Nome',phone:'Telemóvel',email:'Email',source:'Origem',interest:'Interesse ou imóvel',budget:'Budget',stage:'Etapa',labels:'Etiquetas',note:'Nota',client:'Cliente',date:'Data de entrada',skip:'Não importar'};
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z ]/g,' ').trim();
+function guessField(h){const n=norm(h);for(const [f,syn] of Object.entries(FIELD_MAP)){if(syn.some(s=>n===s||n.startsWith(s)))return f}return 'skip'}
+function matchStage(v,cid){if(!v)return null;const n=String(v).toLowerCase().trim();const ex=S.stages.find(st=>(st.clientId===null||st.clientId===cid)&&st.name.toLowerCase()===n);if(ex)return ex.id;
+  if(/desq|perd|sem interesse/.test(n))return 'desq';if(/qualif/.test(n))return 'qualificada';if(/follow|tent|contact|convers/.test(n))return 'followup';if(/meta|facebook|instagram/.test(n))return 'meta';if(/imov|portal|idealista|casa sapo/.test(n))return 'imoveis';if(/nov|bd|base/.test(n))return 'bd';return null}
+function matchClient(v){if(!v)return null;const n=String(v).toLowerCase();const c=S.clients.find(c=>c.name.toLowerCase().includes(n)||n.includes(c.name.toLowerCase().split(' ')[0]));return c?c.id:null}
+function analyseImport(){
+  if(!IMP)return null;const res={nw:[],dup:[],bad:[]};
+  const col=f=>Object.keys(IMP.map).find(h=>IMP.map[h]===f);
+  IMP.rows.forEach((r,i)=>{
+    const g=f=>{const h=col(f);return h?String(r[h]??'').trim():''};
+    const cid=IMP.client==='__col'?matchClient(g('client')):IMP.client;
+    const o={row:i+2,name:g('name'),phone:g('phone'),email:g('email'),source:g('source')||'Base de dados',interest:g('interest'),budget:g('budget'),labels:g('labels'),stageId:IMP.stage==='__col'?(matchStage(g('stage'),cid)||'bd'):IMP.stage,note:g('note'),clientId:cid};
+    if(!cid||(!o.phone&&!o.email)||!o.name){o.why=!cid?'Cliente não reconhecido':!o.name?'Sem nome':'Sem telemóvel nem email';res.bad.push(o);return}
+    const ex=S.leads.find(l=>l.clientId===cid&&((o.phone&&normPhone(l.phone)===normPhone(o.phone))||(o.email&&l.email&&l.email.toLowerCase()===o.email.toLowerCase())));
+    if(ex){o.existing=ex;res.dup.push(o)}else res.nw.push(o)});
+  return res;
+}
+function renderIO(){
+  const a=analyseImport();
+  const opts=(sel,list)=>list.map(([v,l])=>`<option value="${v}" ${sel===v?'selected':''}>${esc(l)}</option>`).join('');
+  $('#main').innerHTML=`<div class="top"><div><h1>Importar e exportar leads</h1><div class="sub">Só a equipa OPERA vê este ecrã. Ficheiros .xlsx, .xls ou .csv.</div></div></div>
+  <div class="det">
+   <section class="panel" style="flex:3 1 560px;display:flex;flex-direction:column;gap:16px">
+    <div class="top"><h2 style="margin:0;font-size:18px">Importar</h2><button type="button" class="link" data-act="template">Descarregar modelo Excel</button></div>
+    ${!IMP?`<label class="banner blue" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;cursor:pointer">
+      <b>Escolhe um ficheiro Excel ou CSV</b><span>A primeira linha tem de ter os nomes das colunas. As colunas são reconhecidas pelo nome.</span>
+      <input type="file" id="impFile" accept=".xlsx,.xls,.csv"></label>`:`
+    <div class="banner blue" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">${ICON.file}<div style="flex:1"><b>${esc(IMP.file)}</b><div style="font-size:12px">${IMP.rows.length} linhas encontradas</div></div><button type="button" class="btn sm" data-act="impClear">Trocar ficheiro</button></div>
+    <div class="g2">
+      <label class="f">Para que cliente?<select id="impClient">${opts(IMP.client,[['__col','Usar a coluna Cliente do ficheiro']].concat(AC().map(c=>[c.id,c.name])))}</select></label>
+      <label class="f">Etapa onde entram<select id="impStage">${opts(IMP.stage,S.stages.filter(st=>st.clientId===null||st.clientId===IMP.client).sort((x,y)=>x.order-y.order).map(st=>[st.id,st.name+(st.clientId?' ('+client(st.clientId).name+')':'')]).concat([['__col','Usar a coluna Etapa do ficheiro']]))}</select></label>
+    </div>
+    <div><h3 style="margin:0 0 4px;font-size:14px">Correspondência de colunas</h3><div class="sub" style="margin:0 0 8px">Reconhecidas automaticamente. Ajusta se for preciso.</div>
+    <div class="tbl" style="margin:0"><table><thead><tr><th>Coluna no Excel</th><th>Exemplo</th><th>Campo no OPERA Leads</th></tr></thead><tbody>
+    ${IMP.headers.map(h=>`<tr><td><b>${esc(h)}</b></td><td style="color:var(--mute)">${esc(String(IMP.rows[0]?.[h]??'').slice(0,40))}</td><td><select data-map="${esc(h)}" aria-label="Campo para ${esc(h)}">${opts(IMP.map[h],Object.entries(FIELD_LABEL))}</select></td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="sum">
+      <div style="background:var(--greenSoft);color:var(--greenText)"><b>${a.nw.length}</b><span style="font-size:12px">leads novas</span></div>
+      <div style="background:var(--orangeSoft);color:#7C2D12"><b>${a.dup.length}</b><span style="font-size:12px">já existem</span></div>
+      <div style="background:var(--redSoft);color:var(--redText)"><b>${a.bad.length}</b><span style="font-size:12px">com problemas</span></div>
+    </div>
+    ${(()=>{const cnt={};a.nw.concat(IMP.dup==='create'?a.dup:[]).forEach(o=>{cnt[o.stageId]=(cnt[o.stageId]||0)+1});const k=Object.keys(cnt);return k.length?`<div class="sub" style="margin:0">Vão entrar em: ${k.map(id=>`<b>${esc(stage(id).name)}</b> ${cnt[id]}`).join(' · ')}</div>`:''})()}
+    ${a.bad.length?`<details><summary style="cursor:pointer;font-weight:600;min-height:32px">Ver linhas com problemas</summary><div class="list" style="margin-top:8px">${a.bad.slice(0,50).map(b=>`<div class="item" style="padding:8px 14px"><span>Linha ${b.row}</span><span style="color:var(--mute)">${esc(b.name||'sem nome')}</span><span style="color:var(--redText)">${b.why}</span></div>`).join('')}</div></details>`:''}
+    <fieldset style="border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:16px"><legend style="font-weight:600;margin-bottom:8px">Leads que já existem</legend>
+      ${[['ignore','Ignorar'],['fill','Atualizar dados em falta'],['create','Criar na mesma']].map(([v,l])=>`<label style="display:flex;gap:8px;align-items:center;min-height:32px"><input type="radio" name="dup" value="${v}" ${IMP.dup===v?'checked':''}>${l}</label>`).join('')}
+    </fieldset>
+    <div class="actions"><button type="button" class="btn primary" data-act="doImport" ${a.nw.length||(a.dup.length&&IMP.dup!=='ignore')?'':'disabled'}>Importar ${a.nw.length+(IMP.dup==='create'?a.dup.length:0)} leads</button></div>`}
+   </section>
+   <section class="panel" style="flex:2 1 320px;display:flex;flex-direction:column;gap:14px">
+    <h2 style="margin:0;font-size:18px">Exportar</h2>
+    <label class="f">Cliente<select id="expClient"><option value="all">Todos os clientes</option>${AC().map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></label>
+    <fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:4px"><legend style="font-weight:600;margin-bottom:6px">Etapas</legend>
+      ${S.stages.slice().sort((a,b)=>a.order-b.order).map(s=>`<label style="display:flex;gap:8px;align-items:center;min-height:30px"><input type="checkbox" class="expSt" value="${s.id}" checked>${esc(s.name)}${s.clientId?' <span style="color:var(--mute2);font-size:12px">('+esc(client(s.clientId).name)+')</span>':''}</label>`).join('')}
+    </fieldset>
+    <label class="f">Período<select id="expPer"><option value="0">Sempre</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 3 meses</option></select></label>
+    <label style="display:flex;gap:8px;align-items:center;min-height:32px"><input type="checkbox" id="expHist" checked>Incluir notas e histórico</label>
+    <label style="display:flex;gap:8px;align-items:center;min-height:32px"><input type="checkbox" id="expPipe">Formato pronto para importar no Pipedrive</label>
+    <button type="button" class="btn dark" data-act="doExport">${ICON.down}Exportar .xlsx</button>
+   </section>
+  </div>`;
+  const fi=$('#impFile');if(fi)fi.addEventListener('change',readFile);
+}
+function readFile(e){const f=e.target.files[0];if(!f)return;
+  if(typeof XLSX==='undefined'){toast('Não foi possível carregar o leitor de Excel. Verifica a ligação à internet.');return}
+  const rd=new FileReader();rd.onload=ev=>{try{const wb=XLSX.read(ev.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(!rows.length){toast('O ficheiro não tem linhas.');return}
+    const headers=Object.keys(rows[0]);const map={};headers.forEach(h=>map[h]=guessField(h));
+    IMP={file:f.name,rows,headers,map,client:headers.some(h=>map[h]==='client')?'__col':AC()[0].id,stage:headers.some(h=>map[h]==='stage')?'__col':'bd',dup:'ignore'};renderIO();
+  }catch(err){toast('Não consegui ler este ficheiro.')}};rd.readAsArrayBuffer(f)}
+function doImport(){const a=analyseImport();const now=Date.now();let n=0,u=0;
+  const mk=o=>{const l={id:uid(),clientId:o.clientId,name:o.name,phone:o.phone,email:o.email,source:o.source,interest:o.interest,stageId:o.stageId,entryStage:'bd',createdAt:now,attempts:0,qual:o.budget?{Budget:o.budget}:{},tasks:[],
+    timeline:[{id:uid(),t:'auto',title:'Lead importada de Excel',when:now,body:'Ficheiro '+IMP.file,by:'André'}]};
+    l.labels=String(o.labels||'').split(/[,;|]/).map(x=>x.trim()).filter(Boolean).map(n=>{let x=S.labels.find(z=>z.name.toLowerCase()===n.toLowerCase());if(!x){x={id:'lb_'+uid(),name:n,color:'cinzento'};S.labels.push(x)}return x.id});
+    if(o.note)l.timeline.push({id:uid(),t:'note',title:'Nota',when:now,body:o.note,by:'André'});
+    if(o.stageId!=='desq'&&stage(o.stageId).order<QUAL_ORDER())addTask(l,'call',now+3600e3,NEW_STAGES.includes(o.stageId)?'Primeiro contacto':'Ligar de novo');return l};
+  a.nw.forEach(o=>{S.leads.push(mk(o));n++});
+  if(IMP.dup==='create')a.dup.forEach(o=>{S.leads.push(mk(o));n++});
+  if(IMP.dup==='fill')a.dup.forEach(o=>{const l=o.existing;['email','interest','phone'].forEach(k=>{if(!l[k]&&o[k]){l[k]=o[k];u++}});if(o.budget&&!l.qual.Budget){l.qual.Budget=o.budget;u++}});
+  IMP=null;toast(n+' leads importadas'+(u?', '+u+' campos atualizados':''));S.ui.view='pipeline';render()}
+function exportRows(L,hist,pipe){return L.map(l=>{const c=client(l.clientId),s=stage(l.stageId),t=nextTask(l);
+  const histTxt=l.timeline.slice().sort((a,b)=>a.when-b.when).map(e=>fmtWhen(e.when)+' '+e.title+(e.body?': '+e.body:'')).join('\n');
+  if(pipe)return {'Nome':l.name,'Telefone':l.phone,'Email':l.email,'Titulo':l.name+(l.interest?' · '+l.interest:''),'Origem':l.source,'Nota':hist?histTxt:''};
+  const r={Cliente:c.name,Nome:l.name,'Telemóvel':l.phone,Email:l.email,Origem:l.source,Interesse:l.interest,Etapa:s?s.name:'',Entrada:new Date(l.createdAt).toLocaleString('pt-PT'),'Próxima tarefa':t?TASK_TYPES[t.type]+' '+new Date(t.due).toLocaleString('pt-PT'):'',Tentativas:l.attempts,Etiquetas:(l.labels||[]).map(id=>(S.labels.find(x=>x.id===id)||{}).name).filter(Boolean).join(', '),'Notas afixadas':pinned(l).map(p=>p.body).join(' | ')};
+  QUAL_FIELDS.forEach(q=>r[q]=l.qual[q]||'');
+  if(hist)r['Histórico']=histTxt;return r})}
+function downloadXlsx(rows,name){if(typeof XLSX==='undefined'){toast('Não foi possível carregar o gerador de Excel.');return}
+  if(!rows.length){toast('Não há leads para exportar com estes filtros.');return}
+  audit('Exportação',rows.length+' leads, ficheiro '+name);
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Leads');XLSX.writeFile(wb,name);toast(rows.length+' leads exportadas')}
+function doExport(){const cid=$('#expClient').value,sts=[...document.querySelectorAll('.expSt:checked')].map(i=>i.value),per=+$('#expPer').value;
+  let L=S.leads.filter(l=>(cid==='all'||l.clientId===cid)&&sts.includes(l.stageId));if(per)L=L.filter(l=>l.createdAt>=Date.now()-per*864e5);
+  const pipe=$('#expPipe').checked;downloadXlsx(exportRows(L,$('#expHist').checked,pipe),'leads_'+(cid==='all'?'todos':cid)+(pipe?'_pipedrive':'')+'.xlsx')}
+
+/* ================= MODAIS ================= */
+function openModal(html,wide,keepScroll){const ov=$('#ovl');const sc=ov.scrollTop;const m=$('#modal');m.className='modal'+(wide?' wide':'');m.innerHTML=html;ov.classList.add('open');
+  if(keepScroll)ov.scrollTop=sc;else{ov.scrollTop=0;const f=m.querySelector('input,select,textarea,button:not(.x)');if(f)f.focus({preventScroll:true})}}
+function closeModal(){$('#ovl').classList.remove('open');$('#modal').innerHTML='';CUR=null}
+
+function newLeadModal(){
+  const cl=isClient()?client(S.ui.role):null;
+  const def=cl?cl.id:(S.ui.filter!=='all'?S.ui.filter:AC()[0].id);
+  openModal(`<div class="mh"><h2>Nova lead</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <form id="nlForm" style="display:flex;flex-direction:column;gap:14px">
+  ${cl?`<input type="hidden" name="clientId" value="${cl.id}">`:`<label class="f">Cliente *<select name="clientId">${AC().map(c=>`<option value="${c.id}" ${c.id===def?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>`}
+  <div class="g2"><label class="f">Nome *<input name="name" required></label><label class="f">Telemóvel *<input name="phone" type="tel" required></label>
+  <label class="f">Email<input name="email" type="email" placeholder="opcional"></label><label class="f">Origem<select name="source">${SOURCES.map(s=>`<option ${s==='Referência'?'selected':''}>${s}</option>`).join('')}</select></label></div>
+  <div id="dupWarn"></div>
+  <div class="g2"><label class="f">Interesse ou imóvel<input name="interest" placeholder="Ex.: T3 Telheiras"></label><label class="f">Budget<input name="budget" placeholder="Ex.: 450 000 €"></label></div>
+  ${cl?`<fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px"><legend class="f" style="margin-bottom:8px">Quem trata desta lead?</legend>
+    <label class="radio"><input type="radio" name="stageId" value="auto" checked>A OPERA contacta e qualifica</label>
+    <label class="radio"><input type="radio" name="stageId" value="qualificada">Fico eu com ela (já está qualificada)</label></fieldset><input type="hidden" name="task" value="1">`:`<div class="g2"><label class="f">Etapa inicial<select name="stageId"><option value="auto">Automática pela origem</option>${BASE_STAGES.slice(0,5).map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></label>
+  <label class="f">Primeira tarefa<select name="task"><option value="1">Chamada daqui a 1 h</option><option value="0.25">Chamada daqui a 15 min</option><option value="24">Chamada amanhã</option><option value="0">Sem tarefa</option></select></label></div>`}
+  <label class="f">Nota<textarea name="note" placeholder="Contexto, quem referenciou, o que pediu"></textarea></label>
+  <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" name="pin">Afixar esta nota no topo da lead</label>
+  <div class="actions"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn" name="again" value="1" style="border-color:var(--blue);color:var(--blueDark);font-weight:600">Criar e adicionar outra</button><button type="submit" class="btn primary">Criar lead</button></div>
+  </form>`);
+  const fm=$('#nlForm'),E=fm.elements;
+  const chk=()=>{const p=normPhone(E.phone.value);const ex=p.length>5&&S.leads.find(l=>l.clientId===E.clientId.value&&normPhone(l.phone)===p);
+    $('#dupWarn').innerHTML=ex?`<div class="banner orange" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><span style="flex:1 1 260px">Já existe uma lead com este telemóvel em ${esc(client(ex.clientId).name)}: ${esc(ex.name)}, ${esc(stage(ex.stageId).name)}.</span><button type="button" class="btn sm" data-open="${ex.id}">Abrir a existente</button></div>`:''};
+  E.phone.addEventListener('input',chk);if(E.clientId.tagName==='SELECT')E.clientId.addEventListener('change',chk);
+  fm.addEventListener('submit',e=>{e.preventDefault();const again=e.submitter&&e.submitter.name==='again';const d=Object.fromEntries(new FormData(fm));const now=Date.now();
+    if(d.stageId==='auto')d.stageId=srcStage(d.source);
+    const l={id:uid(),clientId:d.clientId,name:d.name.trim(),phone:d.phone.trim(),email:d.email.trim(),source:d.source,interest:d.interest.trim(),stageId:d.stageId,entryStage:NEW_STAGES.includes(d.stageId)?d.stageId:srcStage(d.source),createdAt:now,attempts:0,qual:d.budget.trim()?{Budget:d.budget.trim()}:{},tasks:[],
+      timeline:[{id:uid(),t:'auto',title:cl?'Lead adicionada pelo cliente':'Lead criada manualmente',when:now,body:cl&&NEW_STAGES.includes(d.stageId)?'A OPERA foi avisada para contactar.':'',by:by()}]};
+    if(+d.task&&d.stageId!=='qualificada')addTask(l,'call',now+(+d.task)*3600e3,'Primeiro contacto');
+    if(d.note.trim())l.timeline.push({id:uid(),t:'note',title:'Nota',when:now,body:d.note.trim(),by:by(),pinned:!!d.pin});
+    S.leads.push(l);toast(cl&&NEW_STAGES.includes(d.stageId)?'Lead criada. A OPERA vai contactar.':'Lead criada: '+l.name);render();if(again)newLeadModal();else closeModal()});
+}
+function stageModal(){
+  const forClient=isClient();
+  const afterOpts=cid=>S.stages.filter(s=>s.order>=QUAL_ORDER()&&s.id!=='desq'&&(s.clientId===null||s.clientId===cid)).sort((a,b)=>a.order-b.order);
+  const defC=forClient?S.ui.role:(S.ui.filter!=='all'?S.ui.filter:AC()[0].id);
+  openModal(`<div class="mh"><h2>Nova etapa</h2><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <form id="stForm" style="display:flex;flex-direction:column;gap:14px">
+  <label class="f">Nome da etapa<input name="name" required placeholder="Ex.: Proposta enviada"></label>
+  ${forClient?`<input type="hidden" name="scope" value="client"><input type="hidden" name="clientId" value="${defC}">`:`
+  <fieldset style="border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px"><legend class="f" style="margin-bottom:8px">Para quem é esta etapa</legend>
+    <label class="radio"><input type="radio" name="scope" value="all">Todos os clientes</label>
+    <div class="radio" style="flex-wrap:wrap;padding:6px 12px"><label style="display:flex;gap:10px;align-items:center"><input type="radio" name="scope" value="client" checked>Só um cliente:</label>
+    <select name="clientId" aria-label="Cliente" style="flex:1 1 200px;min-height:38px;border:1px solid var(--line2);border-radius:8px;padding:0 10px;background:#fff">${AC().map(c=>`<option value="${c.id}" ${c.id===defC?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+  </fieldset>`}
+  <div class="g2"><label class="f">Posição: depois de<select name="after"></select></label>
+  <label class="f">Quem trabalha esta etapa<select name="owner"><option value="cliente">Cliente</option><option value="opera">OPERA</option><option value="ambos">Ambos</option></select></label></div>
+  <div style="display:flex;flex-direction:column;gap:8px"><span class="f">Como fica o pipeline</span><div class="preview" id="stPrev"></div>
+  <span class="sub" style="margin:0;font-size:12px">Só dá para acrescentar etapas depois de Lead Qualificada. Até aí o funil é igual para todos os clientes.</span></div>
+  <div class="actions"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn primary">Criar etapa</button></div>
+  </form>`);
+  const fm=$('#stForm'),E=fm.elements;
+  const cidNow=()=>E.scope.value==='all'?null:E.clientId.value;
+  const upd=()=>{const cid=cidNow();const opts=afterOpts(cid);const prev=E.after.value;
+    E.after.innerHTML=opts.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');E.after.value=opts.some(o=>o.id===prev)?prev:opts[opts.length-1].id;
+    const all=S.stages.filter(s=>s.clientId===null||s.clientId===cid).sort((a,b)=>a.order-b.order);const i=all.findIndex(s=>s.id===E.after.value);
+    const list=all.map(s=>`<span>${esc(s.name)}</span>`);list.splice(i+1,0,`<span class="new">${esc(E.name.value.trim()||'Nova etapa')}</span>`);$('#stPrev').innerHTML=list.join('')};
+  fm.addEventListener('input',upd);fm.addEventListener('change',upd);upd();
+  fm.addEventListener('submit',e=>{e.preventDefault();const cid=cidNow();const all=S.stages.filter(s=>s.clientId===null||s.clientId===cid).sort((a,b)=>a.order-b.order);
+    const i=all.findIndex(s=>s.id===E.after.value);const a=all[i].order,b=all[i+1]?all[i+1].order:a+10;const c=cid?client(cid):null;
+    S.stages.push({id:'st_'+uid(),name:E.name.value.trim(),color:c?c.dot:'#475569',order:(a+b)/2,clientId:cid,owner:E.owner.value,base:false});
+    toast('Etapa criada'+(c?' para '+c.name:' para todos os clientes'));closeModal();render()});
+}
+
+
+function labelsModal(){
+  const back=CUR;
+  openModal(`<div class="mh"><h2>Etiquetas</h2><button type="button" class="x" data-act="${back?'backLead':'close'}" data-back="${back||''}" aria-label="Fechar">×</button></div>
+  <div class="sub" style="margin:0">As etiquetas servem para todos os clientes. Mudar o nome ou a cor atualiza todas as leads que a têm.</div>
+  <div class="list">${S.labels.map(x=>`<div class="item" style="padding:10px 14px">${lab(x.id)}
+    <label class="f" style="flex:1 1 160px"><span class="vh">Nome</span><input data-lname="${x.id}" value="${esc(x.name)}" style="min-height:38px"></label>
+    <label class="f"><span class="vh">Cor</span><select data-lcolor="${x.id}" style="min-height:38px">${Object.entries(LABEL_COLORS).map(([k,v])=>`<option value="${k}" ${x.color===k?'selected':''}>${v[2]}</option>`).join('')}</select></label>
+    <span class="sub" style="margin:0;font-size:12px">${S.leads.filter(l=>(l.labels||[]).includes(x.id)).length} leads</span>
+    <button type="button" class="link" data-ldel="${x.id}" style="color:#B91C1C">Apagar</button></div>`).join('')}</div>
+  <form id="labForm" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+    <label class="f" style="flex:1 1 200px">Nova etiqueta<input name="name" required placeholder="Ex.: Urgente"></label>
+    <div class="f" style="flex:2 1 300px">Cor<div class="chips" role="radiogroup" aria-label="Cor">${Object.entries(LABEL_COLORS).map(([k,v],i)=>`<label style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:${v[0]};color:${v[1]};font-size:12px;font-weight:600;min-height:32px;cursor:pointer"><input type="radio" name="color" value="${k}" ${i===0?'checked':''}>${v[2]}</label>`).join('')}</div></div>
+    <button type="submit" class="btn primary">Criar etiqueta</button>
+  </form>
+  <div class="actions"><button type="button" class="btn" data-act="${back?'backLead':'close'}" data-back="${back||''}">${back?'Voltar à lead':'Fechar'}</button></div>`);
+  CUR=back;
+  $('#labForm').addEventListener('submit',e=>{e.preventDefault();const E=e.target.elements;const n=E.name.value.trim();if(!n)return;
+    if(S.labels.some(x=>x.name.toLowerCase()===n.toLowerCase())){toast('Já existe uma etiqueta com esse nome');return}
+    S.labels.push({id:'lb_'+uid(),name:n,color:E.color.value});save();render();labelsModal();toast('Etiqueta criada')});
+}
+
+let CUR=null;
+function leadModal(id,opt){
+  opt=opt||{};const l=leadById(id);if(!l)return;CUR=l.id;const c=client(l.clientId);
+  const cols=S.stages.filter(s=>s.clientId===null||s.clientId===l.clientId).sort((a,b)=>a.order-b.order);
+  const cur=stage(l.stageId);const ci=cols.findIndex(s=>s.id===l.stageId);
+  const readOnly=isClient()&&cur.order<QUAL_ORDER();
+  const icon={call:['TEL','#DCE8FF','#1E3A8A'],note:['NOTA','#FEF3C7','#78350F'],auto:['AUTO','#ECE3FB','#5B21B6'],stage:['ETAPA','#E8F8EF','#14532D'],act:['FEITO','#F1F5F9','#334155']};
+  const now=Date.now();const ot=openTasks(l);const pins=pinned(l);
+  const tType=opt.tType||'call';const tDue=opt.tDue||localInput(now+3600e3);
+  const canEdit=e=>(e.t==='note'||e.t==='call')&&e.body&&(!isClient()||e.by===by());
+  openModal(`<div class="mh"><div style="display:flex;flex-direction:column;gap:6px"><div class="tags">${tag(c)}<span class="src">Origem: ${esc(l.source)}</span><span style="font-size:12px;color:var(--mute)">Entrou ${fmtWhen(l.createdAt)}${firstCall(l)?' · Time to Lead '+fmtDur((firstCall(l)-l.createdAt)/60000):''}</span></div><h2>${esc(l.name)}</h2>${labsHTML(l)}</div><button type="button" class="x" data-act="close" aria-label="Fechar">×</button></div>
+  ${pins.length?`<div class="banner pin" style="display:flex;flex-direction:column;gap:8px">${pins.map(p=>`<div style="display:flex;gap:10px;align-items:flex-start">${ICON.pin}<span style="flex:1;white-space:pre-line">${esc(p.body)}<span style="font-size:12px;opacity:.75"> · ${esc(p.by)}, ${fmtWhen(p.when)}</span></span>${readOnly?'':`<button type="button" class="link" data-pin="${p.id}">Desafixar</button>`}</div>`).join('')}</div>`:''}
+  <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+    <div class="row">
+      <button type="button" class="btn primary" data-call="${l.id}" ${isClient()?'disabled':''}>${ICON.phone}Ligar pela CloudTalk</button>
+      <a class="btn" href="https://wa.me/${normPhone(l.phone).length===9?'351'+normPhone(l.phone):normPhone(l.phone)}" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" href="mailto:${esc(l.email)}">Email</a>
+      ${!isClient()?`<label class="f" style="flex-direction:row;align-items:center;gap:8px;margin-left:auto">Cliente<select id="ldClient" style="min-height:40px">${AC().map(x=>`<option value="${x.id}" ${x.id===l.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:''}
+    </div>
+    <div class="stagesBar" role="group" aria-label="Etapa da lead">${cols.map((s,i)=>`<button type="button" class="${i<ci?'past':i===ci?'cur':''}" data-stage="${s.id}" ${(!canMoveTo(s)||readOnly)?'disabled':''}>${esc(s.name)}</button>`).join('')}</div>
+    ${readOnly?'<span class="sub" style="margin:0">Esta lead ainda está a ser trabalhada pela OPERA. Passa a ser vossa quando ficar qualificada.</span>':''}
+  </div>
+  <div class="det">
+   <aside>
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Etiquetas</h3>${isClient()?'':'<button type="button" class="link" data-act="manageLabels">Gerir etiquetas</button>'}</div>
+      <div class="chips" style="margin-top:10px" role="group" aria-label="Etiquetas da lead">${S.labels.map(x=>{const on=(l.labels||[]).includes(x.id);const c=LABEL_COLORS[x.color]||LABEL_COLORS.cinzento;return `<button type="button" class="chip" data-ltoggle="${x.id}" aria-pressed="${on}" ${readOnly?'disabled':''} style="${on?`background:${c[0]};color:${c[1]};border-color:${c[1]};font-weight:600`:''}">${on?'✓ ':''}${esc(x.name)}</button>`}).join('')}</div></div>
+    <div class="panel"><h3>Contacto</h3>
+      <label class="kv"><span>Telemóvel</span><input data-f="phone" value="${esc(l.phone)}" ${readOnly?'readonly':''}></label>
+      <label class="kv"><span>Email</span><input data-f="email" value="${esc(l.email)}" ${readOnly?'readonly':''}></label>
+      <label class="kv"><span>Interesse ou imóvel</span><input data-f="interest" value="${esc(l.interest)}" ${readOnly?'readonly':''}></label>
+    </div>
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><h3>Qualificação</h3><span class="tag" style="background:var(--greenSoft);color:var(--greenText)">${QUAL_FIELDS.filter(q=>l.qual[q]).length} de ${QUAL_FIELDS.length}</span></div>
+      ${QUAL_FIELDS.map(q=>`<label class="kv"><span>${q}</span><input data-q="${esc(q)}" value="${esc(l.qual[q]||'')}" placeholder="${q==='Budget'?'Ex.: 400 000 €':'Por perguntar'}" ${readOnly?'readonly':''}></label>`).join('')}
+    </div>
+    <div class="panel"><h3>Responsável no cliente</h3><label class="f" style="margin-top:10px"><span class="vh">Responsável</span><select id="ldOwner" ${readOnly?'disabled':''}><option value="">Todos os utilizadores do cliente</option>${S.users.filter(u=>u.clientId===l.clientId&&u.status==='ativo').map(u=>`<option value="${u.id}" ${l.ownerUserId===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}</select></label><span class="sub" style="margin:6px 0 0;font-size:12px">Quem recebe o aviso quando a lead fica qualificada.</span></div>
+    ${!isClient()&&cur.order<QUAL_ORDER()?`<button type="button" class="btn green" data-qualify="${l.id}">Marcar qualificada e avisar cliente</button>`:''}
+    ${readOnly||l.erased?'':`<details class="panel"><summary style="cursor:pointer;font-weight:600;min-height:28px">Dados pessoais (RGPD)</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><span class="sub" style="margin:0;font-size:12px">Para pedidos do titular: acesso aos seus dados ou apagamento.</span><button type="button" class="btn sm" data-rgpdexp="${l.id}">Exportar dados desta pessoa</button><button type="button" class="btn sm" data-rgpddel="${l.id}" style="color:#B91C1C">Apagar a pedido do titular</button></div></details>`}
+    ${l.stageId!=='desq'&&!readOnly?`<button type="button" class="btn" data-desq="${l.id}" style="color:#B91C1C">Desqualificar</button>`:''}
+   </aside>
+   <section>
+    <div class="panel" style="display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><h3>Tarefas</h3><span class="sub" style="margin:0;font-size:12px">${ot.length} em aberto</span></div>
+      ${ot.length?ot.map(t=>`<div class="task"><span class="when ${t.due<now?'late':''}">${fmtWhen(t.due)}</span>${ttag(t.type)}<span class="nt">${esc(t.note)}</span>${readOnly?'':`<button type="button" class="btn xs" data-done="${l.id}|${t.id}">Feita</button><button type="button" class="btn xs" data-snooze="${l.id}|${t.id}">Adiar 1 dia</button><button type="button" class="link" data-tdel="${l.id}|${t.id}" aria-label="Apagar tarefa" style="color:var(--mute)">Apagar</button>`}</div>`).join(''):'<div class="sub" style="margin:4px 0">Sem tarefas em aberto. Uma lead sem próxima tarefa é uma lead esquecida.</div>'}
+      ${readOnly?'':`<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:12px;display:flex;flex-direction:column;gap:10px">
+        <div class="chips" role="group" aria-label="Tipo de tarefa"><span style="font-size:12px;color:var(--mute);font-weight:600">Nova tarefa:</span>${Object.entries(TASK_TYPES).map(([k,v])=>`<button type="button" class="btn xs ${tType===k?'on':''}" data-ttype="${k}" aria-pressed="${tType===k}">${v}</button>`).join('')}</div>
+        <div class="g2"><label class="f">Quando<input id="tDue" type="datetime-local" value="${tDue}"></label><label class="f">Nota da tarefa<input id="tNote" placeholder="${tType==='meeting'?'Ex.: Reunião por videochamada':tType==='followup'?'Ex.: Enviar imóveis':'Ex.: Ligar de novo'}"></label></div>
+        <div class="chips"><span style="font-size:12px;color:var(--mute)">Rápido:</span>${[['1h','Daqui a 1 h'],['3h','Daqui a 3 h'],['tom','Amanhã 10:00'],['3d','Daqui a 3 dias']].map(([k,v])=>`<button type="button" class="chip" data-preset="${k}">${v}</button>`).join('')}<button type="button" class="btn sm primary" data-addtask="${l.id}" style="margin-left:auto">Criar tarefa</button></div>
+      </div>`}
+    </div>
+    ${readOnly?'':`<div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <label class="f">Registar nota<textarea id="note" placeholder="O que aconteceu?"></textarea></label>
+      <div class="chips"><span style="font-size:12px;color:var(--mute)">Resultado rápido:</span>${['Não atendeu','Pediu para ligar mais tarde','Número errado','Sem interesse','Marcou visita'].map(x=>`<button type="button" class="chip" data-chip="${x}">${x}</button>`).join('')}</div>
+      <div class="actions" style="align-items:center"><label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-right:auto"><input type="checkbox" id="notePin">Afixar no topo</label><button type="button" class="btn primary" data-savenote="${l.id}">Guardar nota</button></div>
+    </div>`}
+    <div class="panel"><h3 style="margin-bottom:6px">Histórico</h3>
+      ${l.timeline.concat(l.tasks.filter(t=>t.done&&t.doneAt).map(t=>({id:'tk'+t.id,t:'act',title:TASK_TYPES[t.type]+' concluída',when:t.doneAt,body:t.note,by:t.by||'André'}))).sort((a,b)=>b.when-a.when).map(e=>{const ic=icon[e.t]||icon.act;
+        const editing=opt.edit===e.id;
+        return `<div class="tl"><span class="ic" style="background:${ic[1]};color:${ic[2]}">${ic[0]}</span><div style="flex:1;min-width:0"><b>${esc(e.title)}</b>${e.pinned?` <span style="color:var(--pinText)">${ICON.pin}</span>`:''}<span class="w">${fmtWhen(e.when)} · ${esc(e.by||'')}${e.edited?' · editada':''}</span>
+        ${editing?`<textarea id="editTxt" aria-label="Editar nota">${esc(e.body)}</textarea><div class="tools"><button type="button" class="btn xs primary" data-editsave="${e.id}">Guardar</button><button type="button" class="btn xs" data-editcancel="1">Cancelar</button></div>`:
+        `${e.body?`<p>${esc(e.body)}</p>`:''}${canEdit(e)&&!readOnly?`<div class="tools"><button type="button" class="link" data-edit="${e.id}">Editar</button><button type="button" class="link" data-pin="${e.id}">${e.pinned?'Desafixar':'Afixar'}</button></div>`:''}`}
+        </div></div>`}).join('')}
+    </div>
+   </section>
+  </div>`,true,!!opt.keep);
+  const m=$('#modal');
+  m.querySelectorAll('[data-f]').forEach(i=>i.addEventListener('change',()=>{l[i.dataset.f]=i.value;save()}));
+  m.querySelectorAll('[data-q]').forEach(i=>i.addEventListener('change',()=>{const v=i.value.trim();if(v)l.qual[i.dataset.q]=v;else delete l.qual[i.dataset.q];save()}));
+  const ow=$('#ldOwner');if(ow)ow.addEventListener('change',()=>{l.ownerUserId=ow.value||null;log(l,'auto','Responsável alterado',ow.value?S.users.find(u=>u.id===ow.value).name:'Todos os utilizadores do cliente');render();refresh(curTaskForm())});
+  const sel=$('#ldClient');if(sel)sel.addEventListener('change',()=>{l.clientId=sel.value;if(stage(l.stageId).clientId&&stage(l.stageId).clientId!==sel.value)l.stageId='qualificada';log(l,'auto','Cliente alterado para '+client(sel.value).name);render();refresh()});
+  const ed=$('#editTxt');if(ed){ed.focus();ed.setSelectionRange(ed.value.length,ed.value.length)}
+}
+function refresh(opt){if(CUR)leadModal(CUR,Object.assign({keep:true},opt||{}))}
+function curTaskForm(){return {tType:(document.querySelector('[data-ttype].on')||{dataset:{ttype:'call'}}).dataset.ttype,tDue:($('#tDue')||{}).value}}
+function moveLead(l,sid){const s=stage(sid);if(!s||l.stageId===sid)return;if(!canMoveTo(s)){toast('Só a OPERA mexe nas etapas antes de Qualificada');return}
+  const from=stage(l.stageId).name;l.stageId=sid;log(l,'stage','Mudou de etapa',from+' → '+s.name,{to:sid});
+  if(sid==='qualificada'){const rec=l.ownerUserId?S.users.filter(u=>u.id===l.ownerUserId):S.users.filter(u=>u.clientId===l.clientId&&u.status==='ativo');log(l,'auto','Cliente notificado','Aviso enviado por email a '+(rec.length?rec.map(u=>u.name).join(', '):client(l.clientId).name)+' com o resumo da lead.');l.tasks=l.tasks.filter(t=>t.done);addTask(l,'followup',Date.now()+24*3600e3,'Confirmar com o cliente');toast('Lead qualificada. '+client(l.clientId).name+' foi avisado.')}
+  else if(sid==='desq'){l.tasks=l.tasks.filter(t=>t.done)}
+  render()}
+function completeTask(l,tid){const t=l.tasks.find(x=>x.id===tid);if(!t)return;t.done=true;t.doneAt=Date.now();t.by=by()}
+
+/* ================= EVENTOS ================= */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,a,[data-open],[data-cmodal]');if(!t)return;const d=t.dataset;
+  if(d.nav){S.ui.view=d.nav;S.ui.q='';closeModal();render();return}
+  if(d.client){S.ui.view='pipeline';S.ui.filter=d.client;render();return}
+  if(d.filter){S.ui.filter=d.filter;S.ui.shown={};render();return}
+  if(d.period){S.ui.period=d.period;render();return}
+  if(d.dclient){S.ui.dashClient=d.dclient;render();return}
+  if(d.simmeta){const c=client(d.simmeta);const fn=['Raquel','Duarte','Marisa','Nelson','Vera'][Math.floor(Math.random()*5)],ln=['Soares','Lima','Freitas','Pacheco'][Math.floor(Math.random()*4)];
+    const l=ingest(c.id,'Meta',{name:fn+' '+ln,phone:'+351 91'+Math.floor(1000000+Math.random()*8999999),email:(fn+'.'+ln).toLowerCase()+'@email.pt',interest:'Formulário: quer vender casa',msg:'Resposta ao formulário: pretende vender nos próximos 3 meses.'});
+    toast('Lead Meta recebida para '+c.name+': '+l.name);render();return}
+  if(d.simmail){simMailModal(d.simmail);return}
+  if(d.sample){$('#simTxt').value=SAMPLE_EMAIL[d.sample];$('#simPortal').value=d.sample;$('#simPrev').innerHTML='';return}
+  if(d.simparse||d.simgo){const r=parsePortal($('#simTxt').value,$('#simPortal').value);
+    if(d.simparse){$('#simPrev').innerHTML=`<div class="banner ${r.phone||r.email?'blue':'orange'}"><b>Extraído:</b> ${esc(r.name||'sem nome')} · ${esc(r.phone||'sem telefone')} · ${esc(r.email||'sem email')} · ${esc(r.interest||'sem imóvel')}${r.ref?' · ref. '+esc(r.ref):''}${r.phone||r.email?'':'<br>Sem contacto: a lead entra na mesma, com uma nota afixada a pedir revisão.'}</div>`;return}
+    const l=ingest(d.simgo,'Email '+r.portal,r);closeModal();toast('Email processado: '+l.name);render();return}
+  if(d.fwd){fwdModal(d.fwd);return}
+  if(d.demo){tryLogin(d.demo);return}
+  if(d.cmodal){clientModal(d.cmodal);return}
+  if(d.uaccept||d.uon){const u=S.users.find(x=>x.id===(d.uaccept||d.uon));u.status='ativo';audit(d.uaccept?'Convite aceite':'Acesso reativado',u.name);render();reopenUsers(u.clientId);return}
+  if(d.uresend){const u=S.users.find(x=>x.id===d.uresend);audit('Convite reenviado',u.email);toast('Convite reenviado para '+u.email);return}
+  if(d.uoff){const u=S.users.find(x=>x.id===d.uoff);if(confirm('Retirar o acesso de '+u.name+'?')){const was=u.status;u.status=was==='convidado'?'removido':'desativado';if(u.status==='removido')S.users=S.users.filter(x=>x!==u);audit(was==='convidado'?'Convite cancelado':'Acesso desativado',u.name);S.leads.forEach(l=>{if(l.ownerUserId===u.id)l.ownerUserId=null});render();reopenUsers(u.clientId)}return}
+  if(d.cexport){const c=client(d.cexport);downloadXlsx(exportRows(S.leads.filter(l=>l.clientId===c.id),true,false),'leads_'+c.id+'.xlsx');return}
+  if(d.cdeact){const c=client(d.cdeact);if(confirm('Desativar '+c.name+'? Os utilizadores perdem o acesso já e os dados são apagados daqui a '+RETENTION_MONTHS+' meses.')){c.status='inativo';c.deactivatedAt=Date.now();c.deleteAt=addMonths(Date.now(),RETENTION_MONTHS);if(S.ui.filter===c.id)S.ui.filter='all';audit('Cliente desativado',c.name+', apagamento a '+fmtDate(c.deleteAt));render();clientModal(c.id)}return}
+  if(d.creact){const c=client(d.creact);c.status='ativo';delete c.deleteAt;delete c.deactivatedAt;audit('Cliente reativado',c.name);render();clientModal(c.id);return}
+  if(d.cdel){const c=client(d.cdel);if(prompt('Isto apaga todas as leads e utilizadores de '+c.name+' e não se pode desfazer. Escreve APAGAR para confirmar.')==='APAGAR'){purgeClient(c,'apagamento manual');closeModal();render();toast('Dados apagados')}return}
+  if(d.rgpdexp){const l=leadById(d.rgpdexp);audit('Pedido de acesso do titular',l.name+' ('+client(l.clientId).name+')');downloadXlsx(exportRows([l],true,false),'dados_titular_'+l.id+'.xlsx');return}
+  if(d.rgpddel){const l=leadById(d.rgpddel);if(prompt('Apagar os dados pessoais de '+l.name+'? Não se pode desfazer. Escreve APAGAR para confirmar.')==='APAGAR'){eraseLead(l,'pedido do titular');render();refresh();toast('Dados pessoais apagados')}return}
+  if(d.gopen){const id=d.gopen;$('#gq').value='';gsearch('');leadModal(id);return}
+  if(d.layout){S.ui.layout=d.layout;render();return}
+  if(d.lsort){const ls=S.ui.lsort;if(ls.key===d.lsort)ls.dir*=-1;else{ls.key=d.lsort;ls.dir=['name','client','stage','source','next'].includes(d.lsort)?1:-1}render();return}
+  if(d.lmore){S.ui.listShown=(S.ui.listShown||PAGE)+PAGE;render();return}
+  if(d.more){S.ui.shown[d.more]=(S.ui.shown[d.more]||PAGE)+PAGE;render();return}
+  if(d.open){leadModal(d.open);return}
+  if(d.call){const l=leadById(d.call);l.attempts++;log(l,'call','Chamada CloudTalk iniciada','Simulação: no sistema real a chamada abre na CloudTalk e o registo chega sozinho, com duração e gravação.');
+    const ct=openTasks(l).find(x=>x.type==='call');if(ct)completeTask(l,ct.id);
+    if(NEW_STAGES.includes(l.stageId)){log(l,'stage','Mudou de etapa',stage(l.stageId).name+' → Follow Up OPERA',{to:'followup'});l.stageId='followup'}
+    toast('A ligar a '+l.name+' pela CloudTalk');render();refresh();return}
+  if(d.done){const [lid,tid]=d.done.split('|');const l=leadById(lid);completeTask(l,tid);toast('Tarefa concluída'+(openTasks(l).length?'':'. Esta lead ficou sem próxima tarefa.'));render();refresh();return}
+  if(d.snooze){const [lid,tid]=d.snooze.split('|');const l=leadById(lid);const tk=l.tasks.find(x=>x.id===tid);tk.due=Math.max(tk.due,Date.now())+864e5;render();refresh();return}
+  if(d.tdel){const [lid,tid]=d.tdel.split('|');const l=leadById(lid);l.tasks=l.tasks.filter(x=>x.id!==tid);render();refresh();return}
+  if(d.ttype){refresh({tType:d.ttype,tDue:($('#tDue')||{}).value});return}
+  if(d.preset){const n=Date.now();let ts=n+3600e3;if(d.preset==='3h')ts=n+3*3600e3;if(d.preset==='3d')ts=n+3*864e5;if(d.preset==='tom'){const x=new Date();x.setDate(x.getDate()+1);x.setHours(10,0,0,0);ts=x.getTime()}$('#tDue').value=localInput(ts);return}
+  if(d.addtask){const l=leadById(d.addtask);const f=curTaskForm();if(!f.tDue){toast('Escolhe quando');return}addTask(l,f.tType,new Date(f.tDue).getTime(),$('#tNote').value.trim());toast(TASK_TYPES[f.tType]+' marcada para '+fmtWhen(new Date(f.tDue).getTime()));render();refresh();return}
+  if(d.stage){moveLead(leadById(CUR),d.stage);refresh();return}
+  if(d.qualify){moveLead(leadById(d.qualify),'qualificada');refresh();return}
+  if(d.desq){const l=leadById(d.desq);if(confirm('Passar '+l.name+' para Lead desqualificada? As tarefas em aberto são canceladas.')){moveLead(l,'desq');refresh();toast('Lead desqualificada')}return}
+  if(d.chip){const n=$('#note');n.value=(n.value?n.value+'. ':'')+d.chip;
+    if(d.chip==='Não atendeu'||d.chip==='Pediu para ligar mais tarde'){const keep={tType:'call',tDue:localInput(Date.now()+(d.chip==='Não atendeu'?3:24)*3600e3)};const txt=n.value;refresh(keep);$('#note').value=txt;$('#tNote').value='Ligar de novo';toast('Sugestão: cria a chamada seguinte nas tarefas')}
+    if(d.chip==='Marcou visita'){const txt=n.value;refresh({tType:'meeting'});$('#note').value=txt;$('#tNote').value='Visita'}
+    return}
+  if(d.savenote){const l=leadById(d.savenote);const n=$('#note').value.trim();if(!n){toast('Escreve a nota primeiro');return}
+    const isCall=/atendeu|ligar mais tarde|número errado/i.test(n);log(l,'note',isCall?'Resultado da chamada':'Nota',n,{pinned:$('#notePin').checked});
+    render();refresh(curTaskForm());toast('Nota guardada');return}
+  if(d.ltoggle){const l=leadById(CUR);l.labels=l.labels||[];const i=l.labels.indexOf(d.ltoggle);if(i>=0)l.labels.splice(i,1);else l.labels.push(d.ltoggle);render();refresh(curTaskForm());return}
+  if(d.ldel){const x=S.labels.find(z=>z.id===d.ldel);const n=S.leads.filter(l=>(l.labels||[]).includes(x.id)).length;if(confirm('Apagar a etiqueta '+x.name+'?'+(n?' Sai de '+n+' leads.':''))){S.labels=S.labels.filter(z=>z!==x);S.leads.forEach(l=>{l.labels=(l.labels||[]).filter(id=>id!==x.id)});if(S.ui.label===x.id)S.ui.label='all';render();labelsModal()}return}
+  if(d.pin){const l=leadById(CUR);const en=l.timeline.find(x=>x.id===d.pin);en.pinned=!en.pinned;save();render();refresh(curTaskForm());toast(en.pinned?'Nota afixada':'Nota desafixada');return}
+  if(d.edit){refresh(Object.assign(curTaskForm(),{edit:d.edit}));return}
+  if(d.editcancel){refresh(curTaskForm());return}
+  if(d.editsave){const l=leadById(CUR);const en=l.timeline.find(x=>x.id===d.editsave);const v=$('#editTxt').value.trim();if(!v){toast('A nota não pode ficar vazia');return}en.body=v;en.edited=true;save();render();refresh();toast('Nota atualizada');return}
+  const a=d.act;if(!a)return;
+  if(a==='close')closeModal();
+  else if(a==='newLead')newLeadModal();
+  else if(a==='newStage')stageModal();
+  else if(a==='assignMgr')assignModal();
+  else if(a==='newClient')newClientModal();
+  else if(a==='logout')logout();
+  else if(a==='magic'){const e=(document.querySelector('#lgForm [name=email]')||{}).value;if(!e){toast('Escreve primeiro o teu email');return}toast('Se a conta existir, enviámos um link de acesso para '+e)}
+  else if(a==='forgot'){const e=(document.querySelector('#lgForm [name=email]')||{}).value;if(!e){toast('Escreve primeiro o teu email');return}toast('Se a conta existir, enviámos instruções para '+e)}
+  else if(a==='lgback'){LOGIN={step:'cred',uid:null,msg:''};renderLogin()}
+  else if(a==='manageLabels')labelsModal();
+  else if(a==='backLead'){const id=d.back;if(id)leadModal(id);else closeModal()}
+  else if(a==='addMgr'){const n=prompt('Nome do novo gestor de leads');if(n&&n.trim()){S.managers.push({id:'m_'+uid(),name:n.trim()});render();toast('Gestor adicionado')}}
+  else if(a==='reset'){if(confirm('Apagar tudo e repor os dados de exemplo?')){S=seed();render()}}
+  else if(a==='impClear'){IMP=null;renderIO()}
+  else if(a==='doImport')doImport();
+  else if(a==='doExport')doExport();
+  else if(a==='quickExport'){downloadXlsx(exportRows(visibleLeads(),true,false),'leads_'+(S.ui.filter==='all'?'todos':S.ui.filter)+'.xlsx')}
+  else if(a==='exportClient'){downloadXlsx(exportRows(S.leads.filter(l=>l.clientId===S.ui.role),true,false),'leads_'+S.ui.role+'.xlsx')}
+  else if(a==='template'){downloadXlsx([{Cliente:'Bruno Fernandes',Nome:'Exemplo Silva','Telemóvel':'912345678',Email:'exemplo@email.pt',Origem:'Referência',Interesse:'T2 Lisboa',Budget:'300 000 €',Etapa:'Nova Lead BD',Etiquetas:'Quente, Comprador',Nota:''}],'modelo_importacao_opera.xlsx')}
+});
+$('#ovl').addEventListener('click',e=>{if(e.target.id==='ovl')closeModal()});
+document.addEventListener('mousedown',e=>{if(!e.target.closest('.gsearch')){const b=$('#gres');if(b)b.classList.remove('on')}});
+document.addEventListener('focusin',e=>{if(e.target.id==='gq'&&e.target.value.trim())gsearch(e.target.value)});
+document.addEventListener('keydown',e=>{
+  const gq=$('#gq');
+  if(e.target===gq){const rs=[...document.querySelectorAll('#gres .r')];
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!rs.length)return;GSEL=(GSEL+(e.key==='ArrowDown'?1:-1)+rs.length)%rs.length;rs.forEach((r,i)=>r.classList.toggle('act',i===GSEL));rs[GSEL].scrollIntoView({block:'nearest'});return}
+    if(e.key==='Enter'){e.preventDefault();if(rs[GSEL]){const id=rs[GSEL].dataset.gopen;gq.value='';gsearch('');gq.blur();leadModal(id)}return}
+    if(e.key==='Escape'){gq.value='';gsearch('');gq.blur();return}}
+  if((e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))||((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k')){e.preventDefault();gq.focus();gq.select();return}
+  if(e.key==='Escape'&&$('#ovl').classList.contains('open'))closeModal();if((e.key==='Enter'||e.key===' ')&&e.target.matches('div[data-open],tr[data-open]')){e.preventDefault();leadModal(e.target.dataset.open)}else if((e.key==='Enter')&&e.target.matches('tr[data-cmodal]')){e.preventDefault();clientModal(e.target.dataset.cmodal)}});
+document.addEventListener('input',e=>{if(e.target.id==='gq'){gsearch(e.target.value);return}if(e.target.id==='q'){S.ui.q=e.target.value;const pos=e.target.selectionStart;render();const q=$('#q');if(q){q.focus();q.setSelectionRange(pos,pos)}}});
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.id==='role'){loginAs(t.value)}
+  else if(t.id==='dashClient'){S.ui.dashClient=t.value;render()}
+  else if(t.id==='anonSel'){S.settings.anonAfter=+t.value;audit('Regra de anonimização',+t.value?t.value+' meses':'Desligada');retentionSweep();render()}
+  else if(t.id==='mine'){S.ui.mine=t.checked;render()}
+  else if(t.id==='sortSel'){S.ui.sort=t.value;render()}
+  else if(t.id==='labFilter'){S.ui.label=t.value;S.ui.shown={};render()}
+  else if(t.dataset.lname!==undefined){const x=S.labels.find(z=>z.id===t.dataset.lname);const v=t.value.trim();if(v){x.name=v;render();labelsModal()}}
+  else if(t.dataset.lcolor!==undefined){const x=S.labels.find(z=>z.id===t.dataset.lcolor);x.color=t.value;render();labelsModal()}
+  else if(t.dataset.assign!==undefined){const c=client(t.dataset.assign);c.managerId=t.value||null;render();assignModal()}
+  else if(t.dataset.map!==undefined&&IMP){IMP.map[t.dataset.map]=t.value;renderIO()}
+  else if(t.id==='impClient'){IMP.client=t.value;const st=stage(IMP.stage);if(st&&st.clientId&&st.clientId!==IMP.client)IMP.stage='bd';renderIO()}
+  else if(t.id==='impStage'){IMP.stage=t.value;renderIO()}
+  else if(t.name==='dup'&&IMP){IMP.dup=t.value;renderIO()}
+});
+function bindDnD(){
+  document.querySelectorAll('[data-drag][draggable=true]').forEach(c=>c.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',c.dataset.drag)}));
+  document.querySelectorAll('[data-col]').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drop')});
+    col.addEventListener('dragleave',()=>col.classList.remove('drop'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('drop');const l=leadById(e.dataTransfer.getData('text/plain'));if(l)moveLead(l,col.dataset.col)})});
+}
+function reopenUsers(cid){if(S.ui.view==='clientes'&&$('#ovl').classList.contains('open'))clientModal(cid)}
+load();retentionSweep();render();
+</script>
+</body>
+</html>
