@@ -16,6 +16,14 @@
   VITE_SUPABASE_URL = "https://tdxooskqhpncylwmakvv.supabase.co"
   VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq"
 
+[context.deploy-preview.environment]
+  VITE_SUPABASE_URL = "https://zorfupxbkluiswmhoqnq.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NHi7PX1qwKiiXrY6Qb5lKQ_DNap6cmc"
+
+[context.branch-deploy.environment]
+  VITE_SUPABASE_URL = "https://zorfupxbkluiswmhoqnq.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NHi7PX1qwKiiXrY6Qb5lKQ_DNap6cmc"
+
 # O OPERA Leads é uma aplicação de página única: qualquer caminho em /leads/ abre a aplicação.
 [[redirects]]
   from = "/leads/*"
