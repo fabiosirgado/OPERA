@@ -1,0 +1,17 @@
+# Build do site OPERA.
+# As páginas estáticas (index.html, crm/, etc.) são copiadas tal como estão para dist/.
+# Só o OPERA Leads (leads-app/) é compilado com Vite e publicado em /leads/.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# O OPERA Leads é uma aplicação de página única: qualquer caminho em /leads/ abre a aplicação.
+[[redirects]]
+  from = "/leads/*"
+  to = "/leads/index.html"
+  status = 200
