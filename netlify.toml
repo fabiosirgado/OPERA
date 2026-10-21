@@ -10,6 +10,12 @@
 [build.environment]
   NODE_VERSION = "24"
 
+# Valores públicos (URL e chave publicável, protegidos pelo RLS). Nunca pôr aqui segredos.
+# Produção usa o projeto Supabase real; pré visualizações e branches usam o projeto de testes.
+[context.production.environment]
+  VITE_SUPABASE_URL = "https://tdxooskqhpncylwmakvv.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq"
+
 # O OPERA Leads é uma aplicação de página única: qualquer caminho em /leads/ abre a aplicação.
 [[redirects]]
   from = "/leads/*"
