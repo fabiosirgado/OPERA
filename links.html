@@ -68,6 +68,11 @@ button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit
 .avatar span{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:var(--navy-900);font-family:var(--f-display);font-weight:900;font-size:34px;color:var(--ink-0);letter-spacing:.02em;}
 h1{font-family:var(--f-display);font-weight:900;font-size:clamp(30px,8vw,38px);color:var(--ink-0);line-height:1.05;letter-spacing:-.01em;}
 .bio{color:var(--ink-300);font-size:15.5px;max-width:34ch;}
+.roles{font-size:15px;color:var(--ink-200);display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;}
+.roles a{font-weight:600;color:var(--ink-0);border-bottom:1px solid rgba(111,139,255,.5);transition:color .25s var(--ease),border-color .25s var(--ease);}
+.roles a:hover{color:var(--teal-300);border-color:var(--teal-300);}
+.roles a:focus-visible{outline:2px solid var(--teal-300);outline-offset:3px;border-radius:2px;}
+.roles span{color:var(--ink-500);}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
 .chip{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-200);background:var(--glass);border:1px solid var(--glass-border);border-radius:999px;padding:7px 12px;display:inline-flex;align-items:center;gap:8px;}
 .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--teal-300);box-shadow:0 0 10px 2px var(--teal-300);animation:pulse 2.4s ease-in-out infinite;}
@@ -161,11 +166,13 @@ footer b{color:var(--ink-200);font-weight:500;}
   <section class="profile">
     <div class="avatar"><span>FS</span></div>
     <h1>Fábio Sirgado</h1>
-    <p class="bio">Fundador da OPERA, o departamento operacional externo dos consultores imobiliários.</p>
     <div class="chips">
-      <span class="chip"><span class="dot"></span>Lisboa</span>
-      <span class="chip">You sell. We operate.</span>
+      <span class="chip"><span class="dot"></span>Operações</span>
+      <span class="chip">Equipas</span>
+      <span class="chip">Crescimento no imobiliário</span>
     </div>
+    <p class="roles">Founder <a href="https://www.instagram.com/opera.pt/" target="_blank" rel="noopener">@opera.pt</a> <span aria-hidden="true">·</span> CEO <a href="https://www.instagram.com/zome_evolution/" target="_blank" rel="noopener">@zome_evolution</a></p>
+    <p class="bio">Conteúdo diário para consultores que querem faturar mais</p>
   </section>
 
   <section class="group" aria-labelledby="g1">
