@@ -198,7 +198,7 @@ footer b{color:var(--ink-200);font-weight:500;}
     </a>
     <button class="link" style="--i:3" type="button" id="openZome" aria-haspopup="dialog">
       <span class="ic alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></span>
-      <span class="txt"><span class="t">Conhecer a Zome</span><span class="s">Deixa o teu contacto e eu ligo te</span></span>
+      <span class="txt"><span class="t">Conhecer a Zome</span><span class="s">O ecossistema para cresceres enquanto consultor</span></span>
       <span class="go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>
     </button>
   </section>
@@ -227,25 +227,23 @@ footer b{color:var(--ink-200);font-weight:500;}
 <dialog id="zome" aria-labelledby="zt">
   <div class="dlg" id="zForm">
     <div class="dlg-head">
-      <div><h2 id="zt">Conhecer a Zome</h2><p>Deixa os teus dados e entro em contacto contigo.</p></div>
+      <div><h2 id="zt">Conhecer a Zome</h2><p>O ecossistema para cresceres enquanto consultor. Deixa os teus dados e marcamos uma conversa.</p></div>
       <button class="x" type="button" data-close aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <form class="fg" name="contacto-zome" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="zomeForm" novalidate>
       <input type="hidden" name="form-name" value="contacto-zome">
       <p hidden><label>Não preencher <input name="bot-field"></label></p>
       <fieldset class="opts">
-        <legend>Em que te posso ajudar?</legend>
-        <label class="opt"><input type="radio" name="interesse" value="Comprar casa" checked><span>Comprar casa</span></label>
-        <label class="opt"><input type="radio" name="interesse" value="Vender casa"><span>Vender casa</span></label>
-        <label class="opt"><input type="radio" name="interesse" value="Arrendar"><span>Arrendar</span></label>
-        <label class="opt"><input type="radio" name="interesse" value="Trabalhar na Zome"><span>Trabalhar na Zome</span></label>
+        <legend>Qual é a tua situação?</legend>
+        <label class="opt"><input type="radio" name="situacao" value="Já sou consultor" checked><span>Já sou consultor</span></label>
+        <label class="opt"><input type="radio" name="situacao" value="Quero começar no imobiliário"><span>Quero começar no imobiliário</span></label>
       </fieldset>
       <label>Nome<input id="z-nome" name="nome" autocomplete="name" required></label>
       <label>Telemóvel<input id="z-tel" name="telefone" type="tel" autocomplete="tel" inputmode="tel" required></label>
       <label>Email<input id="z-email" name="email" type="email" autocomplete="email"></label>
       <label>Mensagem (opcional)<textarea id="z-msg" name="mensagem" rows="3"></textarea></label>
       <p class="err" id="zErr" hidden></p>
-      <button class="submit" type="submit" id="zSend">Pedir contacto</button>
+      <button class="submit" type="submit" id="zSend">Quero conhecer a Zome</button>
     </form>
   </div>
   <div class="dlg done" id="zDone" hidden>
@@ -294,7 +292,7 @@ footer b{color:var(--ink-200);font-weight:500;}
     fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(new FormData(form)).toString()})
       .then(function(r){if(!r.ok)throw 0;form.reset();document.getElementById('zForm').hidden=true;document.getElementById('zDone').hidden=false;})
       .catch(function(){err.textContent='Não foi possível enviar. Tenta outra vez dentro de momentos.';err.hidden=false;})
-      .finally(function(){send.disabled=false;send.textContent='Pedir contacto';});
+      .finally(function(){send.disabled=false;send.textContent='Quero conhecer a Zome';});
   });
 
   // copiar link
