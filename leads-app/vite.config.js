@@ -18,6 +18,8 @@ export default defineConfig({
     include: ["src/**/*.test.{js,jsx}", "tests/**/*.test.js"],
     // Os testes de RLS fazem logins reais no projeto de testes.
     hookTimeout: 120_000,
+    // Um ficheiro de cada vez: os logins com dois passos não podem reutilizar o mesmo código.
+    fileParallelism: false,
     testTimeout: 60_000,
   },
 });

@@ -59,7 +59,12 @@ export async function signInWithMfa(env, email, key) {
     appendFileSync(ENV_FILE, `${key}=${secret}\n`);
     env[key] = secret;
   }
-  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code: totp(secret) });
+  let { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code: totp(secret) });
+  if (error) {
+    // O Supabase não aceita o mesmo código duas vezes: espera pelo próximo (30 s) e tenta de novo.
+    await new Promise((r) => setTimeout(r, 30_000 - (Date.now() % 30_000) + 500));
+    ({ error } = await sb.auth.mfa.challengeAndVerify({ factorId, code: totp(secret) }));
+  }
   if (error) throw new Error(`Verificação em dois passos falhou para ${email}: ${error.message}`);
   return sb;
 }

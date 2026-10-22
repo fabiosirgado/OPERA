@@ -95,11 +95,18 @@ suite("RLS do OPERA Leads", { timeout: 60_000 }, () => {
       const { error } = await gestor.rpc("leads_deactivate_client", { p_client_id: clientA });
       expect(error).toBeTruthy();
     });
+    it("o gestor não vê clientes que só existem no CRM", async () => {
+      const { data } = await gestor.from("clients").select("name").eq("name", "Cliente só do CRM");
+      expect(data).toHaveLength(0);
+      const { data: ov } = await gestor.rpc("leads_clients_overview");
+      expect(ov.map((c) => c.name)).toContain("Cliente Teste A");
+      expect(ov.map((c) => c.name)).not.toContain("Cliente só do CRM");
+    });
     it("um gestor não pode ter mais de 8 clientes", async () => {
       const gestorId = (await gestor.auth.getUser()).data.user.id;
       const extra = [];
       for (let i = 0; i < 7; i++) {
-        const { data, error } = await admin.from("clients").insert({ name: `Capacidade ${Date.now()}-${i}` }).select().single();
+        const { data, error } = await admin.from("clients").insert({ name: `Capacidade ${Date.now()}-${i}`, leads_enabled: true }).select().single();
         if (error) throw error;
         extra.push(data.id);
       }
@@ -165,6 +172,28 @@ suite("RLS do OPERA Leads", { timeout: 60_000 }, () => {
         const { data } = await aAdmin.from(t).select("id").limit(1);
         expect(data, t).toHaveLength(0);
       }
+    });
+  });
+
+  describe("RGPD", () => {
+    it("apagar a pedido do titular anonimiza e exige confirmação escrita", async () => {
+      const { data: l } = await admin.from("leads")
+        .insert({ client_id: clientA, name: "Titular", phone: "912000111", email: "t@example.com", stage_id: stages.followup, entry_stage: "meta" })
+        .select().single();
+      leads.titular = l;
+      await admin.from("lead_events").insert({ lead_id: l.id, type: "note", body: "Dados pessoais", author_id: (await admin.auth.getUser()).data.user.id });
+      expect((await aUser.rpc("leads_erase_subject", { p_lead_id: l.id, p_confirm: "APAGAR" })).error).toBeTruthy();
+      expect((await gestor.rpc("leads_erase_subject", { p_lead_id: l.id, p_confirm: "sim" })).error).toBeTruthy();
+      expect((await gestor.rpc("leads_erase_subject", { p_lead_id: l.id, p_confirm: "APAGAR" })).error).toBeNull();
+      const { data: after } = await gestor.from("leads").select("name,phone,email,anonymized,entry_stage,created_at").eq("id", l.id).single();
+      expect(after).toMatchObject({ name: "Titular apagado", phone: null, email: null, anonymized: true, entry_stage: "meta" });
+      const { data: ev } = await gestor.from("lead_events").select("type,body").eq("lead_id", l.id);
+      expect(ev.some((e) => e.body === "Dados pessoais")).toBe(false);
+    });
+    it("só o admin muda a regra de anonimização", async () => {
+      expect(await tryUpdate(gestor, "leads_settings", { anonymize_after_months: 12 }, true)).toHaveLength(0);
+      expect(await tryUpdate(admin, "leads_settings", { anonymize_after_months: 12 }, true)).toHaveLength(1);
+      await admin.from("leads_settings").update({ anonymize_after_months: 0 }).eq("id", true);
     });
   });
 
