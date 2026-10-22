@@ -16,5 +16,8 @@ export default defineConfig({
   test: {
     root: here,
     include: ["src/**/*.test.{js,jsx}", "tests/**/*.test.js"],
+    // Os testes de RLS fazem logins reais no projeto de testes.
+    hookTimeout: 120_000,
+    testTimeout: 60_000,
   },
 });
