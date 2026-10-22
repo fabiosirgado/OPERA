@@ -192,7 +192,9 @@ async function parseEmail(b: Body): Promise<Parsed> {
     x = await aiExtract(subject, text);
   } catch (e) {
     aiFailed = true;
-    console.error("leads-inbound: IA indisponível:", e instanceof Anthropic.APIError ? e.status : "erro");
+    // A mensagem de erro da API descreve o pedido (modelo, parâmetros, saldo), nunca o conteúdo do email.
+    console.error("leads-inbound: IA indisponível:",
+      e instanceof Anthropic.APIError ? `${e.status} ${e.message.slice(0, 300)}` : "erro");
   }
   if (!x) {
     const r = regexExtract(text, to);

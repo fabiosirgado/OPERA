@@ -44,8 +44,16 @@ Tudo isto está aplicado só no projeto Supabase de **testes**. A produção nã
   * os clientes sem acesso.
 * **Verificado no browser** como gestor, em computador e telemóvel: entradas de exemplo do Cliente Teste A, atribuição de uma entrada sem cliente e email original.
 
+**IA testada no opera-testes** com 4 emails de exemplo (dados inventados):
+* **Idealista em HTML:** nome, telefone, email, imóvel, referência e mensagem certos.
+* **Imovirtual sem email**, com o telefone escrito `00351 962 118 404`: telefone normalizado para `962118404`.
+* **Casa Sapo sem telefone:** nome, email e mensagem certos.
+* **Resumo semanal do Idealista**, que não é um pedido de contacto: fica marcado para revisão.
+
+A chave da Anthropic tem de ser de um **espaço de trabalho** (começa por `sk-ant-api03`); uma chave da organização é recusada pela API.
+
 ## O que falta do teu lado
-1. **Chave da Anthropic** como segredo `ANTHROPIC_API_KEY` das Edge Functions, primeiro no opera-testes. Pode ser a chave nova, depois de rodares a antiga. Enquanto não existir, os emails entram com o telefone e o email tirados pelo padrão e ficam marcados para revisão.
+1. Para a produção, criar uma chave do espaço de trabalho com um prazo mais longo e guardá-la como `ANTHROPIC_API_KEY` no projeto de produção.
 2. **Make:** criar os dois cenários seguindo o [guia do Make](make.md). Eu acompanho passo a passo.
 3. **Teste real:** reencaminhar um email verdadeiro de um portal antes de fecharmos a fase.
 
