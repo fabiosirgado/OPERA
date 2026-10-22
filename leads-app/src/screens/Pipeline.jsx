@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { pipeline, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
+import { exportLeads } from "../lib/exportLeads.js";
+import { fileSafe } from "../lib/excel.js";
 import { PAGE, QUALIFIED_POSITION, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
 import { useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags } from "../ui/bits.jsx";
@@ -76,6 +78,15 @@ export default function Pipeline({ ctx }) {
     if (await run(() => updateLead(leadId, { stage_id: stage.id }), stage.key === "qualificada" ? "Lead qualificada. O cliente vai ser avisado." : `Movida para ${stage.name}`)) loadBoard();
   };
 
+  // Exportação rápida do que está filtrado por cliente (todas as etapas, com histórico).
+  const [exporting, setExporting] = useState(false);
+  const quickExport = async () => {
+    setExporting(true);
+    const name = client ? clients.find((c) => c.id === client)?.name : "todos";
+    await run(() => exportLeads({ client: client || null, history: true, fileName: `leads_${fileSafe(name)}.xlsx` }), (n) => `${n} leads exportadas`);
+    setExporting(false);
+  };
+
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const qualifiedId = stages.find((s) => s.key === "qualificada")?.id;
   const sortList = (key) => setPrefs((p) => {
@@ -109,6 +120,8 @@ export default function Pipeline({ ctx }) {
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, minHeight: 44 }}>
               <input type="checkbox" checked={prefs.mine} onChange={(e) => setPref("mine", e.target.checked)} />Só as minhas</label>
           )}
+          {opera && <button type="button" className="btn" onClick={() => ctx.onGo("io")}>Importar Excel</button>}
+          <button type="button" className="btn" disabled={exporting} onClick={quickExport}>{opera ? "Exportar Excel" : "Exportar contactos"}</button>
           <button type="button" className="btn primary" onClick={ctx.onNewLead}>Nova lead</button>
         </div>
       </div>

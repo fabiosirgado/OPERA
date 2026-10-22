@@ -8,3 +8,4 @@ dist/
 supabase/.temp/
 supabase/.branches/
 .claude/
+leads-app/public/teste-*

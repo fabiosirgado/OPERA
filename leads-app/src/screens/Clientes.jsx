@@ -5,6 +5,8 @@ import {
 } from "../lib/api.js";
 import { CLIENT_COLORS, MAX_CLIENTS_PER_MANAGER, RETENTION_MONTHS, fmtDate } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
+import { exportLeads } from "../lib/exportLeads.js";
+import { fileSafe } from "../lib/excel.js";
 import { InviteForm, UserTable } from "./users.jsx";
 
 const INBOX_DOMAIN = "leads.opera-os.com";
@@ -97,6 +99,8 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
     if (!confirm(`Desativar ${c.name}? Todos os acessos deste cliente ficam bloqueados já. As leads ficam guardadas ${RETENTION_MONTHS} meses e depois são apagadas automaticamente.`)) return;
     if (await run(() => deactivateClient(c.id), "Cliente desativado")) onChanged();
   };
+  // Para entregar ao cliente que sai: todas as leads, com histórico.
+  const exportClient = () => run(() => exportLeads({ client: c.id, history: true, fileName: `leads_${fileSafe(c.name)}.xlsx` }), (n) => `${n} leads exportadas`);
   const purge = async () => {
     const typed = prompt(`Para apagar já todas as leads de ${c.name}, escreve o nome do cliente:`);
     if (typed === null) return;
@@ -121,8 +125,9 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
           {!inactive ? (
             <>
               <b>Desativar cliente</b>
-              <span className="sub" style={{ margin: 0, fontSize: 13 }}>Usar quando o cliente deixa de trabalhar com a OPERA. Todos os acessos são bloqueados já. As leads deixam de aparecer no pipeline e ficam guardadas {RETENTION_MONTHS} meses; depois são apagadas automaticamente. Entrega primeiro a exportação ao cliente (Importar e exportar).</span>
-              <div className="row"><button type="button" className="btn sm" disabled={busy} onClick={deactivate}
+              <span className="sub" style={{ margin: 0, fontSize: 13 }}>Usar quando o cliente deixa de trabalhar com a OPERA. Todos os acessos são bloqueados já. As leads deixam de aparecer no pipeline e ficam guardadas {RETENTION_MONTHS} meses; depois são apagadas automaticamente. Entrega primeiro a exportação ao cliente.</span>
+              <div className="row"><button type="button" className="btn sm" disabled={busy} onClick={exportClient}>Exportar leads deste cliente</button>
+                <button type="button" className="btn sm" disabled={busy} onClick={deactivate}
                 style={{ color: "#B91C1C", borderColor: "#F5C2C2" }}>Desativar cliente</button></div>
             </>
           ) : (
@@ -131,6 +136,7 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
               <div className="row">
                 <button type="button" className="btn sm" disabled={busy}
                   onClick={async () => (await run(() => reactivateClient(c.id), "Cliente reativado")) && onChanged()}>Reativar cliente</button>
+                <button type="button" className="btn sm" disabled={busy} onClick={exportClient}>Exportar leads</button>
                 <button type="button" className="btn sm" disabled={busy} onClick={purge}
                   style={{ color: "#B91C1C", borderColor: "#F5C2C2" }}>Apagar já todos os dados</button>
               </div>
