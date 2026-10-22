@@ -87,12 +87,8 @@ begin
         if nullif(trim(r.note), '') is not null then
           insert into public.lead_events (lead_id, type, title, body, author_id) values (v_id, 'note', 'Nota', trim(r.note), auth.uid());
         end if;
-        -- Toda a lead antes de Lead Qualificada nasce com uma tarefa Chamada.
-        if v_stage.position < 50 then
-          insert into public.lead_tasks (lead_id, type, due_at, note, created_by)
-          values (v_id, 'call', now() + interval '1 hour',
-                  case when v_stage.key in ('meta', 'imoveis', 'bd') then 'Primeiro contacto' else 'Ligar de novo' end, auth.uid());
-        end if;
+        -- Leads importadas não nascem com tarefa: decisão do Fábio (a regra 6 aplica-se às leads que chegam
+        -- uma a uma, não a listas importadas).
         v_created := v_created + 1;
       end if;
 

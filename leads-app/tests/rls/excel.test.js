@@ -40,12 +40,13 @@ suite("Importar e exportar", () => {
     expect((await aAdmin.rpc("leads_import_check", { p_rows: [] })).error).toBeTruthy();
   });
 
-  it("cria leads novas como BD, com Chamada, nota e etiquetas (as novas a cinzento)", async () => {
+  it("cria leads novas como BD, sem tarefa, com nota e etiquetas (as novas a cinzento)", async () => {
     const r = await batch(gestor, [row(2, { source: "Meta", note: "Veio de uma feira", labels: ["Quente", `${TAG} Nova`] })]);
     expect(r).toMatchObject({ created: 1, updated: 0, ignored: 0, errors: [] });
     const l = await byName(`${TAG} 2`);
     expect(l.entry_stage).toBe("bd");
-    expect(l.lead_tasks.filter((t) => t.type === "call" && !t.done_at)).toHaveLength(1);
+    expect(l.lead_tasks).toHaveLength(0);
+    expect(l.next_task_at).toBeNull();
     expect(l.lead_events.map((e) => e.title)).toEqual(expect.arrayContaining(["Lead importada de Excel", "Nota"]));
     expect(l.links).toHaveLength(2);
     const { data: lab } = await gestor.from("lead_labels").select("color").eq("name", `${TAG} Nova`).single();

@@ -12,7 +12,7 @@ Tudo isto está aplicado só no projeto Supabase de **testes**. A produção nã
 * **Antes de confirmar:** leads novas, as que já existem (verificadas na base de dados), as que têm problemas (com a linha do Excel e o motivo) e quantas vão para cada etapa.
 * **Duplicados:** ignorar, atualizar dados em falta ou criar na mesma.
 * **Gravação:** feita no servidor em lotes de 250, com barra de progresso.
-  * Cada lead importada tem entrada BD (fica fora do Time to Lead), nasce com uma Chamada se estiver antes de Qualificada e guarda a nota.
+  * Cada lead importada tem entrada BD (fica fora do Time to Lead) e guarda a nota. Não nasce com tarefa: o Fábio decidiu que a Chamada obrigatória (regra 6) é só para leads que chegam uma a uma, não para listas importadas.
   * Etiquetas desconhecidas são criadas a cinzento.
 * **Modelo Excel** para descarregar.
 
@@ -26,11 +26,8 @@ Importações e exportações ficam no registo de atividade: quem, quando e quan
 ## Testes
 * 15 testes novos (65 no total):
   * a lógica de Excel: colunas, etapas, clientes, linhas com problemas, leitura de ficheiros e os dois formatos de exportação;
-  * as regras no servidor: só a equipa importa; os três modos de duplicados; erros por linha; etiquetas novas a cinzento; cada cliente só exporta as suas leads; paginação; registo de atividade.
+  * as regras no servidor: só a equipa importa; as leads importadas não nascem com tarefa; os três modos de duplicados; erros por linha; etiquetas novas a cinzento; cada cliente só exporta as suas leads; paginação; registo de atividade.
 * **Excel real de 5001 linhas no browser**, com linhas sem nome ou sem contacto, telefones repetidos no ficheiro, uma lead já existente e etapas escritas de várias formas:
   * Importado em **20 segundos**: 4982 criadas, 11 ignoradas por duplicado e 8 com problemas (as previstas).
   * A exportação dessas 5002 leads com histórico demorou **2,2 segundos**.
   * Os dados do teste foram apagados no fim.
-
-## Nota
-As leads importadas antes de Lead Qualificada nascem com uma Chamada para daí a 1 hora, como diz a regra 6. Numa importação grande, por exemplo da migração do Pipedrive na Fase 7, isso enche a lista Hoje de uma vez. Na Fase 7 proponho espalhar essas chamadas pelos dias seguintes.
