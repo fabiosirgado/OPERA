@@ -1,3 +1,5 @@
 /* Ajustes do OPERA Leads por cima do CSS do protótipo (prototipo.css). */
 #root{min-height:100vh}
 .pill input{margin:0}
+/* Formulários em linha (Entradas automáticas): os campos com o mesmo aspeto dos .f do protótipo. */
+.inline-f input,.inline-f select{min-height:40px;border:1px solid var(--line2);border-radius:8px;padding:0 12px;font-size:14px;background:#fff;color:var(--text);min-width:0}

@@ -10,6 +10,7 @@ import Pipeline from "./screens/Pipeline.jsx";
 import Hoje from "./screens/Hoje.jsx";
 import ImportExport from "./screens/ImportExport.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
+import Entradas from "./screens/Entradas.jsx";
 import LeadModal from "./screens/LeadModal.jsx";
 import { LabelsModal, NewLeadModal, StageModal } from "./screens/smallModals.jsx";
 
@@ -23,7 +24,7 @@ export default function Shell({ access }) {
   const { profile, client: myClient, opera } = access;
   const role = profile.leads_role;
   const items = opera
-    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
+    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
     : [["pipeline", "As vossas leads"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
   const [view, setView] = useState(() => (items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
@@ -119,6 +120,7 @@ export default function Shell({ access }) {
         {stages.length > 0 && view === "hoje" && <Hoje ctx={ctx} />}
         {stages.length > 0 && view === "io" && <ImportExport ctx={ctx} />}
         {view === "dash" && <Dashboard ctx={ctx} isAdmin={role === "admin"} />}
+        {view === "entradas" && <Entradas ctx={ctx} isAdmin={role === "admin"} />}
         {view === "clientes" && <Clientes profile={profile} />}
         {view === "equipa" && <Equipa profile={profile} client={myClient} />}
         {view === "privacidade" && <Privacidade />}
