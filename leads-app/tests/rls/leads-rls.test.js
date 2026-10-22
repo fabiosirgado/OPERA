@@ -104,11 +104,17 @@ suite("RLS do OPERA Leads", { timeout: 60_000 }, () => {
     });
     it("um gestor não pode ter mais de 8 clientes", async () => {
       const gestorId = (await gestor.auth.getUser()).data.user.id;
+      // Reutiliza sempre os mesmos 7 clientes de teste, para não acumular clientes no projeto de testes.
       const extra = [];
-      for (let i = 0; i < 7; i++) {
-        const { data, error } = await admin.from("clients").insert({ name: `Capacidade ${Date.now()}-${i}`, leads_enabled: true }).select().single();
-        if (error) throw error;
-        extra.push(data.id);
+      for (let i = 1; i <= 7; i++) {
+        const name = `Capacidade ${i}`;
+        let { data: c } = await admin.from("clients").select("id,leads_status").eq("name", name).maybeSingle();
+        if (!c) {
+          ({ data: c } = await admin.from("clients").insert({ name, leads_enabled: true }).select("id,leads_status").single());
+        }
+        if (c.leads_status === "inativo") await admin.rpc("leads_reactivate_client", { p_client_id: c.id });
+        await admin.rpc("leads_assign_manager", { p_client_id: c.id, p_manager_id: null });
+        extra.push(c.id);
       }
       const results = [];
       for (const id of extra) {

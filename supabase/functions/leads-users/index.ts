@@ -37,6 +37,14 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 const fail = (message: string, status = 400) => json({ error: message }, status);
 
+// Erros do envio de email, em português.
+function mailError(message: string) {
+  if (/rate limit|too many/i.test(message)) return "Foram enviados demasiados emails em pouco tempo. Tenta daqui a uns minutos.";
+  if (/invalid|not authorized/i.test(message)) return "O servidor de email não aceitou este endereço. Confirma o email.";
+  if (/already been registered|already registered/i.test(message)) return "Já existe uma conta com este email.";
+  return "O email não foi enviado. Tenta outra vez.";
+}
+
 type Profile = {
   id: string; email: string | null; full_name: string | null; client_id: string | null;
   leads_role: string | null; leads_status: string;
@@ -125,7 +133,7 @@ async function handle(req: Request): Promise<Response> {
     const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
       data: { full_name: name }, redirectTo,
     });
-    if (error || !invited.user) return fail(`Não foi possível enviar o convite: ${error?.message ?? "erro"}`, 502);
+    if (error || !invited.user) return fail(`Não foi possível enviar o convite. ${mailError(error?.message ?? "")}`, 502);
     await must(admin.from("profiles").update({
       leads_role: role, client_id: clientId, leads_status: "convidado", full_name: name,
       leads_invited_at: new Date().toISOString(), leads_invited_by: caller.id,
@@ -142,7 +150,7 @@ async function handle(req: Request): Promise<Response> {
 
     if (body.action === "resend") {
       const { error } = await admin.auth.admin.inviteUserByEmail(target.email, { data: { full_name: target.full_name }, redirectTo });
-      if (error) return fail(`Não foi possível reenviar: ${error.message}`, 502);
+      if (error) return fail(`Não foi possível reenviar o convite. ${mailError(error.message)}`, 502);
       await must(admin.from("profiles").update({ leads_invited_at: new Date().toISOString() }).eq("id", target.id), "Atualizar perfil");
       await audit(caller.id, "convite_reenviado", { user_id: target.id });
       return json({ ok: true });

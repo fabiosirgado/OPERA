@@ -9,4 +9,15 @@ export const configError = !SUPABASE_URL || !SUPABASE_KEY
   ? "Faltam as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY."
   : "";
 
+// Tipo de link de email com que a pessoa chegou (convite ou recuperação de palavra passe).
+// Tem de ser lido antes de o cliente do Supabase consumir o endereço.
+export const ARRIVED_VIA = (() => {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1));
+    return p.get("type") || "";
+  } catch {
+    return "";
+  }
+})();
+
 export const sb = configError ? null : createClient(SUPABASE_URL, SUPABASE_KEY);
