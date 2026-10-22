@@ -127,8 +127,9 @@ suite("Pipeline e regras de negócio", () => {
   describe("consultas no servidor", () => {
     it("o pipeline pagina e ordena no servidor e mostra a nota afixada", async () => {
       const { data } = await gestor.rpc("leads_pipeline", { p_client: clientA, p_sort: "name", p_limit: 2 });
-      expect(data.length).toBeLessThanOrEqual(2);
-      expect(Number(data[0].total)).toBeGreaterThan(2);
+      expect(data).toHaveLength(2);
+      const { data: page2 } = await gestor.rpc("leads_pipeline", { p_client: clientA, p_sort: "name", p_offset: 2, p_limit: 2 });
+      expect(page2[0].name.localeCompare(data[1].name)).toBeGreaterThanOrEqual(0);
       const names = data.map((r) => r.name);
       expect([...names].sort((a, b) => a.localeCompare(b))).toEqual(names);
       const { data: pinned } = await gestor.rpc("leads_pipeline", { p_client: clientA, p_q: "Com nota" });
@@ -144,6 +145,10 @@ suite("Pipeline e regras de negócio", () => {
       expect(s).toHaveLength(0);
       const { data: sa } = await aAdmin.rpc("leads_search", { p_q: "Origem" });
       expect(sa.length).toBeGreaterThanOrEqual(3);
+    });
+    it("o filtro de texto trata % e _ como letras", async () => {
+      const { data } = await gestor.rpc("leads_pipeline_counts", { p_client: clientA, p_q: "%" });
+      expect(Object.values(data).length).toBe(0);
     });
     it("a pesquisa encontra pelo telefone e pelas notas", async () => {
       const { data: byPhone } = await gestor.rpc("leads_search", { p_q: "+351 944 000 001" });

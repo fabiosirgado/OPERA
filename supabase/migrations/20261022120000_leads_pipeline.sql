@@ -132,7 +132,7 @@ begin
     insert into public.lead_notifications (lead_id, kind) values (new.id, 'qualificada');
     insert into public.lead_events (lead_id, type, title, body, author_id)
     values (new.id, 'auto', 'Cliente vai ser avisado',
-            'Resumo da lead enviado por email ao responsável no cliente ou, sem responsável, a todos os utilizadores ativos do cliente.',
+            'O resumo da lead segue por email para o responsável no cliente ou, sem responsável, para todos os utilizadores ativos do cliente.',
             auth.uid());
   end if;
   return null;

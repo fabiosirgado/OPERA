@@ -22,6 +22,7 @@ const ACTION_LABEL = {
   anonimizacao_automatica: "Anonimização automática",
   regra_anonimizacao: "Regra de anonimização alterada",
   exportacao: "Exportação",
+  pedido_titular_exportar: "Pedido do titular: exportar",
 };
 
 // Detalhe legível, sem repetir identificadores internos.

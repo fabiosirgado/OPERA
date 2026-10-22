@@ -28,11 +28,11 @@ export function Modal({ title, onClose, wide, children }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
   return (
-    <div className="ovl open" role="dialog" aria-modal="true" aria-label={title}
+    <div className="ovl open" role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : undefined}
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal ${wide ? "wide" : ""}`}>
         <div className="mh">
-          <h2>{title}</h2>
+          {typeof title === "string" ? <h2>{title}</h2> : <div style={{ fontSize: 22, fontWeight: 700, minWidth: 0 }}>{title}</div>}
           <button type="button" className="x" onClick={onClose} aria-label="Fechar">×</button>
         </div>
         {children}
