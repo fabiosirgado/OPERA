@@ -12,7 +12,7 @@ Tudo isto está aplicado só no projeto Supabase de **testes**. A produção nã
 * **Antes de confirmar:** leads novas, as que já existem (verificadas na base de dados), as que têm problemas (com a linha do Excel e o motivo) e quantas vão para cada etapa.
 * **Duplicados:** ignorar, atualizar dados em falta ou criar na mesma.
 * **Gravação:** feita no servidor em lotes de 250, com barra de progresso.
-  * Cada lead importada tem entrada BD (fica fora do Time to Lead) e guarda a nota. Não nasce com tarefa: o Fábio decidiu que a Chamada obrigatória (regra 6) é só para leads que chegam uma a uma, não para listas importadas.
+  * Cada lead importada tem entrada BD (fica fora do Time to Lead) e guarda a nota. Como todas as leads, não nasce com tarefa automática.
   * Etiquetas desconhecidas são criadas a cinzento.
 * **Modelo Excel** para descarregar.
 

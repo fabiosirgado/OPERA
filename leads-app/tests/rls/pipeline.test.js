@@ -38,17 +38,15 @@ suite("Pipeline e regras de negócio", () => {
   });
 
   describe("entrada de leads", () => {
-    it("a etapa inicial depende da origem e nasce com uma tarefa Chamada", async () => {
+    it("a etapa inicial depende da origem e a lead nasce sem tarefa", async () => {
       const meta = await lead(await create(gestor, { client_id: clientA, name: "Origem Meta", phone: "911111111", source: "Meta" }));
       const port = await lead(await create(gestor, { client_id: clientA, name: "Origem Idealista", phone: "911111112", source: "Idealista" }));
       const bd = await lead(await create(gestor, { client_id: clientA, name: "Origem BD", phone: "911111113", source: "Referência" }));
       expect([meta.stage_id, meta.entry_stage]).toEqual([stages.meta, "meta"]);
       expect([port.stage_id, port.entry_stage]).toEqual([stages.imoveis, "imoveis"]);
       expect([bd.stage_id, bd.entry_stage]).toEqual([stages.bd, "bd"]);
-      const tasks = await openTasks(meta.id);
-      expect(tasks).toHaveLength(1);
-      expect(tasks[0].type).toBe("call");
-      expect(meta.next_task_type).toBe("call");
+      expect(await openTasks(meta.id)).toHaveLength(0);
+      expect(meta.next_task_at).toBeNull();
     });
     it("deteta duplicados pelo telefone normalizado, no mesmo cliente", async () => {
       const id = await create(gestor, { client_id: clientA, name: "Dup Original", phone: "+351 922 333 444", source: "Meta" });
@@ -60,7 +58,7 @@ suite("Pipeline e regras de negócio", () => {
     it("o cliente escolhe entre a OPERA contactar ou ficar com a lead", async () => {
       const opera = await lead(await create(aUser, { client_id: clientA, name: "Do cliente para a OPERA", phone: "933000001", source: "Idealista", stage: "auto" }));
       expect(opera.stage_id).toBe(stages.imoveis);
-      expect(await openTasks(opera.id)).toHaveLength(1);
+      expect(await openTasks(opera.id)).toHaveLength(0);
       const own = await lead(await create(aUser, { client_id: clientA, name: "Fico eu", phone: "933000002", stage: "qualificada" }));
       expect(own.stage_id).toBe(stages.qualificada);
       expect(await openTasks(own.id)).toHaveLength(0);
@@ -76,6 +74,7 @@ suite("Pipeline e regras de negócio", () => {
   describe("chamadas e etapas", () => {
     it("ligar soma tentativa, fecha a Chamada e passa para Follow Up OPERA", async () => {
       const id = await create(gestor, { client_id: clientA, name: "Para ligar", phone: "944000001", source: "Meta" });
+      await gestor.from("lead_tasks").insert({ lead_id: id, type: "call", due_at: new Date().toISOString() });
       expect((await gestor.rpc("leads_register_call", { p_lead_id: id, p_meta: { answered: false } })).error).toBeNull();
       const l = await lead(id);
       expect(l.attempts).toBe(1);
@@ -105,6 +104,7 @@ suite("Pipeline e regras de negócio", () => {
     });
     it("Lead desqualificada cancela as tarefas em aberto", async () => {
       const id = await create(gestor, { client_id: clientA, name: "A desqualificar", phone: "944000004", source: "Meta" });
+      await gestor.from("lead_tasks").insert({ lead_id: id, type: "call", due_at: new Date().toISOString() });
       await gestor.from("leads").update({ stage_id: stages.desq }).eq("id", id);
       expect(await openTasks(id)).toHaveLength(0);
       expect((await lead(id)).next_task_at).toBeNull();
@@ -157,6 +157,8 @@ suite("Pipeline e regras de negócio", () => {
       expect(byNote[0]).toMatchObject({ name: "Com nota", found_in: "notas" });
     });
     it("a lista Hoje mostra as tarefas em aberto até amanhã", async () => {
+      const { data: l } = await gestor.from("leads").select("id").eq("name", "Origem Meta").single();
+      await gestor.from("lead_tasks").insert({ lead_id: l.id, type: "call", due_at: new Date(Date.now() + 3600e3).toISOString() });
       const { data } = await gestor.rpc("leads_today", { p_client: clientA });
       expect(data.some((t) => t.lead_name === "Origem Meta" && t.task_type === "call")).toBe(true);
     });

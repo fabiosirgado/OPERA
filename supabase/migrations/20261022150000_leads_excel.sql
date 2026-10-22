@@ -87,8 +87,7 @@ begin
         if nullif(trim(r.note), '') is not null then
           insert into public.lead_events (lead_id, type, title, body, author_id) values (v_id, 'note', 'Nota', trim(r.note), auth.uid());
         end if;
-        -- Leads importadas não nascem com tarefa: decisão do Fábio (a regra 6 aplica-se às leads que chegam
-        -- uma a uma, não a listas importadas).
+        -- Nenhuma lead nasce com tarefa automática (decisão do Fábio, ver 20261022160000_leads_sem_tarefa_auto.sql).
         v_created := v_created + 1;
       end if;
 

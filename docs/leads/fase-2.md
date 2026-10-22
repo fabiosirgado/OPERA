@@ -22,7 +22,7 @@ Tudo isto está aplicado só no projeto Supabase de **testes**. A produção nã
 * **Tempo real**: o quadro, a lista Hoje e a ficha aberta atualizam-se sozinhos.
 
 **Regras de negócio no servidor** ([supabase/migrations](../../supabase/migrations/)), com testes:
-* A etapa inicial depende da origem; toda a lead antes de Qualificada nasce com uma tarefa Chamada.
+* A etapa inicial depende da origem. Nenhuma lead nasce com tarefa automática (decisão do Fábio, que substitui a regra 6).
 * Duplicados pelo telefone normalizado ou pelo email, dentro do mesmo cliente.
 * **Ligar:**
   * soma uma tentativa e regista a chamada;

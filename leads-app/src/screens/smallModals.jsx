@@ -9,7 +9,7 @@ import { LabelTag } from "../ui/bits.jsx";
 export function NewLeadModal({ ctx, onClose }) {
   const { opera, myClient, clients } = ctx;
   const blank = { client_id: myClient?.id || ctx.defaultClient || clients[0]?.id || "", name: "", phone: "", email: "",
-    source: "Referência", interest: "", budget: "", stage: "auto", first_task_minutes: "60", note: "", note_pinned: false };
+    source: "Referência", interest: "", budget: "", stage: "auto", note: "", note_pinned: false };
   const [f, setF] = useState(blank);
   const [dup, setDup] = useState(null);
   const [run, busy] = useAction();
@@ -27,7 +27,7 @@ export function NewLeadModal({ ctx, onClose }) {
   const submit = async (e) => {
     e.preventDefault();
     const again = e.nativeEvent.submitter?.name === "again";
-    const p = { ...f, first_task_minutes: Number(f.first_task_minutes) };
+    const p = { ...f };
     const fromClient = !opera && f.stage === "auto";
     const id = await run(() => createLead(p), fromClient ? "Lead criada. A OPERA vai contactar." : `Lead criada: ${f.name.trim()}`);
     if (!id) return;
@@ -59,15 +59,10 @@ export function NewLeadModal({ ctx, onClose }) {
           <label className="f">Budget<input value={f.budget} onChange={set("budget")} placeholder="Ex.: 450 000 €" /></label>
         </div>
         {opera ? (
-          <div className="g2">
-            <label className="f">Etapa inicial<select value={f.stage} onChange={set("stage")}>
-              <option value="auto">Automática pela origem</option>
-              {ctx.stages.filter((s) => s.is_base && s.key !== "desq").map((s) => <option key={s.id} value={s.key}>{s.name}</option>)}
-            </select></label>
-            <label className="f">Primeira tarefa<select value={f.first_task_minutes} onChange={set("first_task_minutes")}>
-              <option value="60">Chamada daqui a 1 h</option><option value="15">Chamada daqui a 15 min</option><option value="1440">Chamada amanhã</option>
-            </select></label>
-          </div>
+          <label className="f">Etapa inicial<select value={f.stage} onChange={set("stage")}>
+            <option value="auto">Automática pela origem</option>
+            {ctx.stages.filter((s) => s.is_base && s.key !== "desq").map((s) => <option key={s.id} value={s.key}>{s.name}</option>)}
+          </select></label>
         ) : (
           <fieldset style={{ border: 0, margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             <legend className="f" style={{ marginBottom: 8 }}>Quem trata desta lead?</legend>
