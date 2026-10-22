@@ -62,10 +62,10 @@ button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit
 
 /* perfil */
 .profile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;}
-.avatar{position:relative;width:104px;height:104px;border-radius:50%;padding:3px;background:conic-gradient(from var(--a,0deg),var(--blue-500),var(--teal-300),var(--blue-600),var(--blue-500));animation:spin 8s linear infinite;}
+.avatar{position:relative;width:128px;height:128px;border-radius:50%;padding:3px;background:conic-gradient(from var(--a,0deg),var(--blue-500),var(--teal-300),var(--blue-600),var(--blue-500));animation:spin 8s linear infinite;}
 @property --a{syntax:'<angle>';initial-value:0deg;inherits:false;}
 @keyframes spin{to{--a:360deg;}}
-.avatar span{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:var(--navy-900);font-family:var(--f-display);font-weight:900;font-size:34px;color:var(--ink-0);letter-spacing:.02em;}
+.avatar img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--navy-950);background:var(--navy-900);}
 h1{font-family:var(--f-display);font-weight:900;font-size:clamp(30px,8vw,38px);color:var(--ink-0);line-height:1.05;letter-spacing:-.01em;}
 .bio{color:var(--ink-300);font-size:15.5px;max-width:34ch;}
 .roles{font-size:15px;color:var(--ink-200);display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;}
@@ -164,7 +164,7 @@ footer b{color:var(--ink-200);font-weight:500;}
   </div>
 
   <section class="profile">
-    <div class="avatar"><span>FS</span></div>
+    <div class="avatar"><img src="fabio-sirgado.jpg" width="128" height="128" alt="Fábio Sirgado"></div>
     <h1>Fábio Sirgado</h1>
     <div class="chips">
       <span class="chip"><span class="dot"></span>Operações</span>
@@ -207,12 +207,12 @@ footer b{color:var(--ink-200);font-weight:500;}
     <span class="eyebrow" id="g2">Podcast</span>
     <a class="link" style="--i:4" href="https://www.youtube.com/@RealizaPodcast" target="_blank" rel="noopener">
       <span class="ic alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5.5" width="19" height="13" rx="3.5"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor" stroke="none"/></svg></span>
-      <span class="txt"><span class="tag">YouTube</span><span class="t">Realiza Podcast</span><span class="s">Episódios completos em vídeo</span></span>
+      <span class="txt"><span class="tag">YouTube</span><span class="t">Realiza Podcast</span><span class="s">Conversas informais com as pessoas por trás dos negócios: histórias de sucesso, resiliência e superação</span></span>
       <span class="go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
     <a class="link" style="--i:5" href="https://open.spotify.com/show/5mwz6YMKb4FjsOfx5SBUpZ" target="_blank" rel="noopener">
       <span class="ic alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M7.5 9.5c3-1 6.5-.7 9 .8M8 12.6c2.5-.7 5.2-.4 7.2.8M8.6 15.5c1.9-.5 3.8-.3 5.4.6"/></svg></span>
-      <span class="txt"><span class="tag">Spotify</span><span class="t">OPERA by Fábio Sirgado</span><span class="s">Episódios em áudio</span></span>
+      <span class="txt"><span class="tag">Spotify</span><span class="t">OPERA by Fábio Sirgado</span><span class="s">O que faz uma equipa imobiliária crescer: pessoas, liderança, leads, processos e vendas</span></span>
       <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span class="go" aria-hidden="true" style="margin-left:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </a>
