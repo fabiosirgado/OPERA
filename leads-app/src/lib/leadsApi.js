@@ -1,5 +1,5 @@
 // Dados do pipeline e da ficha da lead. As listas vêm de funções no servidor, que filtram, ordenam e paginam.
-import { sb } from "../supabase.js";
+import { sb, SUPABASE_URL } from "../supabase.js";
 import { PAGE } from "./format.js";
 
 const must = async (query) => {
@@ -51,6 +51,35 @@ export const createLead = (p) => must(sb.rpc("leads_create", { p }));
 export const findDuplicate = (clientId, phone, email) =>
   must(sb.rpc("leads_find_duplicate", { p_client_id: clientId, p_phone: phone || null, p_email: email || null })).then((r) => r[0] || null);
 export const registerCall = (id, meta = {}) => must(sb.rpc("leads_register_call", { p_lead_id: id, p_meta: meta }));
+
+// ---------- CloudTalk (função leads-cloudtalk; as chaves ficam no servidor)
+async function cloudtalk(payload, asBlob = false) {
+  const { data: s } = await sb.auth.getSession();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/leads-cloudtalk`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${s.session?.access_token ?? ""}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "A CloudTalk não respondeu. Tenta outra vez.");
+  }
+  return asBlob ? res.blob() : res.json();
+}
+
+// Ligar: pela CloudTalk quando está configurada; senão pelo telefone, como antes. Devolve "cloudtalk" ou "telefone".
+export async function callLead(lead) {
+  const r = await cloudtalk({ action: "call", lead_id: lead.id });
+  if (r.configured) return "cloudtalk";
+  window.location.href = `tel:${lead.phone}`;
+  await registerCall(lead.id, { via: "telefone" });
+  return "telefone";
+}
+export const callRecording = (callId) => cloudtalk({ action: "recording", call_id: callId }, true);
 export const eraseSubject = (id) => must(sb.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" }));
 
 export const toggleLabel = (leadId, labelId, on) => on

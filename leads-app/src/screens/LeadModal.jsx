@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   addNote, addTask, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
-  registerCall, snoozeTask, toggleLabel, updateEvent, updateLead,
+  callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
@@ -34,6 +34,7 @@ export default function LeadModal({ id, ctx, onClose }) {
   const [tForm, setTForm] = useState({ type: "call", due: localInput(Date.now() + 3600e3), note: "" });
   const [note, setNote] = useState({ body: "", pinned: false });
   const [editing, setEditing] = useState(null);
+  const [audio, setAudio] = useState({});
   const [run, busy] = useAction();
   const toast = useToast();
 
@@ -73,10 +74,13 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (cur.client_id) patch.stage_id = stages.find((s) => s.key === "qualificada").id;
     after(() => updateLead(lead.id, patch), "Cliente alterado");
   };
-  const call = () => {
-    window.location.href = `tel:${lead.phone}`;
-    after(() => registerCall(lead.id, { via: "telefone" }), `A ligar a ${lead.name}`);
-  };
+  const call = () => after(() => callLead(lead),
+    (via) => (via === "cloudtalk" ? `A CloudTalk vai ligar-te primeiro e depois a ${lead.name}` : `A ligar a ${lead.name}`));
+  // Gravação da CloudTalk: só a equipa OPERA a ouve, e fica no registo de atividade.
+  const listen = (callId) => run(async () => {
+    const blob = await callRecording(callId);
+    setAudio((a) => ({ ...a, [callId]: URL.createObjectURL(blob) }));
+  });
   const qualSave = (field, value) => {
     const q = { ...lead.qualification };
     if (value.trim()) q[field] = value.trim(); else delete q[field];
@@ -325,6 +329,11 @@ export default function LeadModal({ id, ctx, onClose }) {
                     ) : (
                       <>
                         {body && <p>{body}</p>}
+                        {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (
+                          audio[e.meta.call_id]
+                            ? <audio controls autoPlay src={audio[e.meta.call_id]} style={{ width: "100%", marginTop: 6 }} />
+                            : <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => listen(e.meta.call_id)}>Ouvir gravação</button></div>
+                        )}
                         {canEdit(e) && (
                           <div className="tools">
                             <button type="button" className="link" onClick={() => setEditing({ id: e.id, body: e.body || "" })}>Editar</button>

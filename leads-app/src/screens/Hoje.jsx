@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { completeTask, registerCall, today } from "../lib/leadsApi.js";
+import { callLead, completeTask, today } from "../lib/leadsApi.js";
 import { useAction } from "../ui/feedback.jsx";
 import { ClientTag, Icon, TaskTag } from "../ui/bits.jsx";
 
@@ -29,10 +29,9 @@ export default function Hoje({ ctx }) {
       ? x.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })
       : x.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
   };
-  const call = (r) => {
-    window.location.href = `tel:${r.phone}`;
-    run(() => registerCall(r.lead_id, { via: "telefone" }), `A ligar a ${r.lead_name}`).then((ok) => ok && ctx.onChanged());
-  };
+  const call = (r) => run(() => callLead({ id: r.lead_id, phone: r.phone }),
+    (via) => (via === "cloudtalk" ? `A CloudTalk vai ligar-te primeiro e depois a ${r.lead_name}` : `A ligar a ${r.lead_name}`))
+    .then((ok) => ok && ctx.onChanged());
 
   return (
     <>
