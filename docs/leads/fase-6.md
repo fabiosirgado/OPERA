@@ -1,6 +1,6 @@
 # OPERA Leads: Fase 6 (CloudTalk)
 
-Tudo isto está aplicado só no projeto Supabase de **testes**. A produção não foi tocada. A CloudTalk ainda não está ligada: faltam as chaves (ver no fim).
+Tudo isto está aplicado só no projeto Supabase de **testes**. A produção não foi tocada. A CloudTalk está ligada ao opera-testes (chaves e webhook criados a 2026-10-23).
 
 ## Como funciona
 **Botão Ligar** (ficha da lead e ecrã Hoje):
@@ -35,8 +35,13 @@ Tudo isto está aplicado só no projeto Supabase de **testes**. A produção nã
   * gravação;
   * assinaturas inválidas e permissões.
 * **Verificado no browser:** chamada atendida de 3 minutos com "Ouvir gravação" na ficha de uma lead do Cliente Teste A.
+* **Chamada real (2026-10-23), no opera-testes, com a conta da CloudTalk da OPERA:**
+  * O botão Ligar criou o contacto "Teste CloudTalk (Fábio) · Cliente Teste A" e pediu a chamada. A CloudTalk ligou primeiro ao agente e depois ao telemóvel.
+  * A chamada ficou logo na lead, que passou para Follow Up OPERA.
+  * A CloudTalk enviou `call.ended` e `call.recording_ready`, assinados, e a assinatura foi verificada. A chamada ficou "atendida", com 5 segundos de conversa e 11 no total.
+  * A gravação ouviu-se na ficha da lead.
 
-## O que falta do teu lado (na CloudTalk, com uma conta de admin)
+## Ligar a CloudTalk (feito no opera-testes; repetir para a produção, com uma conta de admin)
 1. **Chaves da API:** Settings, API Keys, criar uma chave. Guardar no Supabase (Edge Functions, Secrets) como `CLOUDTALK_API_KEY_ID` e `CLOUDTALK_API_KEY_SECRET`.
 2. **Webhook:** Settings, Webhooks (precisa do plano Essential ou superior):
    * **Endereço:** `https://zorfupxbkluiswmhoqnq.supabase.co/functions/v1/leads-cloudtalk` (testes).
