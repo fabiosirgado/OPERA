@@ -8,16 +8,18 @@
 --   * nenhuma lead nasce com tarefa; uma lead repetida só recebe o evento "Novo contacto recebido".
 
 -- ============================================================ CONFIGURAÇÃO
--- Formulários Meta de cada cliente: página e, opcionalmente, formulário (sem formulário = toda a página).
+-- Formulários Meta de cada cliente: a página (todos os formulários dela), o formulário, ou os dois.
+-- O gatilho de leads do Make só envia o id do formulário, por isso o formulário sozinho também serve.
 create table public.lead_meta_forms (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null references public.clients (id) on delete cascade,
-  page_id text not null check (page_id ~ '^[0-9A-Za-z_-]{1,64}$'),
+  page_id text check (page_id ~ '^[0-9A-Za-z_-]{1,64}$'),
   form_id text check (form_id ~ '^[0-9A-Za-z_-]{1,64}$'),
   label text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint lead_meta_forms_pagina_ou_formulario check (page_id is not null or form_id is not null)
 );
-create unique index lead_meta_forms_unico on public.lead_meta_forms (page_id, coalesce(form_id, ''));
+create unique index lead_meta_forms_unico on public.lead_meta_forms (coalesce(page_id, ''), coalesce(form_id, ''));
 create index lead_meta_forms_client_idx on public.lead_meta_forms (client_id);
 
 -- Endereços de email onde cada cliente recebe os emails dos portais (e que reencaminha para o Make).
@@ -88,9 +90,10 @@ begin
     select id into v_client from public.clients
      where inbox_alias = lower(p ->> 'client') or id::text = p ->> 'client';
   end if;
-  if v_client is null and v_log.channel = 'meta' and nullif(p ->> 'page_id', '') is not null then
+  if v_client is null and v_log.channel = 'meta' then
     select client_id into v_client from public.lead_meta_forms
-     where page_id = p ->> 'page_id' and (form_id is null or form_id = p ->> 'form_id')
+     where (nullif(p ->> 'form_id', '') is not null and form_id = p ->> 'form_id')
+        or (nullif(p ->> 'page_id', '') is not null and page_id = p ->> 'page_id' and form_id is null)
      order by form_id nulls last limit 1;
   end if;
   if v_client is null and jsonb_typeof(p -> 'recipients') = 'array' then

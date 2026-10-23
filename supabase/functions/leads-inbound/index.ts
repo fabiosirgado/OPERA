@@ -68,7 +68,7 @@ function parseMeta(b: Body): Parsed {
   }
   return {
     name, phone: pick("phone", "phone_number", "telefone"), email: pick("email"),
-    source: "Meta", answers,
+    source: "Meta", answers, message: str(b.message), // message: respostas já em texto, se o Make as juntar
     external_id: str(b.lead_id || b.leadgen_id || b.id) ? `meta:${str(b.lead_id || b.leadgen_id || b.id)}` : "",
     source_created_at: str(b.created_time || b.created_at),
     page_id: str(b.page_id), form_id: str(b.form_id), client: str(b.client),

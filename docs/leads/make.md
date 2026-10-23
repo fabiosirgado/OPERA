@@ -31,17 +31,15 @@ O cenário do opera-testes usa uma chave própria (só a impressão digital est�
 
 ## Cenário 2: formulários Meta
 
-1. **Novo cenário.** Primeiro módulo: **Facebook Lead Ads, Watch Leads**. Ligar a conta do Facebook com acesso às páginas dos clientes e escolher a página.
-2. Segundo módulo: **HTTP, Make a request**, com a mesma URL, cabeçalhos e Parse response do cenário 1. Conteúdo:
-   ```json
-   { "type": "meta", "page_id": "{{1.page_id}}", "form_id": "{{1.form_id}}", "lead_id": "{{1.id}}",
-     "created_time": "{{1.created_time}}", "name": "{{1.full_name}}", "phone": "{{1.phone_number}}",
-     "email": "{{1.email}}", "answers": [ { "q": "Pergunta do formulário", "a": "{{1.resposta}}" } ] }
-   ```
-   Em alternativa ao nome, telefone e email soltos, pode ir a lista `field_data` tal como o Facebook a entrega; a OPERA percebe os dois formatos.
-3. Os mesmos alertas do cenário 1 (error handler e filtro `alert`).
-4. **No ecrã Entradas automáticas**, juntar ao cartão do cliente o id da página (e, se a página tiver formulários de vários clientes, o id do formulário). É assim que a OPERA sabe de que cliente é a lead; não é preciso um cenário por cliente.
-5. O módulo Watch Leads do Make trabalha com uma página de cada vez. Para outra página, clona-se o cenário e muda-se só a página no primeiro módulo; tudo o resto fica igual.
+**Cópia de teste (desde 2026-10-23):** o cenário que já existia, **"OPERA, Meta > Pipedrive (Leads META)"** (id 7548097), ganhou um módulo no fim.
+* O módulo **HTTP, Make a request** envia cada lead também para o opera-testes, como formulário: `type=meta`, `form_id`, `lead_id`, `created_time`, `name`, `phone`, `email` e `message` (as respostas, já em texto).
+* **O Pipedrive fica igual:** os módulos 1 a 4 não mudaram. O módulo novo só corre depois da nota do Pipedrive e tem o tratamento de erro **Ignore**, por isso uma falha da OPERA nunca afeta o Pipedrive.
+* **Para tirar a cópia:** apagar o módulo 5 no Make.
+* **Cliente:** no opera-testes as leads entram no cliente **"OPERA (testes)"**, identificadas pelo formulário. Os 15 formulários deste cenário estão registados no cartão desse cliente.
+* **Formulários novos:** um formulário que não esteja registado fica em "Entradas sem cliente".
+* **Atenção RGPD:** isto põe leads reais no ambiente de testes. Devem ser apagadas quando o teste acabar ou quando a produção estiver ligada.
+
+**Na produção:** o gatilho do Meta no Make só envia o id do formulário, não o da página, por isso a OPERA identifica o cliente pelo formulário. No cartão de cada cliente registam-se os formulários (ou a página inteira, quando o pedido traz a página). Os outros cenários do Meta (por exemplo o do Bruno) recebem o mesmo módulo no fim, com o endereço e a chave de produção.
 
 ## Testar
 

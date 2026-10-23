@@ -186,7 +186,8 @@ function ClientCard({ c, onChanged, onInstructions }) {
   }, "Endereço juntado");
   const removeAddress = (a) => run(async () => { await must(sb.from("client_inbox_addresses").delete().eq("address", a)); onChanged(); }, "Endereço retirado");
   const addForm = () => run(async () => {
-    await must(sb.from("lead_meta_forms").insert({ client_id: c.id, page_id: form.page_id.trim(), form_id: form.form_id.trim() || null, label: form.label.trim() || null }));
+    if (!form.page_id.trim() && !form.form_id.trim()) throw new Error("Indica a página, o formulário, ou os dois.");
+    await must(sb.from("lead_meta_forms").insert({ client_id: c.id, page_id: form.page_id.trim() || null, form_id: form.form_id.trim() || null, label: form.label.trim() || null }));
     setForm({ page_id: "", form_id: "", label: "" }); onChanged();
   }, "Formulário juntado");
   const removeForm = (id) => run(async () => { await must(sb.from("lead_meta_forms").delete().eq("id", id)); onChanged(); }, "Formulário retirado");
@@ -199,17 +200,17 @@ function ClientCard({ c, onChanged, onInstructions }) {
       <div style={section}>
         <b style={{ fontSize: 13 }}>Formulários Meta</b>
         <span className="sub" style={{ margin: 0, fontSize: 13 }}>
-          As leads destas páginas ou formulários entram em <b>Nova Lead Meta</b>. Última entrada: {c.meta_last ? fmtWhen(c.meta_last) : "ainda sem entradas"}.
+          As leads destes formulários (ou de todos os formulários de uma página) entram em <b>Nova Lead Meta</b>. Última entrada: {c.meta_last ? fmtWhen(c.meta_last) : "ainda sem entradas"}.
         </span>
         {c.forms.map((f) => (
           <div key={f.id} className="row" style={{ justifyContent: "space-between", fontSize: 13, gap: 8 }}>
-            <span style={{ minWidth: 0, wordBreak: "break-all" }}>{f.label ? <b>{f.label} </b> : null}Página {f.page_id}{f.form_id ? `, formulário ${f.form_id}` : ", todos os formulários"}</span>
+            <span style={{ minWidth: 0, wordBreak: "break-all" }}>{f.label ? <b>{f.label} </b> : null}{f.form_id ? `Formulário ${f.form_id}` : `Página ${f.page_id}, todos os formulários`}</span>
             <button type="button" className="link" style={{ color: "#B91C1C" }} disabled={busy} onClick={() => removeForm(f.id)}>Retirar</button>
           </div>
         ))}
         <form className="row inline-f" style={{ gap: 6 }} onSubmit={(e) => { e.preventDefault(); addForm(); }}>
-          <input value={form.page_id} onChange={(e) => setForm({ ...form, page_id: e.target.value })} placeholder="Id da página" aria-label="Id da página" required pattern="[0-9A-Za-z_-]{1,64}" style={{ flex: "1 1 120px" }} />
-          <input value={form.form_id} onChange={(e) => setForm({ ...form, form_id: e.target.value })} placeholder="Formulário (opcional)" aria-label="Id do formulário" pattern="[0-9A-Za-z_-]{1,64}" style={{ flex: "1 1 160px" }} />
+          <input value={form.page_id} onChange={(e) => setForm({ ...form, page_id: e.target.value })} placeholder="Página (opcional)" aria-label="Id da página" pattern="[0-9A-Za-z_-]{1,64}" style={{ flex: "1 1 120px" }} />
+          <input value={form.form_id} onChange={(e) => setForm({ ...form, form_id: e.target.value })} placeholder="Formulário" aria-label="Id do formulário" pattern="[0-9A-Za-z_-]{1,64}" style={{ flex: "1 1 160px" }} />
           <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Nome (opcional)" aria-label="Nome do formulário" style={{ flex: "1 1 120px" }} />
           <button type="submit" className="btn sm" disabled={busy}>Juntar</button>
         </form>

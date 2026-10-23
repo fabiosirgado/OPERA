@@ -94,6 +94,17 @@ suite("Entradas automáticas", () => {
     expect(count).toBe(0);
   });
 
+  it("o formulário sozinho identifica o cliente (o gatilho do Make não envia a página)", async () => {
+    const form = `frm${RUN}`;
+    expect((await gestor.from("lead_meta_forms").insert({ client_id: clientE, form_id: form })).error).toBeNull();
+    const r = await send({ type: "meta", form_id: form, lead_id: `${RUN}-f1`, name: "Rui Formulário", phone: "914000004",
+      message: "Maior desafio: vender mais depressa" });
+    expect(r.body).toMatchObject({ status: "processado", client_id: clientE });
+    const { data: ev } = await gestor.from("lead_events").select("body").eq("lead_id", r.body.lead_id).eq("type", "note");
+    expect(ev[0].body).toContain("Maior desafio");
+    expect((await gestor.from("lead_meta_forms").insert({ client_id: clientE })).error).toBeTruthy();
+  });
+
   it("formulário desconhecido fica por atribuir e a equipa escolhe o cliente", async () => {
     const r = await send(meta("m3", "Rui Sem Cliente", "913000003", { page_id: `outra${RUN}` }));
     expect(r.body).toMatchObject({ status: "sem_cliente", alert: true });
