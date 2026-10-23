@@ -11,25 +11,23 @@ Dois cenários no Make, na zona UE (o endereço da conta começa por `eu1.make.c
 
 **Chave:** está no Supabase, em Project Settings, Vault, com o nome `leads_inbound_secret`. Cada ambiente tem a sua. Vai no cabeçalho `x-opera-secret` de cada pedido e nunca se escreve em mais lado nenhum.
 
-## Cenário 1: emails dos portais
+## Cenário 1: emails dos portais (criado a 2026-10-23, no opera-testes)
 
-1. **Novo cenário.** Primeiro módulo: **Webhooks, Custom mailhook**. Criar o mailhook com o nome "OPERA Leads portais". O Make mostra um endereço parecido com `abc123@hook.eu1.make.com`.
-2. **Guardar esse endereço** no ecrã **Entradas automáticas** da OPERA Leads (campo "Endereço de receção dos emails", só o admin). É o endereço que aparece nas instruções aos clientes.
-3. Segundo módulo: **HTTP, Make a request**:
-   * URL: o endereço da função (tabela acima). Method: `POST`.
-   * Headers: `x-opera-secret` com a chave, e `Content-Type` com `application/json`.
-   * Body type: Raw, Content type JSON. Conteúdo, mapeando os campos do mailhook:
-     ```json
-     { "type": "email", "from": "{{1.sender}}", "to": "{{1.recipients}}", "subject": "{{1.subject}}",
-       "text": "{{1.text}}", "html": "{{1.html}}", "headers": "{{1.headers}}" }
-     ```
-     Os nomes exatos dos campos aparecem no Make depois de chegar o primeiro email; escolhem-se na lista. O texto e o HTML devem ir com a função `toJSON`, para as aspas e mudanças de linha não partirem o JSON.
-   * Parse response: Sim.
-4. **Alertas:** botão direito no módulo HTTP, **Add error handler**, módulo **Email, Send an email** para o Fábio, com o assunto "OPERA Leads: entrada falhou". A entrada fica sempre guardada na OPERA, mesmo quando falha.
-5. Depois do módulo HTTP, um **filtro** com a condição `alert` igual a `true`, seguido de outro **Send an email**: "OPERA Leads: entrada sem cliente". Isto acontece quando chega um email de um endereço que ainda não está no cartão de nenhum cliente.
-6. Ligar o cenário (Scheduling: Immediately).
+Cenário **"OPERA Leads (testes), emails dos portais"** (id 8126750), criado pelo conector do Make, ativo:
 
-**Para cada cliente:** no ecrã Entradas automáticas, juntar ao cartão do cliente o endereço onde ele recebe os emails dos portais. Depois enviar-lhe as instruções (botão "Instruções para o cliente"). Quando ele adicionar o reencaminhamento no Gmail, o código de confirmação aparece no topo do ecrã, para lho enviarem.
+1. **Webhooks, Custom mailhook** "OPERA Leads, emails dos portais (testes)": recebe em `21ycigf9uyb9uf34e3jf7h48wd9uvksv@hook.eu1.make.com`. Este endereço está guardado no ecrã Entradas automáticas do opera-testes.
+2. **JSON, Transform to JSON** dos cabeçalhos do email (para a OPERA ler o `X-Forwarded-For` do Gmail).
+3. **HTTP, Make a request**, POST para a função, com o cabeçalho `x-opera-secret`. O corpo vai como **formulário** (`type`, `from`, `to`, `cc`, `subject`, `text`, `html`, `headers_json`): o Make escapa sozinho as aspas e as mudanças de linha, o que num JSON escrito à mão parte o pedido.
+4. **Em caso de erro**, o módulo **Break** guarda a execução e volta a tentar 3 vezes, de 15 em 15 minutos. O Make avisa por email quando um cenário falha.
+5. **Dados confidenciais** ligado: os registos de execução do Make não mostram o conteúdo dos emails.
+
+Cada email gasta 3 operações do Make. Os anexos nunca chegam à OPERA.
+
+O cenário do opera-testes usa uma chave própria (só a impressão digital está na base de dados). Para a produção, cria-se o mesmo cenário com o endereço de produção e a chave `leads_inbound_secret` do Vault de produção.
+
+**Para cada cliente:** no ecrã Entradas automáticas, juntar ao cartão do cliente o endereço de onde vêm os emails reencaminhados (normalmente o email da agência). Depois enviar-lhe as instruções (botão "Instruções para o cliente"). Quando ele adicionar o reencaminhamento no Gmail, o código de confirmação aparece no topo do ecrã, para lho enviarem.
+
+**Teste real (2026-10-23):** um email do Imovirtual reencaminhado a partir de um endereço da Zome chegou à OPERA. A IA tirou o nome, o telefone, o email, a referência e a mensagem. Como o endereço ainda não estava em nenhum cliente, ficou em "Entradas sem cliente", como previsto. Depois de atribuído, a lead entrou em Nova lead imóveis.
 
 ## Cenário 2: formulários Meta
 

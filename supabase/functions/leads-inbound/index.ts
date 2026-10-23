@@ -220,12 +220,25 @@ Deno.serve(async (req) => {
   const ok = await db.rpc("leads_inbound_verify", { p_secret: req.headers.get("x-opera-secret") ?? "" });
   if (ok.error || ok.data !== true) return json({ error: "Chave inválida." }, 401);
 
+  // JSON, ou formulário (o Make envia assim os emails: escapa sozinho aspas e mudanças de linha);
+  // no formulário os cabeçalhos do email chegam em headers_json.
   let body: Body;
   try {
-    body = await req.json();
+    const ct = req.headers.get("content-type") ?? "";
+    if (ct.includes("application/x-www-form-urlencoded") || ct.includes("multipart/form-data")) {
+      const form = await req.formData();
+      body = Object.fromEntries([...form.entries()].map(([k, v]) => [k, String(v)]));
+      if (body.headers_json) {
+        try { body.headers = JSON.parse(String(body.headers_json)); } catch { body.headers = String(body.headers_json); }
+        delete body.headers_json;
+      }
+    } else {
+      body = await req.json();
+    }
   } catch {
-    return json({ error: "O corpo tem de ser JSON." }, 400);
+    return json({ error: "O corpo tem de ser JSON ou um formulário." }, 400);
   }
+  delete body.attachments; // os anexos nunca são precisos e não se guardam
   const type = str(body.type).toLowerCase();
   if (type !== "meta" && type !== "email") return json({ error: "type tem de ser meta ou email." }, 400);
 
