@@ -53,8 +53,11 @@ suite("CloudTalk", () => {
     await admin.from("leads").delete().in("client_id", [c1, c2].filter(Boolean));
   });
 
-  it("sem as chaves da CloudTalk, o botão Ligar pede para ligar pelo telefone; os clientes não ligam", async () => {
-    const id = await lead(c1, { name: "Ligar", phone: phone() });
+  it("o botão Ligar nunca liga pelo utilizador de teste; os clientes não ligam", async () => {
+    // O utilizador de teste não tem agente na CloudTalk: com as chaves configuradas, o pedido é recusado antes de
+    // ligar; sem chaves, a aplicação liga pelo telefone. Nunca sai uma chamada real a partir dos testes.
+    expect((await admin.from("profiles").update({ cloudtalk_agent_id: null }).eq("email", USERS.gestor)).error).toBeNull();
+    const id = await lead(c1, { name: "Ligar", phone: "930000000" });
     const call = async (sb) => {
       const { data: s } = await sb.auth.getSession();
       const res = await fetch(fn(), {
@@ -64,7 +67,8 @@ suite("CloudTalk", () => {
       });
       return { status: res.status, body: await res.json() };
     };
-    expect((await call(gestor)).body).toEqual({ configured: false });
+    const r = await call(gestor);
+    expect(r.body.configured === false || /agente da CloudTalk/.test(r.body.error ?? "")).toBe(true);
     expect((await call(aAdmin)).status).toBe(403);
   });
 

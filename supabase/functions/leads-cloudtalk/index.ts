@@ -131,7 +131,9 @@ async function webhook(req: Request) {
       result = await must(admin.rpc("leads_cloudtalk_recording_ready", { p_call_id: String(d.call_id ?? "") }),
         "Gravação") as Record<string, unknown>;
     }
-    await admin.from("cloudtalk_events").update({ status: result.status, lead_id: result.lead_id ?? null })
+    // A conta da CloudTalk envia todas as chamadas; das que não são de nenhuma lead não se guarda o conteúdo (RGPD).
+    await admin.from("cloudtalk_events")
+      .update({ status: result.status, lead_id: result.lead_id ?? null, ...(result.status === "processado" ? {} : { payload: null }) })
       .eq("event_id", eventId);
     return json({ ok: true, ...result });
   } catch (e) {

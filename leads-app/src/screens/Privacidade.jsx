@@ -78,7 +78,7 @@ export default function Privacidade() {
             <li>Contrato de subcontratação (artigo 28.º do RGPD) assinado com cada cliente: o cliente é o responsável pelos dados das leads e a OPERA trata os por conta dele.</li>
             <li>Política de privacidade do cliente indicada nos formulários do Meta e nos anúncios dos portais.</li>
             <li>Aviso no início das chamadas de que podem ser gravadas, se a gravação da CloudTalk estiver ligada.</li>
-            <li>Registo das atividades de tratamento da OPERA e lista de subcontratantes (Supabase, Netlify, CloudTalk, Make, Anthropic).</li>
+            <li>Registo das atividades de tratamento da OPERA e lista de subcontratantes (Supabase, Netlify, CloudTalk, Make, Anthropic, Resend).</li>
             <li>Procedimento para violações de dados: comunicar à CNPD em 72 horas.</li>
           </ol>
         </div>

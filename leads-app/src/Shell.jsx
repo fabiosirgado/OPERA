@@ -77,6 +77,14 @@ export default function Shell({ access }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [profile.id, opera, myClient, stages, labels, clients, version, filterClient, bump, loadRefs]);
 
+  // Link "Abrir a lead" dos emails de aviso: ?lead=<id> abre logo a ficha (depois do login) e sai do endereço.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("lead");
+    if (!id) return;
+    if (/^[0-9a-f-]{36}$/i.test(id)) setModal({ kind: "lead", id });
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
+
   const closeModal = useCallback(() => setModal(null), []);
   const refCtx = { ...ctx, onChanged: ctx.onRefsChanged };
 

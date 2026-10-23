@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { buildRows, exportRows, guessField, matchClient, matchStage, readWorkbook } from "./excel.js";
+import { buildRows, exportRows, guessField, matchClient, matchStage, readWorkbook, stageValues, statusStageKey } from "./excel.js";
 
 const stages = [
   { id: "s-meta", key: "meta", name: "Nova Lead Meta", client_id: null },
@@ -79,5 +79,32 @@ describe("ficheiros", () => {
     expect(normal).toMatchObject({ Cliente: "A", Nome: "Ana", Budget: "300 000 €", "Histórico": "linha 1" });
     const [pipe] = exportRows([l], { history: true, pipedrive: true });
     expect(pipe).toEqual({ Nome: "Ana", Telefone: "912", Email: "a@x.pt", Titulo: "Ana · T2", Origem: "Meta", Nota: "Ligar à tarde\nlinha 1" });
+  });
+});
+
+describe("exportações do Pipedrive", () => {
+  const headers = ["Negócio - Título", "Pessoa - Nome", "Pessoa - Telefone", "Pessoa - E-mail", "Negócio - Etapa",
+    "Negócio - Status", "Negócio - Negócio criado em", "Negócio - Valor", "Negócio - Origem", "Organização - Nome"];
+
+  it("reconhece as colunas em português e em inglês, sem confundir a origem do Pipedrive", () => {
+    expect(headers.map(guessField)).toEqual(["skip", "name", "phone", "email", "stage", "status", "date", "budget", "skip", "skip"]);
+    expect(["Person - Name", "Person - Phone", "Person - Email", "Deal - Stage", "Deal - Status", "Deal - Deal created"].map(guessField))
+      .toEqual(["name", "phone", "email", "stage", "status", "date"]);
+  });
+
+  it("negócios ganhos entram em Lead Qualificada e perdidos em Lead desqualificada", () => {
+    expect(["Ganho", "won", "Perdido", "Lost", "Aberto", ""].map(statusStageKey)).toEqual(["qualificada", "qualificada", "desq", "desq", null, null]);
+  });
+
+  it("cada etapa do Pipedrive vai para a etapa escolhida no ecrã", () => {
+    const row = (nome, etapa, status) => ({ "Pessoa - Nome": nome, "Pessoa - Telefone": "912000000", "Negócio - Etapa": etapa, "Negócio - Status": status });
+    const imp = {
+      rows: [row("A", "Reunião Agendada", "Aberto"), row("B", "Reunião Agendada", "Ganho"), row("C", "Em Visitas", "Perdido"), row("D", "Leads META", "Aberto")],
+      map: { "Pessoa - Nome": "name", "Pessoa - Telefone": "phone", "Negócio - Etapa": "stage", "Negócio - Status": "status" },
+      client: "c-a", stage: "__col", stageMap: { "Reunião Agendada": "s-fu" },
+    };
+    expect(stageValues(imp)).toEqual([["Reunião Agendada", 2], ["Em Visitas", 1], ["Leads META", 1]]);
+    const { valid } = buildRows(imp, clients, stages);
+    expect(valid.map((o) => o.stage_id)).toEqual(["s-fu", "s-q", "s-d", "s-meta"]);
   });
 });

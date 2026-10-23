@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { sb } from "../supabase.js";
-import { FIELD_LABEL, TEMPLATE_ROWS, buildRows, downloadXlsx, fileSafe, guessField, readWorkbook } from "../lib/excel.js";
+import { FIELD_LABEL, TEMPLATE_ROWS, buildRows, downloadXlsx, fileSafe, guessField, matchStage, readWorkbook, stageValues } from "../lib/excel.js";
 import { exportLeads } from "../lib/exportLeads.js";
 import { useAction, useToast } from "../ui/feedback.jsx";
 
@@ -37,7 +37,7 @@ function Importer({ ctx }) {
       const has = (field) => headers.some((h) => map[h] === field);
       setResult(null);
       setImp({
-        file: f.name, rows, headers, map, dup: "ignore",
+        file: f.name, rows, headers, map, dup: "ignore", stageMap: {},
         client: has("client") ? "__col" : ctx.filterClient || clients[0]?.id,
         stage: has("stage") ? "__col" : stages.find((s) => s.key === "bd").id,
       });
@@ -143,6 +143,10 @@ function Importer({ ctx }) {
               {stageOpts.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               <option value="__col">Usar a coluna Etapa do ficheiro</option></select></label>
           </div>
+          {imp.stage === "__col" && (
+            <StageMapping imp={imp} stageOpts={stageOpts} stages={stages} disabled={!!progress}
+              onChange={(value, id) => set({ stageMap: { ...imp.stageMap, [value]: id } })} />
+          )}
           <div>
             <h3 style={{ margin: "0 0 4px", fontSize: 14 }}>Correspondência de colunas</h3>
             <div className="sub" style={{ margin: "0 0 8px" }}>Reconhecidas automaticamente. Ajusta se for preciso.</div>
@@ -193,6 +197,31 @@ function Importer({ ctx }) {
         </>
       )}
     </section>
+  );
+}
+
+// Etapas do ficheiro (por exemplo as de uma conta Pipedrive) e a etapa da OPERA para onde vai cada uma.
+function StageMapping({ imp, stageOpts, stages, disabled, onChange }) {
+  const values = stageValues(imp);
+  const bd = stages.find((s) => s.key === "bd")?.id;
+  const hasStatus = Object.values(imp.map).includes("status");
+  if (!values.length) return null;
+  return (
+    <div>
+      <h3 style={{ margin: "0 0 4px", fontSize: 14 }}>Etapas do ficheiro</h3>
+      <div className="sub" style={{ margin: "0 0 8px" }}>
+        Escolhe para onde vai cada etapa.{hasStatus ? " Os negócios ganhos entram em Lead Qualificada e os perdidos em Lead desqualificada, seja qual for a etapa." : ""}
+      </div>
+      <div className="tbl" style={{ margin: 0 }}>
+        <table><thead><tr><th>Etapa no ficheiro</th><th>Linhas</th><th>Etapa no OPERA Leads</th></tr></thead>
+          <tbody>{values.map(([v, n]) => (
+            <tr key={v}><td><b>{v}</b></td><td>{n}</td>
+              <td><select aria-label={`Etapa para ${v}`} disabled={disabled}
+                value={imp.stageMap[v] || matchStage(v, imp.client, stages) || bd} onChange={(e) => onChange(v, e.target.value)}>
+                {stageOpts.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></td></tr>))}
+          </tbody></table>
+      </div>
+    </div>
   );
 }
 
