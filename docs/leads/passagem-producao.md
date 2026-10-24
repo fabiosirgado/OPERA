@@ -23,8 +23,8 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 | # | Quem | O quê |
 |---|---|---|
 | 1.1 | Quase feito | **CRM (2026-10-24):** chaves novas só para o CRM no Vault (`crm_resend_api_key`, `crm_anthropic_api_key`); as 8 funções do CRM passaram a lê-las do Vault (migração `20261024120000`), testadas com resposta 200 da Anthropic e do Resend. **Falta:** apagar as chaves antigas no Resend e na Claude Console. |
-| 1.2 | Tu | Supabase, Authentication: ligar a **proteção contra palavras passe expostas** (leaked password protection). |
-| 1.3 | Eu | Confirmar com o verificador de segurança do Supabase que não há avisos novos. |
+| 1.2 | Feito | Proteção contra palavras passe expostas ligada (2026-10-24). |
+| 1.3 | Feito | Verificador de segurança: sem erros. Ficam 3 avisos antigos do CRM, conhecidos e sem risco (funções de papel usadas pelas regras de acesso, leitura de documentos e relatórios só para a equipa, e o `search_path` de `equipa_notify_emails`). |
 
 ## Etapa 2. Base de dados da produção
 
