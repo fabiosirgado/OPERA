@@ -104,6 +104,15 @@ export const updateEvent = (id, patch) => must(sb.from("lead_events").update(pat
 
 // ---------- Etapas e etiquetas
 export const createStage = (row) => must(sb.from("lead_stages").insert(row));
+// Mudar e apagar etapas: o RLS só deixa mexer nas etapas que não são base (a OPERA em todas, o cliente nas suas).
+export const updateStage = (id, patch) => must(sb.from("lead_stages").update(patch).eq("id", id).select("id"))
+  .then((r) => { if (!r.length) throw new Error("Sem permissão para mudar esta etapa."); });
+export const deleteStage = async (id) => {
+  const { data, error } = await sb.from("lead_stages").delete().eq("id", id).select("id");
+  if (error?.code === "23503") throw new Error("Esta etapa tem leads. Muda-as para outra etapa antes de a apagar.");
+  if (error) throw error;
+  if (!data.length) throw new Error("Sem permissão para apagar esta etapa.");
+};
 export const createLabel = (name, color) => must(sb.from("lead_labels").insert({ name, color }));
 export const updateLabel = (id, patch) => must(sb.from("lead_labels").update(patch).eq("id", id));
 export const deleteLabel = (id) => must(sb.from("lead_labels").delete().eq("id", id));

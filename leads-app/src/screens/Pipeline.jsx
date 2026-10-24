@@ -212,8 +212,8 @@ export default function Pipeline({ ctx }) {
               </section>
             );
           })}
-          <button type="button" className="addStage" onClick={ctx.onNewStage}><Icon.plus />Nova etapa
-            <small>{opera ? "depois de Qualificada, para todos ou só um cliente" : "depois de Qualificada"}</small></button>
+          <button type="button" className="addStage" onClick={ctx.onNewStage}><Icon.plus />Etapas
+            <small>criar, mudar a ordem, o nome ou apagar, depois de Qualificada</small></button>
         </div></div>
       )}
       <div className="foot">{total} leads com estes filtros.</div>
