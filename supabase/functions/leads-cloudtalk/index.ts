@@ -100,7 +100,11 @@ const unwrap = (v: unknown, keys: string[]): unknown => {
   }
   return cur;
 };
-// Notas inteligentes: lista de textos; os grupos (ex.: "action_items") ficam como prefixo.
+// Notas inteligentes: lista de textos; os grupos (ex.: "action_items") ficam como prefixo, em português.
+const NOTE_GROUP: Record<string, string> = {
+  action_items: "Próximos passos", next_steps: "Próximos passos", decisions: "Decisões",
+  open_questions: "Perguntas em aberto", questions: "Perguntas", dates: "Datas", key_dates: "Datas",
+};
 function notesList(v: unknown): string[] {
   const out: string[] = [];
   const walk = (x: unknown, prefix: string) => {
@@ -109,18 +113,31 @@ function notesList(v: unknown): string[] {
     else if (isObj(x)) {
       const t = text(x);
       if (t) out.push(prefix + t);
-      else for (const [k, y] of Object.entries(x)) walk(y, `${k.replace(/_/g, " ")}: `);
+      else for (const [k, y] of Object.entries(x)) walk(y, `${NOTE_GROUP[k] ?? k.replace(/_/g, " ")}: `);
     }
   };
   walk(v, "");
   return out.slice(0, 50);
 }
 
-export async function fetchCI(callId: string) {
-  const [sum, notes, sent, topics] = await Promise.all([
-    ciGet(callId, "summary"), ciGet(callId, "smart-notes"), ciGet(callId, "overall-sentiment"), ciGet(callId, "topics"),
-  ]);
-  // Transcrição, por páginas.
+// Resumo, notas, sentimento e temas a partir das respostas (da API ou do próprio evento cidata.ready).
+function analysis(sum: unknown, notes: unknown, sent: unknown, topics: unknown) {
+  const sumVal = unwrap(sum, ["data", "summary"]);
+  const t = unwrap(topics, ["data", "topics"]);
+  return {
+    summary: typeof sumVal === "string" ? sumVal.trim() : text(sumVal),
+    notes: notesList(unwrap(notes, ["data", "smart_notes", "smartNotes", "notes"])),
+    sentiment: text(unwrap(sent, ["data", "overall_sentiment", "sentiment"])),
+    topics: (Array.isArray(t) ? t.map(text) : []).filter(Boolean).slice(0, 20),
+  };
+}
+// cidata.ready já traz a análise: summary (com smart_notes), sentiment e topics.
+export function analysisFromEvent(d: Obj) {
+  const sum = d.summary;
+  return analysis(sum, isObj(sum) ? (sum.smart_notes ?? sum.smartNotes) : d.smart_notes, d.sentiment ?? d.overall_sentiment, d.topics);
+}
+
+async function fetchTranscript(callId: string) {
   const transcript: { s: string; t: number | null; x: string }[] = [];
   let lang = "";
   for (let offset = 0, page = 0; page < 40; page++) {
@@ -140,36 +157,48 @@ export async function fetchCI(callId: string) {
     if (list.length < 100) break;
     offset += list.length;
   }
-  const sumVal = unwrap(sum, ["data", "summary"]);
-  const ci = {
-    summary: typeof sumVal === "string" ? sumVal.trim() : text(sumVal),
-    notes: notesList(unwrap(notes, ["data", "smart_notes", "smartNotes", "notes"])),
-    sentiment: text(unwrap(sent, ["data", "overall_sentiment", "sentiment"])),
-    topics: (() => {
-      const t = unwrap(topics, ["data", "topics"]);
-      return (Array.isArray(t) ? t.map(text) : []).filter(Boolean).slice(0, 20);
-    })(),
-    transcript,
-    lang,
-  };
-  // Para diagnóstico: só os nomes dos campos, nunca o conteúdo.
-  const keys = (v: unknown) => isObj(v) ? Object.keys(v) : Array.isArray(v) ? ["[array]"] : [];
-  return { ci, shape: { summary: keys(sum), notes: keys(notes), sentiment: keys(sent), topics: keys(topics) } };
+  return { transcript, lang };
 }
 
-async function storeCI(callId: string) {
-  let got: Awaited<ReturnType<typeof fetchCI>>;
+// Para diagnóstico: só os nomes dos campos, nunca o conteúdo.
+const keys = (v: unknown) => isObj(v) ? Object.keys(v) : Array.isArray(v) ? ["[array]"] : [];
+
+// part: "analysis" (resumo e afins), "transcript", ou "all". fromEvent: a análise que já veio no cidata.ready.
+async function storeCI(callId: string, part: "analysis" | "transcript" | "all", fromEvent?: Obj) {
+  let ci: Obj = {};
+  let shape: Obj = {};
   try {
-    got = await fetchCI(callId);
+    if (part !== "transcript") {
+      const ev = fromEvent ? analysisFromEvent(fromEvent) : null;
+      if (ev && (ev.summary || ev.notes.length || ev.sentiment || ev.topics.length)) {
+        ci = { ...ev };
+        shape = { evento: keys(fromEvent) };
+      } else {
+        const [sum, notes, sent, topics] = await Promise.all([
+          ciGet(callId, "summary"), ciGet(callId, "smart-notes"), ciGet(callId, "overall-sentiment"), ciGet(callId, "topics"),
+        ]);
+        ci = analysis(sum, notes, sent, topics);
+        shape = { summary: keys(sum), notes: keys(notes), sentiment: keys(sent), topics: keys(topics) };
+      }
+    }
+    if (part !== "analysis") {
+      const tr = await fetchTranscript(callId);
+      ci = { ...ci, ...tr };
+      shape = { ...shape, transcript: tr.transcript.length };
+    }
   } catch (e) {
     if (!(e instanceof CiDenied)) throw e;
     console.error("leads-cloudtalk:", e.message);
-    return { status: "ignorado", motivo: "A chave da CloudTalk não tem acesso à análise das chamadas.", shape: {} };
+    if (!Object.keys(ci).length) {
+      return { status: "ignorado", motivo: "A chave da CloudTalk não tem acesso à análise das chamadas.", shape };
+    }
   }
-  const { ci, shape } = got;
-  const empty = !ci.summary && !ci.notes.length && !ci.transcript.length && !ci.sentiment && !ci.topics.length;
+  const has = (v: unknown) => Array.isArray(v) ? v.length > 0 : !!v;
+  const empty = !["summary", "notes", "sentiment", "topics", "transcript"].some((k) => has(ci[k]));
   if (empty) return { status: "ignorado", motivo: "A CloudTalk ainda não tem análise desta chamada.", shape };
-  const r = await must(admin.rpc("leads_cloudtalk_ci", { p_call_id: callId, p: ci }), "Análise da chamada") as Obj;
+  // Só o que veio preenchido: uma parte vazia não apaga o que já estava guardado.
+  const p = Object.fromEntries(Object.entries(ci).filter(([, v]) => has(v)));
+  const r = await must(admin.rpc("leads_cloudtalk_ci", { p_call_id: callId, p }), "Análise da chamada") as Obj;
   return { ...r, shape };
 }
 
@@ -239,8 +268,10 @@ async function webhook(req: Request) {
     } else if (type === "call.recording_ready") {
       result = await must(admin.rpc("leads_cloudtalk_recording_ready", { p_call_id: String(d.call_id ?? "") }),
         "Gravação") as Record<string, unknown>;
-    } else if ((type === "transcript.ready" || type === "cidata.ready") && d.call_id && CT_ID && CT_SECRET) {
-      const { shape, ...r } = await storeCI(String(d.call_id));
+    } else if (d.call_id && (type === "cidata.ready" || (type === "transcript.ready" && CT_ID && CT_SECRET))) {
+      const { shape, ...r } = type === "cidata.ready"
+        ? await storeCI(String(d.call_id), "analysis", d)
+        : await storeCI(String(d.call_id), "transcript");
       // Só os nomes dos campos que a CloudTalk devolveu, para confirmar o formato; nunca o conteúdo.
       console.log(`leads-cloudtalk: ${type}`, r.status, JSON.stringify(shape));
       result = r;
@@ -343,7 +374,7 @@ async function app(req: Request) {
       .eq("meta->>call_id", String(body.call_id ?? "")).maybeSingle();
     if (!ev) return fail("Chamada não encontrada.", 404);
     if (!CT_ID || !CT_SECRET) return fail("A CloudTalk ainda não está ligada.");
-    return json(await storeCI(String(body.call_id)));
+    return json(await storeCI(String(body.call_id), "all"));
   }
 
   return fail("Ação desconhecida.");
