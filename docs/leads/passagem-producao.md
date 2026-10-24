@@ -22,7 +22,7 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê |
 |---|---|---|
-| 1.1 | Tu | Rodar as chaves antigas da Anthropic e do Resend que estão na base de dados do CRM ("correção 2"). Eu passo-as depois para o Vault. |
+| 1.1 | Quase feito | **CRM (2026-10-24):** chaves novas só para o CRM no Vault (`crm_resend_api_key`, `crm_anthropic_api_key`); as 8 funções do CRM passaram a lê-las do Vault (migração `20261024120000`), testadas com resposta 200 da Anthropic e do Resend. **Falta:** apagar as chaves antigas no Resend e na Claude Console. |
 | 1.2 | Tu | Supabase, Authentication: ligar a **proteção contra palavras passe expostas** (leaked password protection). |
 | 1.3 | Eu | Confirmar com o verificador de segurança do Supabase que não há avisos novos. |
 
