@@ -75,6 +75,7 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 | 6.2 | Tu | Convidar o André (gestor) e os utilizadores de cada cliente. |
 | 6.3 | Tu | Exportar os negócios de cada conta Pipedrive (com os campos da pessoa). |
 | 6.4 | Tu ou eu | Importar cada ficheiro no ecrã "Importar e exportar", escolhendo o cliente e confirmando as etapas. Os ganhos entram em Lead Qualificada e os perdidos em desqualificada, sem enviar emails. |
+| 6.4a | Feito | 2026-10-24: funil "OPERA" do Pipedrive importado por API para o cliente OPERA: 687 leads (todas abertas no Pipedrive). Etapas do cliente OPERA iguais às do Pipedrive (R1, R2, Em decisão, Closed, Em Onboarding, Entrega de serviço). Lead Remax (457) e Lead (1) em Nova Lead BD, com origem "Remax" ou "Base de dados"; Follow up (101) em Follow Up OPERA; Não quer avançar (81) em desqualificada. Data de entrada igual à do Pipedrive. Investidor como etiqueta (5); SINGLE, TEAM e SLA como nota (62). Sem tarefas nem avisos. 60 leads não têm telefone nem email no Pipedrive. |
 | 6.5 | Tu | Conferir 5 leads ao acaso de cada cliente com o Pipedrive. |
 
 ## Etapa 7. Entradas automáticas e CloudTalk, em paralelo com o Pipedrive
