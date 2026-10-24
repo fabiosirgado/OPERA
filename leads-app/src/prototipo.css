@@ -229,7 +229,3 @@ body.out main{padding:0}
 .state.ok{background:var(--greenSoft);color:var(--greenText)}.state.inv{background:#DCE8FF;color:#1E3A8A}.state.off{background:#E5E7EB;color:#374151}.state.del{background:var(--redSoft);color:var(--redText)}
 .danger{border:1px solid #F5C2C2;background:#FFF8F8;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
 
-.tl .ci{margin-top:6px;padding:8px 10px;background:#F8FAFC;border:1px solid var(--line2);border-radius:8px}
-.tl .ci p{margin:0 0 4px}
-.tl .ci ul{margin:4px 0;padding-left:18px;font-size:13px;color:#334155;line-height:1.5}
-.tl .ci .transcript{max-height:320px;overflow-y:auto;margin-top:6px;padding-top:6px;border-top:1px solid var(--line2)}

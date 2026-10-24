@@ -35,7 +35,6 @@ export default function LeadModal({ id, ctx, onClose }) {
   const [note, setNote] = useState({ body: "", pinned: false });
   const [editing, setEditing] = useState(null);
   const [audio, setAudio] = useState({});
-  const [openTranscript, setOpenTranscript] = useState(null);
   const [run, busy] = useAction();
   const toast = useToast();
 
@@ -349,9 +348,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                     ) : (
                       <>
                         {body && <p>{body}</p>}
-                        {e.kind === "call" && e.meta?.ci && <CallAnalysis ci={e.meta.ci}
-                          open={openTranscript === e.id} onToggle={() => setOpenTranscript(openTranscript === e.id ? null : e.id)} />}
-                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !e.meta?.ci?.summary && (
+                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !e.meta?.ci && (
                           <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo e transcrição</button></div>
                         )}
                         {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (
@@ -379,33 +376,3 @@ export default function LeadModal({ id, ctx, onClose }) {
   );
 }
 
-// Análise da CloudTalk numa chamada: resumo, notas inteligentes e transcrição (aberta a pedido).
-const SENTIMENT = { positive: "positivo", neutral: "neutro", negative: "negativo" };
-const mmss = (t) => (t == null ? "" : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")} `);
-function CallAnalysis({ ci, open, onToggle }) {
-  const transcript = Array.isArray(ci.transcript) ? ci.transcript : [];
-  const notes = Array.isArray(ci.notes) ? ci.notes : [];
-  const sentiment = SENTIMENT[String(ci.sentiment || "").toLowerCase()] || ci.sentiment;
-  return (
-    <div className="ci">
-      {ci.summary && <p><b>Resumo</b> {ci.summary}</p>}
-      {notes.length > 0 && <ul>{notes.map((n, i) => <li key={i}>{n}</li>)}</ul>}
-      {(sentiment || ci.topics?.length > 0) && (
-        <div className="w" style={{ marginLeft: 0 }}>
-          {sentiment && `Sentimento ${sentiment}`}{sentiment && ci.topics?.length > 0 && " · "}{ci.topics?.length > 0 && ci.topics.join(", ")}
-        </div>
-      )}
-      {transcript.length > 0 && (
-        <>
-          <div className="tools"><button type="button" className="link" aria-expanded={open} onClick={onToggle}>
-            {open ? "Esconder transcrição" : `Ver transcrição (${transcript.length} falas)`}</button></div>
-          {open && (
-            <div className="transcript">
-              {transcript.map((s, i) => <p key={i}><span className="w" style={{ marginLeft: 0 }}>{mmss(s.t)}</span>{s.s && <b>{s.s}: </b>}{s.x}</p>)}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
