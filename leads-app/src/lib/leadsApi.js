@@ -121,12 +121,14 @@ export function subscribeChanges(onChange) {
     const { data } = await sb.auth.getSession();
     if (stopped) return;
     if (data.session) await sb.realtime.setAuth(data.session.access_token);
+    const again = !!ch;
     if (ch) await sb.removeChannel(ch);
     ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
     for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
       ch.on("postgres_changes", { event: "*", schema: "public", table }, () => onChange(table));
     }
-    ch.subscribe();
+    // Ao voltar a ligar, pede os dados outra vez: o que mudou entretanto não se perde.
+    ch.subscribe((status) => { if (status === "SUBSCRIBED" && again) onChange("*"); });
   };
   connect();
   const { data: auth } = sb.auth.onAuthStateChange((event) => {
