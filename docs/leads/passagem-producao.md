@@ -30,13 +30,13 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê | Verificação |
 |---|---|---|---|
-| 2.1 | Eu | Cópia de segurança (backup do Pro ou cópia manual). | Backup com hora registada. |
-| 2.2 | Eu | Marcar o esquema inicial como aplicado (`20261021000000`), sem o executar. | Lista de migrações. |
-| 2.3 | Eu | Aplicar as 11 migrações do Leads por ordem, de `20261022090000` a `20261023150000`, uma de cada vez. | Depois de cada uma: o CRM continua a abrir e a guardar clientes e perfis. |
-| 2.4 | Eu | Configuração da produção em `private.leads_config`: `functions_url` e `app_url = https://opera-os.com/leads/`. **Sem** `email_redirect_to`. | Consulta à tabela. |
-| 2.5 | Eu | Verificador de segurança e de desempenho do Supabase. RLS ativo em todas as tabelas novas. | Zero avisos críticos. |
+| 2.1 | Feito | Backup diário do Pro (2026-10-24 06:34 UTC) e, antes de começar, cópia das tabelas `clients` e `profiles`, das políticas e das funções do CRM no esquema `copia_20261024` (fora da API). | Feito às 15:15 UTC. |
+| 2.2 | Feito | Esquema inicial (`20261021000000`) e a migração do Vault (`20261024120000`) marcados como aplicados, sem os executar. | Lista de migrações igual à do repositório. |
+| 2.3 | Feito | As 11 migrações do Leads aplicadas uma a uma. Depois de cada uma, como utilizador da equipa do CRM e como cliente (com tudo desfeito no fim): a equipa vê os 9 clientes e os 6 perfis e consegue guardá los, o cliente vê só o seu, e nenhuma função nem política do CRM mudou. | **A 1.ª migração tinha um erro:** a proteção das colunas do Leads impedia a equipa do CRM de guardar clientes e perfis. Apanhado pela verificação e corrigido na 2.ª migração minutos depois (também no opera-testes e nos ficheiros). |
+| 2.4 | Feito | `private.leads_config` da produção: `functions_url` e `app_url = https://opera-os.com/leads/`, **sem** `email_redirect_to`. | Consulta à tabela. |
+| 2.5 | Feito | Produção igual ao opera-testes (tabelas, colunas, índices, políticas, gatilhos, tarefas agendadas e funções, tirando comentários). RLS ativo em todas as tabelas. Verificadores: sem erros; só os avisos já conhecidos. | 98 testes a passar. |
 
-**Voltar atrás:** as migrações só juntam tabelas, colunas e funções. Se algo correr mal com o CRM, restaura-se o backup de 2.1.
+**Voltar atrás:** as migrações só juntam tabelas, colunas e funções. Se algo correr mal com o CRM, restaura-se o backup de 2.1. A cópia `copia_20261024` apaga-se quando a passagem estiver estável.
 
 ## Etapa 3. Autenticação da produção
 

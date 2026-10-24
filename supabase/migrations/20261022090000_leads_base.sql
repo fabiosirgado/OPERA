@@ -262,14 +262,17 @@ begin
      or auth.uid() is null then
     return new;
   end if;
-  if tg_table_name = 'profiles' and (
-       new.leads_role is distinct from old.leads_role or new.leads_status is distinct from old.leads_status) then
-    raise exception 'Só um admin do OPERA Leads pode mudar papéis e estados de utilizadores.';
-  end if;
-  if tg_table_name = 'clients' and (
-       new.manager_id is distinct from old.manager_id or new.leads_status is distinct from old.leads_status
-       or new.leads_purge_at is distinct from old.leads_purge_at) then
-    raise exception 'Só um admin do OPERA Leads pode mudar o gestor ou o estado de um cliente.';
+  -- Um IF por tabela: o PL/pgSQL avalia a condição toda, e new.leads_role não existe em clients
+  -- (nem new.manager_id em profiles).
+  if tg_table_name = 'profiles' then
+    if new.leads_role is distinct from old.leads_role or new.leads_status is distinct from old.leads_status then
+      raise exception 'Só um admin do OPERA Leads pode mudar papéis e estados de utilizadores.';
+    end if;
+  elsif tg_table_name = 'clients' then
+    if new.manager_id is distinct from old.manager_id or new.leads_status is distinct from old.leads_status
+       or new.leads_purge_at is distinct from old.leads_purge_at then
+      raise exception 'Só um admin do OPERA Leads pode mudar o gestor ou o estado de um cliente.';
+    end if;
   end if;
   return new;
 end;

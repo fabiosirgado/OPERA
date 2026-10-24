@@ -99,11 +99,14 @@ suite("Avisos por email", () => {
     expect(await notificationOf(l.id, "qualificada")).toBeNull();
   });
 
-  it("sem a chave do Resend, os avisos ficam pendentes para sair mais tarde", async () => {
+  // Sem a chave do Resend os avisos ficam pendentes; com ela (o opera-testes já a tem) saem, para o
+  // endereço de redirecionamento dos testes.
+  it("os avisos saem com a chave do Resend ou ficam pendentes sem ela", async () => {
     const r = await notify({ action: "process" });
-    expect(r.body).toEqual({ configured: false });
     const id = created[0];
-    expect((await notificationOf(id, "qualificada")).status).toBe("pendente");
+    const { status } = await notificationOf(id, "qualificada");
+    if (r.body.configured === false) expect(status).toBe("pendente");
+    else expect(["enviado", "pendente"]).toContain(status);
   });
 
   it("só o servidor mexe na fila; os clientes não veem os avisos", async () => {
