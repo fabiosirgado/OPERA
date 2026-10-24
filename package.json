@@ -1,0 +1,25 @@
+{
+  "name": "opera-site",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite --config leads-app/vite.config.js",
+    "build": "node scripts/build-site.mjs && vite build --config leads-app/vite.config.js",
+    "preview": "vite preview --config leads-app/vite.config.js",
+    "test": "vitest run --config leads-app/vite.config.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

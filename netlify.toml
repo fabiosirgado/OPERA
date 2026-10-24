@@ -1,0 +1,31 @@
+# Build do site OPERA.
+# As páginas estáticas (index.html, crm/, etc.) são copiadas tal como estão para dist/.
+# Só o OPERA Leads (leads-app/) é compilado com Vite e publicado em /leads/.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Valores públicos (URL e chave publicável, protegidos pelo RLS). Nunca pôr aqui segredos.
+# Produção usa o projeto Supabase real; pré visualizações e branches usam o projeto de testes.
+[context.production.environment]
+  VITE_SUPABASE_URL = "https://tdxooskqhpncylwmakvv.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6BhmqVMz6sQrNJQS7JF0UA_CU1Gq2nq"
+
+[context.deploy-preview.environment]
+  VITE_SUPABASE_URL = "https://zorfupxbkluiswmhoqnq.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NHi7PX1qwKiiXrY6Qb5lKQ_DNap6cmc"
+
+[context.branch-deploy.environment]
+  VITE_SUPABASE_URL = "https://zorfupxbkluiswmhoqnq.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_NHi7PX1qwKiiXrY6Qb5lKQ_DNap6cmc"
+
+# O OPERA Leads é uma aplicação de página única: qualquer caminho em /leads/ abre a aplicação.
+[[redirects]]
+  from = "/leads/*"
+  to = "/leads/index.html"
+  status = 200
