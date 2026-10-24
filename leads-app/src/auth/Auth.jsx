@@ -42,9 +42,16 @@ export function useAccess() {
     if (recovery || profile.leads_status === "convidado") return setState({ step: "setPassword", profile, invited: profile.leads_status === "convidado" });
 
     if (opera) {
-      const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      // Sessão guardada que já não é válida (por exemplo, expirou noutro separador): volta ao login.
+      const expired = async () => {
+        await sb.auth.signOut().catch(() => {});
+        setState({ step: "signedOut", message: "A sessão expirou. Entra outra vez." });
+      };
+      const { data: aal, error: aalError } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalError || !aal) return expired();
       if (aal.currentLevel !== "aal2") {
-        const { data: f } = await sb.auth.mfa.listFactors();
+        const { data: f, error: fError } = await sb.auth.mfa.listFactors();
+        if (fError || !f) return expired();
         const factor = f.totp.find((x) => x.status === "verified");
         return setState(factor ? { step: "mfaCode", factorId: factor.id } : { step: "mfaEnroll" });
       }
