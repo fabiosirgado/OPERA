@@ -25,7 +25,7 @@ export default function Shell({ access }) {
   const role = profile.leads_role;
   const items = opera
     ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
-    : [["pipeline", "As vossas leads"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
+    : [["pipeline", "As vossas leads"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
   const [view, setView] = useState(() => (items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
 
@@ -127,7 +127,7 @@ export default function Shell({ access }) {
         {stages.length > 0 && view === "pipeline" && <Pipeline ctx={ctx} />}
         {stages.length > 0 && view === "hoje" && <Hoje ctx={ctx} />}
         {stages.length > 0 && view === "io" && <ImportExport ctx={ctx} />}
-        {view === "dash" && <Dashboard ctx={ctx} isAdmin={role === "admin"} />}
+        {view === "dash" && <Dashboard ctx={ctx} isAdmin={role === "admin"} opera={opera} />}
         {view === "entradas" && <Entradas ctx={ctx} isAdmin={role === "admin"} />}
         {view === "clientes" && <Clientes profile={profile} />}
         {view === "equipa" && <Equipa profile={profile} client={myClient} />}

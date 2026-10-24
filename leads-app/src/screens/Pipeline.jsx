@@ -76,6 +76,8 @@ export default function Pipeline({ ctx }) {
     if (!canMoveTo(stage) || (!opera && posOf[fromStage] < QUALIFIED_POSITION)) return toast("Só a OPERA mexe nas etapas antes de Qualificada");
     if (stage.key === "desq" && !confirm("Passar esta lead para Lead desqualificada? As tarefas em aberto são canceladas.")) return;
     if (await run(() => updateLead(leadId, { stage_id: stage.id }), stage.key === "qualificada" ? "Lead qualificada. O cliente vai ser avisado." : `Movida para ${stage.name}`)) loadBoard();
+    // Sem Objetivo não se qualifica: abre a ficha para o indicar.
+    else if (stage.key === "qualificada") ctx.onOpenLead(leadId);
   };
 
   // Exportação rápida do que está filtrado por cliente (todas as etapas, com histórico).

@@ -49,7 +49,7 @@ suite("Avisos por email", () => {
 
   it("qualificar uma lead põe o aviso na fila e o email leva o resumo e o link", async () => {
     const id = await lead({ name: `${TAG} Marta`, phone: "912345001", email: "marta@example.com", interest: "T2 Alvalade",
-      qualification: { Budget: "300 000 €", Prazo: "3 meses" } });
+      qualification: { Objetivo: "Comprador", Budget: "300 000 €", Prazo: "3 meses" } });
     await gestor.from("lead_events").insert({ lead_id: id, type: "note", title: "Nota", body: "Só ao fim da tarde", pinned: true, author_id: me });
     expect((await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id)).error).toBeNull();
     const n = await notificationOf(id, "qualificada");
@@ -72,7 +72,7 @@ suite("Avisos por email", () => {
   });
 
   it("com responsável no cliente, só o responsável recebe", async () => {
-    const id = await lead({ name: `${TAG} Rui`, phone: "912345002", owner_user_id: aUserId });
+    const id = await lead({ name: `${TAG} Rui`, phone: "912345002", owner_user_id: aUserId, qualification: { Objetivo: "Proprietário" } });
     await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id);
     const { body: p } = await notify({ action: "preview", id: (await notificationOf(id, "qualificada")).id });
     expect(p.real_to).toEqual([USERS.aUser]);

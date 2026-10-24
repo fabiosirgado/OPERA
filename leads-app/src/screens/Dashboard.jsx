@@ -8,8 +8,9 @@ const TTL_BUCKETS = ["Até 15 min", "15 a 30 min", "30 a 60 min", "1 a 4 h", "Ma
 const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 const dec = (n) => n.toFixed(1).replace(".", ",");
 
-// Dashboard (admin e gestores): desempenho da OPERA. Números calculados no servidor.
-export default function Dashboard({ ctx, isAdmin }) {
+// Dashboard: a equipa OPERA vê todos os clientes; cada cliente vê só os seus números (sem a ocupação dos gestores).
+// Números calculados no servidor.
+export default function Dashboard({ ctx, isAdmin, opera }) {
   const { clients } = ctx;
   const [client, setClient] = useState("");
   const [period, setPeriod] = useState("7");
@@ -21,13 +22,13 @@ export default function Dashboard({ ctx, isAdmin }) {
     run(async () => {
       const [dash, load] = await Promise.all([
         sb.rpc("leads_dashboard", { p_client: client || null, p_period: period }),
-        sb.rpc("leads_managers_load"),
+        opera ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
       ]);
       if (dash.error) throw dash.error;
       setD(dash.data);
       setManagers(load.data || []);
     });
-  }, [client, period, ctx.version, run]);
+  }, [client, period, opera, ctx.version, run]);
 
   const setTarget = async (v) => {
     const m = Math.max(1, Math.min(240, Number(v) || 15));
@@ -41,11 +42,14 @@ export default function Dashboard({ ctx, isAdmin }) {
   return (
     <>
       <div className="top">
-        <div><h1>Dashboard</h1><div className="sub">Desempenho da OPERA na gestão de leads{clientName ? ` · ${clientName}` : ""}</div></div>
+        <div><h1>Dashboard</h1><div className="sub">{opera
+          ? `Desempenho da OPERA na gestão de leads${clientName ? ` · ${clientName}` : ""}`
+          : `As vossas leads e o trabalho da OPERA${clients[0] ? ` · ${clients[0].name}` : ""}`}</div></div>
         <div className="row">
-          <label className="f" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>Cliente
-            <select value={client} onChange={(e) => setClient(e.target.value)} style={{ minHeight: 40 }}>
-              <option value="">Todos os clientes</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          {opera && (
+            <label className="f" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>Cliente
+              <select value={client} onChange={(e) => setClient(e.target.value)} style={{ minHeight: 40 }}>
+                <option value="">Todos os clientes</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>)}
           <div className="pills" role="group" aria-label="Período">
             {PERIODS.map(([v, l]) => <button key={v} type="button" className={`pill ${period === v ? "on" : ""}`} aria-pressed={period === v} onClick={() => setPeriod(v)}>{l}</button>)}
           </div>
@@ -54,7 +58,7 @@ export default function Dashboard({ ctx, isAdmin }) {
 
       {!d ? <div className="empty">A calcular…</div> : (
         <div className="dgrid">
-          <div className="panel s6 hero">
+          <div className={`panel ${opera ? "s6" : "s12"} hero`}>
             <span className="lbl">Time to Lead (mediana)</span>
             <span className="big">{d.ttl_median == null ? "—" : fmtDur(d.ttl_median)}</span>
             <TtlStatus m={d.ttl_median} target={d.ttl_target} />
@@ -68,13 +72,13 @@ export default function Dashboard({ ctx, isAdmin }) {
             <Bars items={TTL_BUCKETS.map((l, i) => ({ l, v: d.ttl_buckets[i] }))} muteLast />
           </div>
 
-          <div className="panel s6">
+          {opera && <div className="panel s6">
             <h3>Taxa de ocupação por gestor de leads</h3>
             <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>Máximo de {MAX_CLIENTS_PER_MANAGER} clientes por gestor</div>
             {managers.length === 0 && <div className="empty">Ainda não há gestores.</div>}
             {managers.map((m) => <Occupancy key={m.id} m={m} />)}
             {isAdmin && <div className="row" style={{ marginTop: 8 }}><button type="button" className="btn sm" onClick={() => ctx.onGo("clientes")}>Atribuir clientes a gestores</button></div>}
-          </div>
+          </div>}
 
           <div className="stat s3"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia</small></div>
           <div className="stat s3"><span>Chamadas feitas</span><b>{d.calls}</b><small>{pct(d.answered, d.calls)} atendidas · {d.leads_in ? dec(d.calls / d.leads_in) : "0"} por lead</small></div>
@@ -88,6 +92,11 @@ export default function Dashboard({ ctx, isAdmin }) {
             <span style={{ color: "var(--greenText)" }}>Leads recuperadas</span><b style={{ color: "var(--greenText)" }}>{d.recovered}</b>
             <small style={{ color: "var(--greenText)" }}>Leads BD que passaram a qualificadas · {pct(d.recovered, d.bd_worked)} das leads BD trabalhadas</small></div>
 
+          <div className="stat s3"><span>Qualificadas: compradores</span><b>{d.qual_types.comprador}</b><small>{pct(d.qual_types.comprador, d.qual)} das qualificadas</small></div>
+          <div className="stat s3"><span>Qualificadas: proprietários</span><b>{d.qual_types.proprietario}</b><small>{pct(d.qual_types.proprietario, d.qual)} das qualificadas</small></div>
+          <div className="stat s3"><span>Qualificadas: crédito</span><b>{d.qual_types.credito}</b><small>{pct(d.qual_types.credito, d.qual)} das qualificadas</small></div>
+          <div className="stat s3"><span>Qualificadas sem tipo</span><b>{d.qual_types.sem_tipo}</b><small>Uma lead pode ter mais de um tipo</small></div>
+
           {period !== "1" && (
             <div className="panel s12">
               <div className="top" style={{ gap: 8 }}><h3>Leads que entraram por dia</h3>
@@ -100,7 +109,7 @@ export default function Dashboard({ ctx, isAdmin }) {
           <div className="panel s6"><h3>Atividades concluídas por tipo</h3>
             <Bars items={[{ l: "Chamada", v: d.acts.call }, { l: "Reunião", v: d.acts.meeting }, { l: "Follow up", v: d.acts.followup }]} /></div>
 
-          {!client && (
+          {opera && !client && (
             <div className="panel s12"><h3>Por cliente</h3>
               <div className="tbl"><table>
                 <thead><tr><th>Cliente</th><th>Gestor</th><th className="n">Leads</th><th className="n">Time to Lead</th><th className="n">Até {d.ttl_target} min</th>

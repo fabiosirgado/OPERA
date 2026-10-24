@@ -1,6 +1,6 @@
 // Dashboard: os números calculados no servidor, verificados com um cenário conhecido num cliente próprio.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { loadEnv, USERS, signIn, signInWithMfa } from "./helpers.js";
+import { loadEnv, USERS, anonClient, signIn, signInWithMfa } from "./helpers.js";
 
 const env = loadEnv();
 const suite = env ? describe : describe.skip;
@@ -37,7 +37,8 @@ suite("Dashboard", () => {
     // 3: Meta por contactar.
     await lead({ name: "D3", source: "Meta", entry_stage: "meta", stage_id: stages.meta, created_at: ago(60) });
     // 4: BD trabalhada e recuperada (passou a qualificada).
-    const l4 = await lead({ name: "D4", source: "Base de dados", entry_stage: "bd", stage_id: stages.qualificada, created_at: ago(2 * 1440) });
+    const l4 = await lead({ name: "D4", source: "Base de dados", entry_stage: "bd", stage_id: stages.qualificada, created_at: ago(2 * 1440),
+      qualification: { Objetivo: "Comprador, Crédito" } });
     // 5: Meta desqualificada sem chamada (não conta como por contactar).
     const l5 = await lead({ name: "D5", source: "Meta", entry_stage: "meta", stage_id: stages.desq, created_at: ago(30) });
 
@@ -83,6 +84,8 @@ suite("Dashboard", () => {
     expect(d.per_day.reduce((n, x) => n + x.v, 0)).toBe(5);
     const row = d.per_client.find((c) => c.id === clientD);
     expect(row).toMatchObject({ leads_in: 5, calls: 3, qual: 1, desq: 1, recovered: 1, overdue: 1, ttl_in_target: 1 });
+    // Qualificadas por tipo: uma lead pode contar em mais de um.
+    expect(d.qual_types).toEqual({ comprador: 1, proprietario: 0, credito: 1, sem_tipo: 0 });
   });
 
   it("os períodos mudam o que conta", async () => {
@@ -92,8 +95,13 @@ suite("Dashboard", () => {
     expect(all.per_day).toHaveLength(30);
   });
 
-  it("só a equipa OPERA vê o dashboard e a ocupação dos gestores", async () => {
-    expect((await aAdmin.rpc("leads_dashboard", { p_period: "7" })).error).toBeTruthy();
+  it("cada cliente vê só o seu dashboard; a ocupação dos gestores é só da equipa OPERA", async () => {
+    // Mesmo pedindo outro cliente, o servidor devolve só os números do cliente de quem pede.
+    const { data: mine, error } = await aAdmin.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
+    expect(error).toBeNull();
+    expect(mine.per_client).toHaveLength(1);
+    expect(mine.per_client[0].id).not.toBe(clientD);
+    expect((await anonClient(env).rpc("leads_dashboard", { p_period: "7" })).error).toBeTruthy();
     const { data: none } = await aAdmin.rpc("leads_managers_load");
     expect(none ?? []).toHaveLength(0);
     const { data: load } = await gestor.rpc("leads_managers_load");
