@@ -63,7 +63,7 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 | 5.1 | Feito | Fases 0 a 7 juntas ao `main` pelo pull request 8 (2026-10-24), sem conflitos (o `main` só tinha juntado `links.html`, `comercial-b2b.html` e uma foto). Os pull requests 1 a 7 foram fechados. |
 | 5.2 | Feito | O Netlify publicou: o site principal, o CRM, links e comercial B2B abrem como antes, e `opera-os.com/leads/` abre o OPERA Leads, ligado ao Supabase da produção. |
 | 5.3 | Tu | A tua conta (`fabio.sirgado@opera-os.com`) já é admin do Leads. Falta o primeiro login em `opera-os.com/leads/`, com a verificação em dois passos. Como o CRM e o Leads estão no mesmo domínio, a sessão do CRM é a mesma. |
-| 5.4 | Por fazer | Mudar os convites do Portal do Cliente do CRM para a função de convites e fechar o registo público (vem da Etapa 3). |
+| 5.4 | Decidido | Os convites do Portal do Cliente do CRM ficam como estão e o registo público fica aberto (decisão de 2026-10-24). Uma conta criada sem convite não vê nada no Leads nem no CRM. |
 
 **Voltar atrás:** no Netlify, "Publish deploy" na publicação anterior repõe o site em segundos.
 
