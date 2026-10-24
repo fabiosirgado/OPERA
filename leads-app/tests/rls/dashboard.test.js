@@ -47,6 +47,9 @@ suite("Dashboard", () => {
     await event(l4, { type: "call", title: "Chamada", meta: { answered: true }, created_at: ago(100) });
     await event(l4, { type: "stage", from_stage_id: stages.followup, to_stage_id: stages.qualificada, created_at: ago(90) });
     await event(l5, { type: "stage", from_stage_id: stages.meta, to_stage_id: stages.desq, created_at: ago(20) });
+    // 6: lead importada (histórico de outro sistema) com uma chamada antiga importada: não conta em nada.
+    const l6 = await lead({ name: "D6", source: "Remax", entry_stage: "bd", stage_id: stages.followup, created_at: ago(60), imported: true });
+    await event(l6, { type: "call", title: "Chamada (Pipedrive)", meta: { imported: true, answered: true }, created_at: ago(50) });
 
     await gestor.from("lead_tasks").insert([
       { lead_id: l1, type: "call", due_at: ago(200), done_at: ago(110) },
