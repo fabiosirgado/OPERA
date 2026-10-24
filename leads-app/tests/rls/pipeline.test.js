@@ -93,7 +93,11 @@ suite("Pipeline e regras de negócio", () => {
     it("Lead Qualificada cancela tarefas, cria Follow up a 24 h e põe o aviso na fila", async () => {
       const id = await create(gestor, { client_id: clientA, name: "A qualificar", phone: "944000003", source: "Meta" });
       await gestor.from("lead_tasks").insert({ lead_id: id, type: "meeting", due_at: new Date(Date.now() + 864e5).toISOString() });
-      await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id);
+      // Sem Objetivo não se qualifica.
+      const sem = await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id);
+      expect(sem.error?.message).toContain("Indica o Objetivo");
+      await gestor.from("leads").update({ qualification: { Objetivo: "Comprador, Crédito" } }).eq("id", id);
+      expect((await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id)).error).toBeNull();
       const open = await openTasks(id);
       expect(open).toHaveLength(1);
       expect(open[0]).toMatchObject({ type: "followup", note: "Confirmar com o cliente" });

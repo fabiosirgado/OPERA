@@ -5,7 +5,7 @@ import {
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
-  LABEL_COLORS, QUALIFIED_POSITION, QUAL_FIELDS, TASK_TYPES, fmtDur, fmtRel, localInput, waLink,
+  LABEL_COLORS, OBJETIVOS, QUALIFIED_POSITION, QUAL_FIELDS, TASK_TYPES, objetivoTipos, fmtDur, fmtRel, localInput, waLink,
 } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags, TaskTag } from "../ui/bits.jsx";
@@ -85,6 +85,10 @@ export default function LeadModal({ id, ctx, onClose }) {
     const q = { ...lead.qualification };
     if (value.trim()) q[field] = value.trim(); else delete q[field];
     save({ qualification: q });
+  };
+  const toggleObjetivo = (o) => {
+    const cur = objetivoTipos(lead.qualification.Objetivo);
+    qualSave("Objetivo", OBJETIVOS.filter((x) => (x === o ? !cur.includes(x) : cur.includes(x))).join(", "));
   };
   const chip = (o) => {
     setNote((n) => ({ ...n, body: n.body ? `${n.body}. ${o}` : o }));
@@ -213,7 +217,15 @@ export default function LeadModal({ id, ctx, onClose }) {
               <span className="tag" style={{ background: "var(--greenSoft)", color: "var(--greenText)" }}>
                 {QUAL_FIELDS.filter((q) => lead.qualification[q]).length} de {QUAL_FIELDS.length}</span>
             </div>
-            {QUAL_FIELDS.map((q) => (
+            <div className="kv"><span>Objetivo</span>
+              <div className="pills" role="group" aria-label="Objetivo (pode escolher vários)">
+                {OBJETIVOS.map((o) => {
+                  const on = objetivoTipos(lead.qualification.Objetivo).includes(o);
+                  return <button key={o} type="button" className={`pill ${on ? "on" : ""}`} aria-pressed={on} disabled={readOnly || busy}
+                    onClick={() => toggleObjetivo(o)}>{o}</button>;
+                })}
+              </div></div>
+            {QUAL_FIELDS.filter((q) => q !== "Objetivo").map((q) => (
               <label key={q} className="kv"><span>{q}</span>
                 <input defaultValue={lead.qualification[q] || ""} key={`${q}-${lead.updated_at}`} readOnly={readOnly}
                   placeholder={q === "Budget" ? "Ex.: 400 000 €" : "Por perguntar"}
