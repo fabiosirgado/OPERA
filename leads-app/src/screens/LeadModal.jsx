@@ -129,7 +129,8 @@ export default function LeadModal({ id, ctx, onClose }) {
   const eventBody = (e) => e.kind === "stage"
     ? `${stageById[e.from_stage_id]?.name ?? "Etapa apagada"} → ${stageById[e.to_stage_id]?.name ?? "Etapa apagada"}`
     : e.body;
-  const author = (e) => e.author ? (e.author.full_name || e.author.email) : (e.kind === "auto" && !e.author_id ? "Automático" : "Equipa OPERA");
+  // Sem autor: escrito pelo sistema (entradas automáticas, CloudTalk, avisos). Com autor apagado: alguém da OPERA.
+  const author = (e) => e.author ? (e.author.full_name || e.author.email) : (!e.author_id ? "Automático" : "Equipa OPERA");
   const canEdit = (e) => e.kind === "note" && !readOnly && (opera || e.author_id === me);
 
   return (

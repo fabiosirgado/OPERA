@@ -111,11 +111,26 @@ export const labelUsage = () => must(sb.from("lead_label_links").select("label_i
   .then((rows) => rows.reduce((m, r) => ({ ...m, [r.label_id]: (m[r.label_id] || 0) + 1 }), {}));
 
 // ---------- Tempo real: avisa quando muda alguma coisa nas leads que quem está na sessão pode ver.
+// O tempo real filtra pelas regras de acesso com a sessão do momento em que se liga. Logo a seguir à verificação em
+// dois passos, a ligação ainda pode ter a sessão anterior (sem os dois passos) e a equipa OPERA não receberia nada:
+// por isso entrega-se primeiro a sessão atual e volta-se a ligar quando a sessão muda.
 export function subscribeChanges(onChange) {
-  const ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
-  for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
-    ch.on("postgres_changes", { event: "*", schema: "public", table }, () => onChange(table));
-  }
-  ch.subscribe();
-  return () => { sb.removeChannel(ch); };
+  let ch = null;
+  let stopped = false;
+  const connect = async () => {
+    const { data } = await sb.auth.getSession();
+    if (stopped) return;
+    if (data.session) await sb.realtime.setAuth(data.session.access_token);
+    if (ch) await sb.removeChannel(ch);
+    ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
+    for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
+      ch.on("postgres_changes", { event: "*", schema: "public", table }, () => onChange(table));
+    }
+    ch.subscribe();
+  };
+  connect();
+  const { data: auth } = sb.auth.onAuthStateChange((event) => {
+    if (event === "MFA_CHALLENGE_VERIFIED" || event === "TOKEN_REFRESHED" || event === "SIGNED_IN") setTimeout(connect, 0);
+  });
+  return () => { stopped = true; auth.subscription.unsubscribe(); if (ch) sb.removeChannel(ch); };
 }

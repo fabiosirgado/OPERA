@@ -146,7 +146,7 @@ export default function Pipeline({ ctx }) {
         <div className={`banner ${counts[qualifiedId] ? "green" : "blue"}`}>
           <b>{counts[qualifiedId] ? `${counts[qualifiedId]} ${counts[qualifiedId] > 1 ? "leads qualificadas à vossa espera." : "lead qualificada à vossa espera."}` : "Sem leads qualificadas pendentes."}</b>
           {" "}Recebem aviso por email sempre que a OPERA qualifica uma lead.
-          {myClient.inbox_alias && <> Endereço para reencaminhar os emails dos portais: <b>{myClient.inbox_alias}@leads.opera-os.com</b></>}
+          {" "}Para os contactos dos portais chegarem sozinhos, a OPERA envia as instruções para reencaminhar os emails.
         </div>
       )}
 
