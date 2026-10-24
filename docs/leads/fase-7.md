@@ -1,6 +1,6 @@
 # OPERA Leads: Fase 7 (avisos aos clientes e migração do Pipedrive)
 
-Tudo isto está aplicado só no projeto Supabase de **testes**. A produção não foi tocada. O envio de emails ainda não está ligado: falta a conta do Resend (ver no fim).
+Tudo isto está aplicado só no projeto Supabase de **testes**. A produção não foi tocada. **O envio de emails está ligado no opera-testes desde 2026-10-24:** o domínio opera-os.com já estava verificado no Resend, na região Irlanda. Ao qualificar uma lead, o email saiu sozinho em 1,6 segundos.
 
 ## Decisões (2026-10-23)
 * **Envio de email:** Resend, com envio a partir da região UE. Serve também para os emails de login e convites da produção.
@@ -63,9 +63,7 @@ Verificado no browser com uma exportação de exemplo (4 negócios):
 * **Verificado no browser:** importação do Pipedrive e link "Abrir a lead".
 
 ## O que falta do teu lado
-1. **Conta no Resend** (resend.com): criar a conta e juntar o domínio `opera-os.com`, escolhendo a região **Irlanda (eu-west-1)**.
-2. **DNS na Register.it:** o Resend mostra os registos a juntar (um TXT para a assinatura DKIM, e um MX e um TXT no subdomínio `send`). Não mexem no email do Google, que usa o domínio principal.
-3. **Chave da API do Resend:** criar uma, com permissão só de envio, e guardá-la no Supabase (Edge Functions, Secrets) como `RESEND_API_KEY`, primeiro no opera-testes.
+1. Para a produção: uma chave do Resend própria (só envio, domínio opera-os.com), guardada no projeto de produção como `RESEND_API_KEY`.
 
 ## Variáveis novas
 | Onde | Nome | Valor |

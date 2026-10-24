@@ -12,9 +12,9 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê | ⏱ |
 |---|---|---|---|
-| 0.1 | Tu | **Plano Pro do Supabase** na produção (cerca de 25 USD por mês): dá backups diários e restauro. Recomendo fortemente antes de mexer numa base que o CRM já usa. Se preferires ficar no gratuito, eu faço uma cópia manual antes (precisa da palavra passe da base de dados). | 5 min |
+| 0.1 | Feito | **Plano Pro do Supabase (ativo a 2026-10-24, backups diários a correr)** na produção (cerca de 25 USD por mês): dá backups diários e restauro. Recomendo fortemente antes de mexer numa base que o CRM já usa. Se preferires ficar no gratuito, eu faço uma cópia manual antes (precisa da palavra passe da base de dados). | 5 min |
 | 0.2 | Feito | **Netlify (resolvido a 2026-10-24):** o build falhava a empacotar a função antiga `diagnostico.js`, por causa do `"type": "module"` do `package.json`. Um `package.json` em `netlify/functions` mantém o formato antigo; a pré visualização do pull request 1 voltou a publicar. | 0 |
-| 0.3 | Tu | **Resend:** criar a conta, juntar `opera-os.com` na região Irlanda e pôr os 3 registos DNS na Register.it (não mexem no email do Google). | 15 min |
+| 0.3 | Feito | **Resend:** o domínio `opera-os.com` já estava verificado, na região Irlanda. A chave do opera-testes está guardada e os avisos saem. Falta só a chave da produção (0.4). | 0 |
 | 0.4 | Tu | **Chaves novas para a produção**, nenhuma mostrada nesta conversa: Anthropic (espaço de trabalho, validade longa), CloudTalk (nova chave da API), Resend (só envio). As de testes que ficaram visíveis: apagar ou rodar. | 15 min |
 | 0.5 | Tu | **Lista inicial:** que clientes entram primeiro (recomendo 1 ou 2 para começar), o gestor de cada um e os utilizadores de cada cliente a convidar. | 10 min |
 
