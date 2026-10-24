@@ -42,10 +42,11 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê |
 |---|---|---|
-| 3.1 | Eu (contigo no Chrome) | SMTP próprio com o Resend (emails de login, convites e "esqueci a palavra passe" a sair de `opera-os.com`). |
-| 3.2 | Eu (contigo no Chrome) | Fechar o registo público e juntar os endereços de regresso (`https://opera-os.com/leads/`). |
-| 3.3 | Eu | Adaptar os convites do portal do CRM para usarem a função de convites nova (decidido na Fase 1). |
-| 3.4 | Eu | Verificação em dois passos: o admin e os gestores ativam-na no primeiro login. |
+| 3.1 | Feito | SMTP do Resend (já existia): remetente passou a "OPERA &lt;crm@opera-os.com&gt;" e a palavra passe é agora uma chave só para isto ("Supabase login", só envio). Testado: link de entrada entregue. O teu endereço estava bloqueado no Resend desde 6/10 (devolução) e foi desbloqueado. As chaves "Onboarding" do Resend já não servem os logins. |
+| 3.2 | Meio feito | Endereço de regresso `https://opera-os.com/leads/**` juntado. **Registo público fica aberto até à Etapa 5** (decisão de 2026-10-24): o CRM cria as contas dos clientes pelo link mágico, que precisa dele. Uma conta nova sem convite não vê nada no Leads nem no CRM. |
+| 3.3 | Etapa 5 | Mudar os convites do Portal do Cliente do CRM para a função de convites e só então fechar o registo público. |
+| 3.4 | Feito | TOTP ligado no Supabase; a app obriga a equipa a ativá lo no primeiro login. |
+| 3.5 | Feito | Os 6 textos dos emails de login em português gravados na produção (2026-10-24): [emails-login-pt.md](emails-login-pt.md). |
 
 ## Etapa 4. Funções no servidor (Supabase, UE)
 
