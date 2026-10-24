@@ -92,6 +92,8 @@ suite("Dashboard", () => {
   });
 
   it("um cliente interno não conta no dashboard geral, só quando é escolhido", async () => {
+    const kpis = async (c) => (await gestor.rpc("leads_pipeline_kpis", { p_client: c })).data[0];
+    const antes = await kpis(null);
     expect((await aAdmin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: true })).error).toBeTruthy();
     expect((await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: true })).error).toBeNull();
     try {
@@ -99,6 +101,11 @@ suite("Dashboard", () => {
       expect(geral.per_client.map((c) => c.id)).not.toContain(clientD);
       const { data: so } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
       expect(so.leads_in).toBe(5);
+      // Os números do Pipeline geral também deixam o cliente interno de fora.
+      const [depois, soD] = [await kpis(null), await kpis(clientD)];
+      expect(soD.entraram_hoje).toBeGreaterThan(0);
+      for (const k of ["entraram_hoje", "por_contactar", "tarefas_atrasadas", "qualificadas"])
+        expect(depois[k]).toBe(antes[k] - soD[k]);
     } finally {
       await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: false });
     }
