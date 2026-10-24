@@ -45,6 +45,7 @@ suite("Importar e exportar", () => {
     expect(r).toMatchObject({ created: 1, updated: 0, ignored: 0, errors: [] });
     const l = await byName(`${TAG} 2`);
     expect(l.entry_stage).toBe("bd");
+    expect(l.imported).toBe(true); // histórico: não conta como lead que entrou no dashboard
     expect(l.lead_tasks).toHaveLength(0);
     expect(l.next_task_at).toBeNull();
     expect(l.lead_events.map((e) => e.title)).toEqual(expect.arrayContaining(["Lead importada de Excel", "Nota"]));
