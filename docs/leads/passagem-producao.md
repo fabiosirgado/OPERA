@@ -106,6 +106,9 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 | 10.1 | Eu | Apagar do opera-testes os dados reais que lá ficaram: o email do Imovirtual reencaminhado, as cópias de leads do Meta (se entrarem), os eventos de chamadas reais, o cliente "OPERA (testes)" e os teus endereços nos cartões dos clientes de teste. |
 | 10.2 | Eu | Desligar o utilizador de teste do teu agente da CloudTalk (já feito) e retirar a chave de teste do Make. |
 
+## Depois da passagem: Fase 8
+Conversa entre a OPERA e cada cliente dentro do OPERA Leads. Começa quando a Etapa 8 (período em paralelo) estiver a correr bem. Plano em [fase-8-plano.md](fase-8-plano.md).
+
 ---
 
 ## Resumo do teu tempo
