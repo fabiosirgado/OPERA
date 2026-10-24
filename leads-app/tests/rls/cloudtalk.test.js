@@ -134,6 +134,20 @@ suite("CloudTalk", () => {
     expect((await aAdmin.rpc("leads_can_hear_recording", { p_call_id: `c-${RUN}-7` })).error).toBeTruthy();
   });
 
+  it("a análise da CloudTalk de uma chamada sem análise não grava nada; os clientes não a gravam", async () => {
+    const p = phone();
+    const id = await lead(c1, { name: "Analisada", phone: p });
+    await hook("call.ended", { call_id: `c-${RUN}-8`, direction: "outgoing", external_number: `+351${p}`, talking_time: 30 });
+    for (const type of ["transcript.ready", "cidata.ready"]) {
+      const r = await hook(type, { call_id: `c-${RUN}-8`, complete: true });
+      expect(r.status).toBe(200);
+      expect(r.body.status).toBe("ignorado");
+    }
+    expect((await calls(id))[0].meta.ci).toBeUndefined();
+    expect((await aAdmin.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
+    expect((await gestor.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
+  });
+
   it("recusa webhooks sem assinatura nem chave, e os clientes não chamam as funções do webhook", async () => {
     expect((await hook("call.ended", {}, "x".repeat(64))).status).toBe(401);
     const res = await fetch(fn(), { method: "POST", headers: { "content-type": "application/json", "svix-id": "msg_1", "svix-timestamp": "1", "svix-signature": "v1,abc" }, body: "{}" });

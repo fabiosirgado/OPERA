@@ -80,6 +80,7 @@ export async function callLead(lead) {
   return "telefone";
 }
 export const callRecording = (callId) => cloudtalk({ action: "recording", call_id: callId }, true);
+export const callAnalysis = (callId) => cloudtalk({ action: "ci", call_id: callId });
 export const eraseSubject = (id) => must(sb.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" }));
 
 export const toggleLabel = (leadId, labelId, on) => on
