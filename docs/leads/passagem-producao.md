@@ -52,9 +52,9 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê |
 |---|---|---|
-| 4.1 | Eu | Publicar `leads-users`, `leads-inbound`, `leads-cloudtalk` e `leads-notify` na produção. |
-| 4.2 | Tu | Guardar os segredos na produção (eu preparo os nomes, tu colas os valores): `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `CLOUDTALK_API_KEY_ID`, `CLOUDTALK_API_KEY_SECRET`, `CLOUDTALK_WEBHOOK_SECRET`. |
-| 4.3 | Eu | Teste de fumo: chave errada recusada (401), email de aviso enviado para ti, leitura de um email de portal de exemplo. |
+| 4.1 | Feito | As 4 funções publicadas na produção (2026-10-24), iguais às do opera-testes (mesma impressão digital), todas com a verificação de acesso feita dentro da função. |
+| 4.2 | Quase feito | Na produção: `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `CLOUDTALK_API_KEY_ID`, `CLOUDTALK_API_KEY_SECRET`. Falta `CLOUDTALK_WEBHOOK_SECRET`, que nasce quando o webhook passar para a produção (Etapa 7). |
+| 4.3 | Feito | Sem chave ou sessão, as 4 funções recusam (401). A base de dados chama a `leads-notify` com a chave do Vault e o Resend está ligado (200, `configured: true`). A leitura de emails com IA fica para o primeiro email real na Etapa 7, para não pôr dados de exemplo na produção. |
 
 ## Etapa 5. Site
 
