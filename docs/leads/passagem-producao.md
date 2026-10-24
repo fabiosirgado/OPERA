@@ -71,10 +71,11 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 
 | # | Quem | O quê |
 |---|---|---|
-| 6.1 | Tu (ou eu contigo) | Ativar no Leads os clientes da lista 0.5, com cor, gestor e endereço dos portais. |
+| 6.1 | Feito | 2026-10-24: Bruno Fernandes, Alberto Liberal, Casa Penafiel, Teixeira & Felizardo e o cliente novo **OPERA** ativos no Leads, com gestor Fábio. A OPERA tem as etapas dos closers: R1 feita, R2, Em decisão, Fechado. Faltam os endereços dos portais (Etapa 7). |
 | 6.2 | Tu | Convidar o André (gestor) e os utilizadores de cada cliente. |
 | 6.3 | Tu | Exportar os negócios de cada conta Pipedrive (com os campos da pessoa). |
 | 6.4 | Tu ou eu | Importar cada ficheiro no ecrã "Importar e exportar", escolhendo o cliente e confirmando as etapas. Os ganhos entram em Lead Qualificada e os perdidos em desqualificada, sem enviar emails. |
+| 6.4a | Feito | 2026-10-24: funil "OPERA" do Pipedrive importado por API para o cliente OPERA: 687 leads (todas abertas no Pipedrive). Etapas do cliente OPERA iguais às do Pipedrive (R1, R2, Em decisão, Closed, Em Onboarding, Entrega de serviço). Lead Remax (457) e Lead (1) em Nova Lead BD, com origem "Remax" ou "Base de dados"; Follow up (101) em Follow Up OPERA; Não quer avançar (81) em desqualificada. Data de entrada igual à do Pipedrive. Investidor como etiqueta (5); SINGLE, TEAM e SLA como nota (62). Sem tarefas nem avisos. 60 leads não têm telefone nem email no Pipedrive. |
 | 6.5 | Tu | Conferir 5 leads ao acaso de cada cliente com o Pipedrive. |
 
 ## Etapa 7. Entradas automáticas e CloudTalk, em paralelo com o Pipedrive
@@ -107,6 +108,10 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 |---|---|---|
 | 10.1 | Eu | Apagar do opera-testes os dados reais que lá ficaram: o email do Imovirtual reencaminhado, as cópias de leads do Meta (se entrarem), os eventos de chamadas reais, o cliente "OPERA (testes)" e os teus endereços nos cartões dos clientes de teste. |
 | 10.2 | Eu | Desligar o utilizador de teste do teu agente da CloudTalk (já feito) e retirar a chave de teste do Make. |
+
+## Extra (2026-10-24, pull requests 9 e 10)
+* Dashboard também para os clientes (sem a taxa de ocupação) e leads qualificadas por tipo (Comprador, Proprietário, Crédito) nos dois dashboards. O Objetivo passou a escolha obrigatória para qualificar.
+* Sessão expirada volta ao login em vez de mostrar um erro.
 
 ## Depois da passagem: Fase 8
 Conversa entre a OPERA e cada cliente dentro do OPERA Leads. Começa quando a Etapa 8 (período em paralelo) estiver a correr bem. Plano em [fase-8-plano.md](fase-8-plano.md).

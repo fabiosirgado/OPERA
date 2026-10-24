@@ -1,6 +1,7 @@
-// Nova lead, Nova etapa e Gerir etiquetas, como no protótipo.
+// Nova lead, Etapas (criar, mudar a ordem, o nome e apagar) e Gerir etiquetas, como no protótipo.
 import { useEffect, useMemo, useState } from "react";
-import { createLabel, createLead, createStage, deleteLabel, findDuplicate, labelUsage, updateLabel } from "../lib/leadsApi.js";
+import { createLabel, createLead, createStage, deleteLabel, deleteStage, findDuplicate, labelUsage, updateLabel, updateStage } from "../lib/leadsApi.js";
+import { movedPosition } from "../lib/stages.js";
 import { LABEL_COLORS, QUALIFIED_POSITION, SOURCES } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
 import { LabelTag } from "../ui/bits.jsx";
@@ -94,6 +95,23 @@ export function StageModal({ ctx, onClose }) {
   const preview = all.map((s) => s.name);
   preview.splice(idx + 1, 0, null);
   const client = clients.find((c) => c.id === cid);
+  // Etapas extra que quem está a trabalhar pode mudar: a OPERA todas; o cliente só as suas.
+  const extra = all.filter((s) => !s.is_base);
+  const canEdit = (s) => !s.is_base && (opera || (s.client_id && s.client_id === myClient?.id && s.owner === "cliente"));
+  const changed = (ok) => ok && ctx.onChanged();
+  const move = async (s, dir) => {
+    const position = movedPosition(all, s.id, dir);
+    if (position != null) changed(await run(() => updateStage(s.id, { position }), `${s.name} ${dir < 0 ? "passou para antes" : "passou para depois"}`));
+  };
+  const rename = async (s, name) => {
+    const n = name.trim();
+    if (!n || n === s.name) return;
+    changed(await run(() => updateStage(s.id, { name: n.slice(0, 60) }), "Nome da etapa mudado"));
+  };
+  const remove = async (s) => {
+    if (!confirm(`Apagar a etapa ${s.name}? Só é possível se não tiver leads.`)) return;
+    changed(await run(() => deleteStage(s.id), "Etapa apagada"));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -106,7 +124,7 @@ export function StageModal({ ctx, onClose }) {
   };
 
   return (
-    <Modal title="Nova etapa" onClose={onClose}>
+    <Modal title="Etapas" onClose={onClose}>
       <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <label className="f">Nome da etapa<input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Ex.: Proposta enviada" autoFocus /></label>
         {opera && (
@@ -135,9 +153,29 @@ export function StageModal({ ctx, onClose }) {
             ? <span key="new" className="new">{f.name.trim() || "Nova etapa"}</span> : <span key={i}>{n}</span>)}</div>
           <span className="sub" style={{ margin: 0, fontSize: 12 }}>Só dá para acrescentar etapas depois de Lead Qualificada. Até aí o funil é igual para todos os clientes.</span>
         </div>
-        <div className="actions"><button type="button" className="btn" onClick={onClose}>Cancelar</button>
+        <div className="actions"><button type="button" className="btn" onClick={onClose}>Fechar</button>
           <button type="submit" className="btn primary" disabled={busy}>Criar etapa</button></div>
       </form>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 20, borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+        <span className="f">Etapas depois de Lead Qualificada{client ? ` · ${client.name}` : ""}</span>
+        {extra.length === 0 && <span className="sub" style={{ margin: 0, fontSize: 13 }}>Ainda não há etapas próprias.</span>}
+        {extra.map((s) => {
+          const edit = canEdit(s);
+          const before = edit && movedPosition(all, s.id, -1) != null;
+          const after = edit && movedPosition(all, s.id, 1) != null;
+          return (
+            <div key={s.id} className="row" style={{ gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <input aria-label={`Nome da etapa ${s.name}`} defaultValue={s.name} key={`${s.id}-${s.name}`} readOnly={!edit} maxLength={60}
+                onBlur={(e) => edit && rename(s, e.target.value)} style={{ flex: "1 1 200px", minWidth: 0, minHeight: 38 }} />
+              {!s.client_id && <span className="tag" title="Etapa de todos os clientes">Todos</span>}
+              <button type="button" className="btn sm" aria-label={`Mover ${s.name} para antes`} disabled={busy || !before} onClick={() => move(s, -1)}>←</button>
+              <button type="button" className="btn sm" aria-label={`Mover ${s.name} para depois`} disabled={busy || !after} onClick={() => move(s, 1)}>→</button>
+              <button type="button" className="btn sm" disabled={busy || !edit} onClick={() => remove(s)}>Apagar</button>
+            </div>
+          );
+        })}
+      </div>
     </Modal>
   );
 }
