@@ -1,7 +1,7 @@
 // OPERA Leads: avisos por email (Resend, região UE). Corre no Supabase (UE).
 //
 // Chamada pela própria base de dados (pg_net), com a chave das entradas automáticas no cabeçalho x-opera-secret:
-//   { action: "process" }             envia os avisos pendentes (até 20 de cada vez)
+//   { action: "process" }             envia os avisos pendentes (até 20 de cada vez) e apaga as mensagens de voz apagadas
 //   { action: "preview", id }         devolve o email de um aviso sem o enviar (testes)
 //   { action: "preview_mensagens", id } o mesmo para um aviso de mensagens por ler nas conversas
 //
@@ -125,6 +125,16 @@ async function send(p: Payload | MsgPayload) {
   return { ok: true, id: String(body?.id ?? ""), to };
 }
 
+// Mensagens de voz apagadas (ou gravações nunca enviadas): o Supabase só apaga ficheiros pela API de armazenamento.
+async function removeGoneFiles() {
+  const { data, error } = await db.rpc("leads_message_files_claim", { p_limit: 100 });
+  if (error || !data?.length) return 0;
+  const { error: rmError } = await db.storage.from("conversas").remove(data as string[]);
+  if (rmError) { console.error("leads-notify: apagar gravações:", rmError.message); return 0; }
+  await db.rpc("leads_message_files_done", { p_paths: data });
+  return data.length;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Só POST." }, 405);
   const ok = await db.rpc("leads_inbound_verify", { p_secret: req.headers.get("x-opera-secret") ?? "" });
@@ -147,7 +157,8 @@ Deno.serve(async (req) => {
   }
 
   if (body.action === "process") {
-    if (!RESEND_KEY) return json({ configured: false });
+    const files = await removeGoneFiles();
+    if (!RESEND_KEY) return json({ configured: false, files });
     const { data, error } = await db.rpc("leads_notifications_claim", { p_limit: 20 });
     const msgs = await db.rpc("leads_message_notifications_claim", { p_limit: 20 });
     if (error || msgs.error) return json({ error: "Não foi possível ler a fila." }, 500);
@@ -160,7 +171,7 @@ Deno.serve(async (req) => {
       if (!r.ok) console.error(`leads-notify: ${p.kind === "mensagens" ? "aviso de conversa" : "aviso"} ${p.id}:`, r.error);
       results.push({ id: p.id, ok: r.ok });
     }
-    return json({ configured: true, sent: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length });
+    return json({ configured: true, files, sent: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length });
   }
 
   return json({ error: "Ação desconhecida." }, 400);

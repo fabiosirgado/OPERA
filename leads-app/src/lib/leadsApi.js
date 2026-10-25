@@ -125,8 +125,27 @@ export const EDIT_WINDOW_MS = 15 * 60 * 1000;
 export const conversations = () => must(sb.rpc("leads_conversations"));
 export const conversation = (clientId, before = null, limit = 50) =>
   must(sb.rpc("leads_conversation", { p_client_id: clientId, p_before: before, p_limit: limit })).then((r) => r.reverse());
-export const sendMessage = (clientId, body, leadId = null) =>
-  must(sb.rpc("leads_message_send", { p_client_id: clientId, p_body: body, p_lead_id: leadId }));
+export const sendMessage = (clientId, body, leadId = null, audio = null) =>
+  must(sb.rpc("leads_message_send", {
+    p_client_id: clientId, p_body: body || null, p_lead_id: leadId,
+    p_audio_path: audio?.path ?? null, p_audio_seconds: audio?.seconds ?? null,
+  }));
+// Mensagens de voz: ficheiro privado na pasta do cliente; ouve-se com um link assinado que dura uma hora.
+export const VOICE_MAX_SECONDS = 300;
+const VOICE_EXT = { "audio/webm": "webm", "audio/mp4": "mp4", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/aac": "aac" };
+export async function uploadVoice(clientId, blob) {
+  const type = (blob.type || "audio/webm").split(";")[0];
+  const ext = VOICE_EXT[type];
+  if (!ext) throw new Error("Este browser grava num formato que não é aceite. Experimenta o Chrome ou o Safari.");
+  const path = `${clientId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from("conversas").upload(path, blob, { contentType: type, upsert: false });
+  if (error) throw new Error("Não foi possível guardar a gravação. Tenta outra vez.");
+  return path;
+}
+export const voiceUrl = (path) => sb.storage.from("conversas").createSignedUrl(path, 3600).then(({ data, error }) => {
+  if (error) throw error;
+  return data.signedUrl;
+});
 export const editMessage = (id, body) => must(sb.rpc("leads_message_edit", { p_id: id, p_body: body }));
 export const deleteMessage = (id) => must(sb.rpc("leads_message_delete", { p_id: id }));
 export const markConversationRead = (clientId) => must(sb.rpc("leads_conversation_mark_read", { p_client_id: clientId }));

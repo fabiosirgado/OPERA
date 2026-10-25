@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  EDIT_WINDOW_MS, attachableLeads, conversation, deleteMessage, editMessage, markConversationRead, sendMessage,
+  EDIT_WINDOW_MS, VOICE_MAX_SECONDS, attachableLeads, conversation, deleteMessage, editMessage, markConversationRead,
+  sendMessage, uploadVoice, voiceUrl,
 } from "../lib/leadsApi.js";
 import { fmtWhen, initials } from "../lib/format.js";
-import { useAction } from "../ui/feedback.jsx";
+import { useAction, useToast } from "../ui/feedback.jsx";
 
 const MAX = 4000;
 const PAGE_SIZE = 50;
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 // Conversas entre a OPERA e cada cliente. A equipa OPERA vê a lista dos clientes e abre uma conversa de cada vez
 // (no telemóvel, a lista ou a conversa); o cliente vê só a sua conversa com a OPERA.
@@ -63,6 +65,8 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
   const [lead, setLead] = useState(null);
   const [picking, setPicking] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [voice, setVoice] = useState(null);
   const [, setTick] = useState(0);
   const [run, busy] = useAction();
   const box = useRef();
@@ -114,13 +118,19 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
     requestAnimationFrame(() => { if (el) el.scrollTop = el.scrollHeight - h; });
   };
 
+  // Mensagem de voz gravada e ainda não enviada: o texto escrito vai como legenda.
+  const dropVoice = () => setVoice((v) => { if (v) URL.revokeObjectURL(v.url); return null; });
+  useEffect(() => () => dropVoice(), []);
   const send = async (e) => {
     e?.preventDefault();
     const body = text.trim();
-    if (!body || busy) return;
-    const ok = await run(() => sendMessage(clientId, body, lead?.id ?? null));
+    if ((!body && !voice) || busy || recording) return;
+    const ok = await run(async () => {
+      const audio = voice ? { path: await uploadVoice(clientId, voice.blob), seconds: voice.seconds } : null;
+      return sendMessage(clientId, body, lead?.id ?? null, audio);
+    });
     if (!ok) return;
-    setText(""); setLead(null); setPicking(false);
+    setText(""); setLead(null); setPicking(false); dropVoice();
     atBottom.current = true;
     count.current += 1;
     await load().catch(() => {});
@@ -164,15 +174,20 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
               </div>
               {editing?.id === m.id ? (
                 <div className="medit">
-                  <textarea value={editing.body} maxLength={MAX} aria-label="Mudar a mensagem" autoFocus
+                  <textarea value={editing.body} maxLength={MAX} aria-label={editing.voice ? "Legenda da mensagem de voz" : "Mudar a mensagem"} autoFocus
                     onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
                   <div className="row">
-                    <button type="button" className="btn sm primary" disabled={busy || !editing.body.trim()} onClick={saveEdit}>Guardar</button>
+                    <button type="button" className="btn sm primary" disabled={busy || (!editing.body.trim() && !editing.voice)} onClick={saveEdit}>Guardar</button>
                     <button type="button" className="btn sm" onClick={() => setEditing(null)}>Cancelar</button>
                   </div>
                 </div>
+              ) : m.deleted_at ? (
+                <p>Mensagem apagada</p>
               ) : (
-                <p>{m.deleted_at ? "Mensagem apagada" : m.body}</p>
+                <>
+                  {m.audio_path && <VoicePlayer path={m.audio_path} seconds={m.audio_seconds} />}
+                  {m.body && <p>{m.body}</p>}
+                </>
               )}
               {m.lead_id && !m.deleted_at && (m.lead_open ? (
                 <button type="button" className="mlead" onClick={() => ctx.onOpenLead(m.lead_id)}>
@@ -183,7 +198,7 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
               ))}
               {canChange(m) && editing?.id !== m.id && (
                 <div className="mtools">
-                  <button type="button" className="link" onClick={() => setEditing({ id: m.id, body: m.body })}>Mudar</button>
+                  <button type="button" className="link" onClick={() => setEditing({ id: m.id, body: m.body ?? "", voice: !!m.audio_path })}>{m.audio_path ? "Mudar legenda" : "Mudar"}</button>
                   <button type="button" className="link" onClick={() => remove(m)}>Apagar</button>
                 </div>
               )}
@@ -197,14 +212,25 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
           <div className="chips"><span className="chip">Lead: <b>{lead.name}</b></span>
             <button type="button" className="link" onClick={() => setLead(null)}>Tirar a lead</button></div>
         )}
-        <label className="vh" htmlFor={`msg-${clientId}`}>Mensagem</label>
+        {recording && <VoiceRecorder onDone={(v) => { setRecording(false); setVoice(v); }} onCancel={() => setRecording(false)} />}
+        {voice && (
+          <div className="voiceDraft">
+            <audio controls src={voice.url} aria-label="Ouvir a gravação antes de enviar" />
+            <span className="sub" style={{ margin: 0 }}>{mmss(voice.seconds)}</span>
+            <button type="button" className="link" onClick={dropVoice}>Descartar</button>
+          </div>
+        )}
+        <label className="vh" htmlFor={`msg-${clientId}`}>{voice ? "Legenda (opcional)" : "Mensagem"}</label>
         <textarea id={`msg-${clientId}`} value={text} maxLength={MAX} rows={2} onChange={(e) => setText(e.target.value)} onKeyDown={onKey}
-          placeholder={opera ? "Escreve ao cliente…" : "Escreve à equipa OPERA…"} />
+          placeholder={voice ? "Legenda (opcional)…" : opera ? "Escreve ao cliente…" : "Escreve à equipa OPERA…"} />
         <div className="row" style={{ justifyContent: "space-between" }}>
-          <button type="button" className="btn sm" onClick={() => setPicking((x) => !x)} aria-expanded={picking}>Juntar lead</button>
+          <span className="row">
+            <button type="button" className="btn sm" onClick={() => setPicking((x) => !x)} aria-expanded={picking}>Juntar lead</button>
+            {!voice && !recording && <button type="button" className="btn sm" onClick={() => setRecording(true)}>Gravar voz</button>}
+          </span>
           <span className="row">
             {text.length > MAX - 200 && <small className="sub" style={{ margin: 0 }}>{text.length} / {MAX}</small>}
-            <button type="submit" className="btn sm primary" disabled={busy || !text.trim()}>Enviar</button>
+            <button type="submit" className="btn sm primary" disabled={busy || recording || (!text.trim() && !voice)}>Enviar</button>
           </span>
         </div>
       </form>
@@ -236,6 +262,94 @@ function LeadPicker({ clientId, stages, onPick, onClose }) {
           <button key={l.id} type="button" onClick={() => onPick(l)}><b>{l.name}</b><small>{stageName[l.stage_id]}</small></button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Mensagem de voz na conversa: o link para ouvir é pedido ao abrir (dura uma hora).
+function VoicePlayer({ path, seconds }) {
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    voiceUrl(path).then((u) => alive && setUrl(u)).catch(() => alive && setFailed(true));
+    return () => { alive = false; };
+  }, [path]);
+  if (failed) return <p className="sub" style={{ margin: 0 }}>Não foi possível carregar a mensagem de voz.</p>;
+  return (
+    <div className="voice">
+      {url ? <audio controls preload="metadata" src={url} aria-label={`Mensagem de voz, ${mmss(seconds)}`} /> : <span className="sub" style={{ margin: 0 }}>A carregar…</span>}
+      <small>{mmss(seconds)}</small>
+    </div>
+  );
+}
+
+// Grava do microfone até 5 minutos. Começa logo ao abrir; Parar entrega a gravação para ouvir antes de enviar.
+const VOICE_TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg;codecs=opus"];
+function VoiceRecorder({ onDone, onCancel }) {
+  const toast = useToast();
+  const [secs, setSecs] = useState(0);
+  const rec = useRef(null);
+  const cancelled = useRef(false);
+  const started = useRef(0);
+
+  useEffect(() => {
+    let stream;
+    let timer;
+    let dead = false;
+    (async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") throw new Error("sem suporte");
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (e) {
+        if (dead) return;
+        toast(e?.name === "NotAllowedError"
+          ? "O browser não deu acesso ao microfone. Permite o microfone para este site e tenta outra vez."
+          : "Este browser não consegue gravar voz.");
+        onCancel();
+        return;
+      }
+      if (dead || cancelled.current) { stream.getTracks().forEach((t) => t.stop()); return; }
+      const mimeType = VOICE_TYPES.find((t) => MediaRecorder.isTypeSupported?.(t));
+      const r = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks = [];
+      r.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      r.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        clearInterval(timer);
+        if (dead || cancelled.current) return;
+        const seconds = Math.min(VOICE_MAX_SECONDS, Math.max(1, Math.round((Date.now() - started.current) / 1000)));
+        const blob = new Blob(chunks, { type: (r.mimeType || mimeType || "audio/webm").split(";")[0] });
+        onDone({ blob, seconds, url: URL.createObjectURL(blob) });
+      };
+      rec.current = r;
+      started.current = Date.now();
+      r.start(1000);
+      timer = setInterval(() => {
+        const s = Math.floor((Date.now() - started.current) / 1000);
+        setSecs(s);
+        if (s >= VOICE_MAX_SECONDS && r.state === "recording") r.stop();
+      }, 250);
+    })();
+    return () => {
+      dead = true;
+      clearInterval(timer);
+      if (rec.current?.state === "recording") rec.current.stop();
+      else stream?.getTracks().forEach((t) => t.stop());
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stop = () => { if (rec.current?.state === "recording") rec.current.stop(); };
+  const cancel = () => { cancelled.current = true; stop(); onCancel(); };
+  return (
+    <div className="recording" role="status">
+      <span className="recdot" aria-hidden="true"></span>
+      <b>A gravar</b><span>{mmss(secs)} / {mmss(VOICE_MAX_SECONDS)}</span>
+      <span className="row" style={{ marginLeft: "auto" }}>
+        <button type="button" className="btn sm" onClick={cancel}>Cancelar</button>
+        <button type="button" className="btn sm primary" onClick={stop} disabled={!rec.current && secs === 0}>Parar</button>
+      </span>
     </div>
   );
 }

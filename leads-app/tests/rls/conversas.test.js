@@ -124,6 +124,48 @@ suite("Conversas", () => {
     expect(data.some((m) => m.deleted)).toBe(true);
   });
 
+  it("mensagens de voz: só quem está na conversa grava e ouve; apagada, o ficheiro sai", async () => {
+    const audio = () => new Blob([new Uint8Array(2048).fill(7)], { type: "audio/webm" });
+    const path = `${clientA}/${crypto.randomUUID()}.webm`;
+    expect((await aUser.storage.from("conversas").upload(path, audio(), { contentType: "audio/webm" })).error).toBeNull();
+    // Outro cliente não grava na pasta deste nem ouve; ficheiro com outro formato não entra.
+    expect((await bAdmin.storage.from("conversas").upload(`${clientA}/${crypto.randomUUID()}.webm`, audio(), { contentType: "audio/webm" })).error).not.toBeNull();
+    expect((await bAdmin.storage.from("conversas").createSignedUrl(path, 60)).error).not.toBeNull();
+    expect((await aUser.storage.from("conversas").upload(`${clientA}/${crypto.randomUUID()}.webm`, new Blob(["x"], { type: "text/html" }), { contentType: "text/html" })).error).not.toBeNull();
+
+    // Só envia quem gravou o ficheiro, e com a duração certa.
+    expect((await gestor.rpc("leads_message_send", { p_client_id: clientA, p_body: null, p_audio_path: path, p_audio_seconds: 12 })).error).not.toBeNull();
+    expect((await aUser.rpc("leads_message_send", { p_client_id: clientA, p_body: null, p_audio_path: path, p_audio_seconds: 301 })).error).not.toBeNull();
+    const { data: id, error } = await aUser.rpc("leads_message_send", { p_client_id: clientA, p_body: `${TAG} ouve isto`, p_audio_path: path, p_audio_seconds: 42 });
+    expect(error).toBeNull();
+    expect((await aUser.rpc("leads_message_send", { p_client_id: clientA, p_body: null, p_audio_path: path, p_audio_seconds: 42 })).error).not.toBeNull();
+
+    const m = (await thread(gestor, clientA)).find((x) => x.id === id);
+    expect(m.audio_path).toBe(path);
+    expect(m.audio_seconds).toBe(42);
+    const { data: signed } = await gestor.storage.from("conversas").createSignedUrl(path, 60);
+    expect((await fetch(signed.signedUrl)).status).toBe(200);
+    const last = (await gestor.rpc("leads_conversations")).data.find((c) => c.client_id === clientA);
+    expect(last.last_body).toBe(`Mensagem de voz (0:42)\n${TAG} ouve isto`);
+
+    // A legenda pode sair; a voz fica.
+    expect((await aUser.rpc("leads_message_edit", { p_id: id, p_body: "" })).error).toBeNull();
+    expect((await thread(gestor, clientA)).find((x) => x.id === id).body).toBeNull();
+
+    // Apagada: some da conversa e o ficheiro é apagado na volta seguinte da função leads-notify.
+    expect((await aUser.rpc("leads_message_delete", { p_id: id })).error).toBeNull();
+    expect((await thread(gestor, clientA)).find((x) => x.id === id).audio_path).toBeNull();
+    if (env.LEADS_INBOUND_TEST_KEY) {
+      const res = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/leads-notify`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-opera-secret": env.LEADS_INBOUND_TEST_KEY },
+        body: JSON.stringify({ action: "process" }),
+      });
+      expect((await res.json()).files).toBeGreaterThanOrEqual(1);
+      expect((await gestor.storage.from("conversas").createSignedUrl(path, 60)).error).not.toBeNull();
+    }
+  });
+
   it("a fila dos avisos por email não está aberta a utilizadores", async () => {
     expect((await gestor.rpc("leads_message_notifications_claim", { p_limit: 1 })).error).not.toBeNull();
     expect((await aAdmin.rpc("leads_message_notification_preview", { p_id: 1 })).error).not.toBeNull();
