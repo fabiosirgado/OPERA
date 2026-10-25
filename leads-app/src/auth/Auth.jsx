@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { sb, ARRIVED_VIA } from "../supabase.js";
+import { sb, ARRIVED_ERROR, ARRIVED_VIA } from "../supabase.js";
 import { acceptInvite, appUrl, getClient, getMyProfile, logLogin } from "../lib/api.js";
 import { OPERA_ROLES } from "../lib/format.js";
 
@@ -17,7 +17,7 @@ export function useAccess() {
 
   const evaluate = useCallback(async () => {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) return setState({ step: "signedOut" });
+    if (!session) return setState({ step: "signedOut", message: ARRIVED_ERROR || undefined });
 
     const profile = await getMyProfile(session.user.id);
     if (!profile?.leads_role) return setState({ step: "noAccess", message: "Esta conta não tem acesso ao OPERA Leads." });

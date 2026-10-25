@@ -27,4 +27,20 @@ export const ARRIVED_VIA = (() => {
   }
 })();
 
+// Link de email que já não vale (usado antes, por exemplo pelo verificador de links do Microsoft 365, ou expirado):
+// o Supabase volta com #error_code=otp_expired e o ecrã de login tem de o explicar.
+export const ARRIVED_ERROR = (() => {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1));
+    const code = p.get("error_code") || p.get("error");
+    if (!code) return "";
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    return /expired|invalid|access_denied/i.test(code)
+      ? "O link do email já foi usado ou expirou. Peça um novo: em Esqueci a palavra passe, ou à OPERA, se era um convite."
+      : "Não foi possível entrar com o link do email. Peça um novo.";
+  } catch {
+    return "";
+  }
+})();
+
 export const sb = configError ? null : createClient(SUPABASE_URL, SUPABASE_KEY);
