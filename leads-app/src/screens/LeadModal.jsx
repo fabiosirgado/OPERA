@@ -171,7 +171,11 @@ export default function LeadModal({ id, ctx, onClose }) {
 
       <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="row">
-          {opera && <button type="button" className="btn primary" disabled={busy || !lead.phone || lead.anonymized} onClick={call}><Icon.phone />Ligar</button>}
+          {opera && <button type="button" className="btn primary" disabled={busy || !lead.phone || lead.anonymized} onClick={call}
+            aria-describedby={!lead.phone && !lead.anonymized ? "sem-telefone" : undefined}><Icon.phone />Ligar</button>}
+          {opera && !lead.phone && !lead.anonymized && (
+            <span id="sem-telefone" style={{ fontSize: 13, color: "var(--mute)" }}>Sem telemóvel: escreve-o em Contacto para poder ligar.</span>
+          )}
           {lead.phone && <a className="btn" href={waLink(lead.phone)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
           {lead.email && <a className="btn" href={`mailto:${lead.email}`}>Email</a>}
           {opera && (
