@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sb } from "./supabase.js";
 import { ROLE_LABEL, initials } from "./lib/format.js";
-import { activeClients, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
+import { activeClients, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
 import GlobalSearch from "./ui/GlobalSearch.jsx";
+import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
 import Clientes from "./screens/Clientes.jsx";
 import Equipa from "./screens/Equipa.jsx";
 import Privacidade from "./screens/Privacidade.jsx";
@@ -36,6 +37,8 @@ export default function Shell({ access }) {
   const [version, setVersion] = useState(0);
   const [modal, setModal] = useState(null);
   const [dueToday, setDueToday] = useState(0);
+  const [newCount, setNewCount] = useState(0);
+  const [alerts, setAlerts] = useState([]);
   const setFilterClient = (id) => { setFilterClientState(id); write(CLIENT_KEY, id); };
 
   const loadRefs = useCallback(async () => {
@@ -52,7 +55,26 @@ export default function Shell({ access }) {
     clearTimeout(bumpTimer.current);
     bumpTimer.current = setTimeout(() => setVersion((v) => v + 1), 400);
   }, []);
-  useEffect(() => subscribeChanges(bump), [bump]);
+  // Lead nova vinda de uma entrada automática: aviso no ecrã (só a equipa OPERA as vê nas etapas de entrada).
+  const refs = useRef({ stages: [], clients: [] });
+  refs.current = { stages, clients };
+  const onChange = useCallback((table, payload) => {
+    bump();
+    if (!opera || table !== "leads" || payload?.eventType !== "INSERT") return;
+    const l = payload.new;
+    const stageById = Object.fromEntries(refs.current.stages.map((x) => [x.id, x]));
+    if (!isAutoNewLead(l, stageById)) return;
+    const client = refs.current.clients.find((c) => c.id === l.client_id)?.name ?? "";
+    setAlerts((a) => (a.some((x) => x.id === l.id) ? a : [...a, { id: l.id, name: l.name, client, source: l.source }]));
+  }, [bump, opera]);
+  useEffect(() => subscribeChanges(onChange), [onChange]);
+  const closeAlert = (id) => setAlerts((a) => (id === "*" ? [] : a.filter((x) => x.id !== id)));
+
+  // Número no menu "Pipeline geral": leads novas em que ainda ninguém pegou.
+  useEffect(() => {
+    if (!opera || !stages.length) return;
+    countNewLeads(stages.filter((x) => x.position < 50).map((x) => x.id)).then(setNewCount).catch(() => {});
+  }, [opera, stages, version]);
 
   // Número no menu "Hoje": tarefas até ao fim do dia.
   useEffect(() => {
@@ -97,6 +119,7 @@ export default function Shell({ access }) {
           {items.map(([k, label]) => (
             <button key={k} type="button" className={view === k ? "on" : ""} aria-current={view === k ? "page" : undefined} onClick={() => go(k)}>
               {label}{k === "hoje" && dueToday > 0 && <span className="badge">{dueToday}</span>}
+              {k === "pipeline" && newCount > 0 && <span className="badge new" title="Leads novas por pegar">{newCount}</span>}
             </button>
           ))}
         </div>
@@ -134,6 +157,8 @@ export default function Shell({ access }) {
         {view === "privacidade" && <Privacidade />}
       </main>
 
+      <NewLeadAlerts alerts={alerts} onClose={closeAlert}
+        onOpen={(id) => { closeAlert(id); setModal({ kind: "lead", id }); }} />
       {modal?.kind === "lead" && <LeadModal key={modal.id} id={modal.id} ctx={ctx} onClose={closeModal} />}
       {modal?.kind === "newLead" && <NewLeadModal ctx={ctx} onClose={closeModal} />}
       {modal?.kind === "newStage" && <StageModal ctx={refCtx} onClose={closeModal} />}
