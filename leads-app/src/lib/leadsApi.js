@@ -80,6 +80,7 @@ export async function callLead(lead) {
   return "telefone";
 }
 export const callRecording = (callId) => cloudtalk({ action: "recording", call_id: callId }, true);
+export const callAnalysis = (callId) => cloudtalk({ action: "ci", call_id: callId });
 export const eraseSubject = (id) => must(sb.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" }));
 
 export const toggleLabel = (leadId, labelId, on) => on
@@ -123,6 +124,14 @@ export const labelUsage = () => must(sb.from("lead_label_links").select("label_i
 // O tempo real filtra pelas regras de acesso com a sessão do momento em que se liga. Logo a seguir à verificação em
 // dois passos, a ligação ainda pode ter a sessão anterior (sem os dois passos) e a equipa OPERA não receberia nada:
 // por isso entrega-se primeiro a sessão atual e volta-se a ligar quando a sessão muda.
+// Lead nova: entrou por uma entrada automática (Meta, portais) e ainda ninguém lhe pegou. Igual ao is_new do pipeline.
+export const isAutoNewLead = (l, stageById) => !!l && l.created_by == null && !l.imported && !l.attempts
+  && !l.last_contact_at && (stageById[l.stage_id]?.position ?? 999) < 50;
+export const countNewLeads = (entryStageIds) => entryStageIds.length
+  ? sb.from("leads").select("id", { count: "exact", head: true }).is("created_by", null).eq("imported", false)
+    .eq("attempts", 0).is("last_contact_at", null).eq("anonymized", false).in("stage_id", entryStageIds).then((r) => r.count ?? 0)
+  : Promise.resolve(0);
+
 export function subscribeChanges(onChange) {
   let ch = null;
   let stopped = false;
@@ -134,7 +143,7 @@ export function subscribeChanges(onChange) {
     if (ch) await sb.removeChannel(ch);
     ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
     for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
-      ch.on("postgres_changes", { event: "*", schema: "public", table }, () => onChange(table));
+      ch.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => onChange(table, payload));
     }
     // Ao voltar a ligar, pede os dados outra vez: o que mudou entretanto não se perde.
     ch.subscribe((status) => { if (status === "SUBSCRIBED" && again) onChange("*"); });

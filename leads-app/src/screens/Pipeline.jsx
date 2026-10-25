@@ -169,8 +169,8 @@ export default function Pipeline({ ctx }) {
                 {list.rows.map((l) => {
                   const late = l.next_task_at && new Date(l.next_task_at) < Date.now();
                   return (
-                    <tr key={l.id} className="rowL" tabIndex={0} onClick={() => ctx.onOpenLead(l.id)} onKeyDown={(e) => e.key === "Enter" && ctx.onOpenLead(l.id)}>
-                      <td><b>{l.name}</b>{l.pinned_note && <span style={{ color: "var(--pinText)" }} title="Tem nota afixada"> <Icon.pin /></span>}<div className="cint">{l.phone}</div></td>
+                    <tr key={l.id} className={`rowL ${l.is_new ? "is-new" : ""}`} tabIndex={0} onClick={() => ctx.onOpenLead(l.id)} onKeyDown={(e) => e.key === "Enter" && ctx.onOpenLead(l.id)}>
+                      <td>{l.is_new && <><span className="nova">Nova</span> </>}<b>{l.name}</b>{l.pinned_note && <span style={{ color: "var(--pinText)" }} title="Tem nota afixada"> <Icon.pin /></span>}<div className="cint">{l.phone}</div></td>
                       {opera && <td><ClientTag name={l.client_name} color={l.client_color} /></td>}
                       <td>{l.stage_name}</td><td>{l.source}</td>
                       <td style={{ whiteSpace: "nowrap" }}>{fmtRel(l.created_at)}</td>
@@ -224,10 +224,10 @@ export default function Pipeline({ ctx }) {
 function Card({ l, opera, labels, draggable, onOpen }) {
   const late = l.next_task_at && new Date(l.next_task_at) < Date.now();
   return (
-    <div role="button" tabIndex={0} className="cardL" aria-label={`Abrir ${l.name}`} draggable={draggable}
+    <div role="button" tabIndex={0} className={`cardL ${l.is_new ? "is-new" : ""}`} aria-label={`Abrir ${l.name}${l.is_new ? ", lead nova" : ""}`} draggable={draggable}
       onDragStart={(e) => e.dataTransfer.setData("text/plain", `${l.id}|${l.stage_id}`)}
       onClick={onOpen} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onOpen())}>
-      <div className="tags">{opera && <ClientTag name={l.client_name} color={l.client_color} />}{l.source && <span className="src">{l.source}</span>}</div>
+      <div className="tags">{l.is_new && <span className="nova">Nova</span>}{opera && <ClientTag name={l.client_name} color={l.client_color} />}{l.source && <span className="src">{l.source}</span>}</div>
       <span className="cname">{l.name}</span>
       {l.interest && <span className="cint">{l.interest}</span>}
       <LabelTags ids={l.label_ids} labels={labels} />

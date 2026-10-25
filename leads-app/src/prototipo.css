@@ -23,6 +23,7 @@ nav.side{flex:1 1 232px;max-width:100%;background:var(--navy);color:#fff;padding
 .nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--navyText)}
 .nav button.on{background:var(--navy2);color:#fff;font-weight:600}
 .nav .badge{margin-left:auto;background:#F97316;color:#111827;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+.nav .badge.new{background:#15803D;color:#fff}
 .side h4{margin:0;padding:0 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--navyMute)}
 .side .clients{display:flex;flex-direction:column;gap:2px;margin-top:6px}
 .side .clients button{display:flex;align-items:center;gap:10px;background:transparent;border:0;color:#E2E8F0;padding:8px;border-radius:6px;min-height:36px;text-align:left}
@@ -75,6 +76,8 @@ main{flex:999 1 560px;min-width:0;padding:24px 28px;display:flex;flex-direction:
 .cardL .pinline{font-size:12px;background:var(--pin);color:var(--pinText);border-radius:6px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px}
+/* Lead que entrou por uma entrada automática e em que ainda ninguém pegou. */
+.nova{font-size:11px;font-weight:700;color:#fff;background:#15803D;padding:3px 8px;border-radius:6px}
 .src{font-size:11px;color:var(--mute);padding:3px 8px;border-radius:6px;background:#F1F5F9}
 .cname{font-size:14px;font-weight:600}
 .cint{font-size:12px;color:var(--mute)}
@@ -229,3 +232,13 @@ body.out main{padding:0}
 .state.ok{background:var(--greenSoft);color:var(--greenText)}.state.inv{background:#DCE8FF;color:#1E3A8A}.state.off{background:#E5E7EB;color:#374151}.state.del{background:var(--redSoft);color:var(--redText)}
 .danger{border:1px solid #F5C2C2;background:#FFF8F8;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
 
+/* Avisos de lead nova (canto superior direito) e destaque no pipeline. */
+.alerts{position:fixed;top:16px;right:16px;z-index:90;display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:min(380px,calc(100vw - 32px))}
+.alert{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:1px solid #BBF7D0;border-left:4px solid #15803D;border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(15,23,42,.14)}
+.alert-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.alert-txt b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-txt small{font-size:12px;color:var(--mute)}
+.alert .x{border:0;background:none;font-size:20px;line-height:1;color:var(--mute);cursor:pointer;min-width:28px;min-height:28px}
+.alerts .link{background:#fff;border-radius:8px;padding:4px 8px}
+.cardL.is-new{border-color:#86EFAC;border-left:4px solid #15803D;background:#F0FDF4}
+.rowL.is-new td:first-child{box-shadow:inset 4px 0 0 #15803D}

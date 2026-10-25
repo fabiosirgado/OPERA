@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   addNote, addTask, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
-  callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
+  callAnalysis, callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
@@ -81,6 +81,12 @@ export default function LeadModal({ id, ctx, onClose }) {
     const blob = await callRecording(callId);
     setAudio((a) => ({ ...a, [callId]: URL.createObjectURL(blob) }));
   });
+  // Resumo e transcrição da CloudTalk: chegam sozinhos; o botão só volta a pedir quando ainda não chegaram.
+  const fetchAnalysis = (callId) => after(async () => {
+    const r = await callAnalysis(callId);
+    if (r.status !== "processado") throw new Error(r.status === "ignorado" && r.motivo?.includes("chave")
+      ? r.motivo : "A CloudTalk ainda não tem o resumo desta chamada. Tenta daqui a uns minutos.");
+  }, "Resumo da chamada atualizado");
   const qualSave = (field, value) => {
     const q = { ...lead.qualification };
     if (value.trim()) q[field] = value.trim(); else delete q[field];
@@ -342,6 +348,9 @@ export default function LeadModal({ id, ctx, onClose }) {
                     ) : (
                       <>
                         {body && <p>{body}</p>}
+                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !e.meta?.ci && (
+                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo e transcrição</button></div>
+                        )}
                         {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (
                           audio[e.meta.call_id]
                             ? <audio controls autoPlay src={audio[e.meta.call_id]} style={{ width: "100%", marginTop: 6 }} />
@@ -366,3 +375,4 @@ export default function LeadModal({ id, ctx, onClose }) {
     </Modal>
   );
 }
+

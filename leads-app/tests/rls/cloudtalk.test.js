@@ -134,6 +134,48 @@ suite("CloudTalk", () => {
     expect((await aAdmin.rpc("leads_can_hear_recording", { p_call_id: `c-${RUN}-7` })).error).toBeTruthy();
   });
 
+  it("a análise da CloudTalk de uma chamada sem análise não grava nada; os clientes não a gravam", async () => {
+    const p = phone();
+    const id = await lead(c1, { name: "Analisada", phone: p });
+    await hook("call.ended", { call_id: `c-${RUN}-8`, direction: "outgoing", external_number: `+351${p}`, talking_time: 30 });
+    for (const type of ["transcript.ready", "cidata.ready"]) {
+      const r = await hook(type, { call_id: `c-${RUN}-8`, complete: true });
+      expect(r.status).toBe(200);
+      expect(r.body.status).toBe("ignorado");
+    }
+    expect((await calls(id))[0].meta.ci).toBeUndefined();
+    expect((await aAdmin.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
+    expect((await gestor.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
+  });
+
+  it("o resumo do cidata.ready fica numa nota da lead, e sai ao apagar os dados pessoais", async () => {
+    const p = phone();
+    const id = await lead(c1, { name: "Resumida", phone: p });
+    await hook("call.ended", { call_id: `c-${RUN}-9`, direction: "outgoing", external_number: `+351${p}`, talking_time: 40 });
+    const r = await hook("cidata.ready", {
+      call_id: `c-${RUN}-9`, complete: true,
+      summary: { summary: "Quer visitar o T2 no sábado.", ai_call_type: "qualification", smart_notes: { action_items: ["Marcar visita"] } },
+      sentiment: { overall_sentiment: "positive" }, topics: [{ name: "Visita" }],
+    });
+    expect(r.body).toMatchObject({ status: "processado", lead_id: id });
+    const ci = (await calls(id))[0].meta.ci;
+    expect(ci).toMatchObject({ summary: "Quer visitar o T2 no sábado.", sentiment: "positive", topics: ["Visita"] });
+    expect(ci.notes).toEqual(["Próximos passos: Marcar visita"]);
+    // No histórico fica uma nota normal, como no Pipedrive.
+    const notes = () => gestor.from("lead_events").select("title,body,edited_at").eq("lead_id", id).eq("type", "note").then((x) => x.data);
+    expect(await notes()).toEqual([{ title: "Resumo da chamada (CloudTalk)", edited_at: null,
+      body: "Quer visitar o T2 no sábado.\n\n• Próximos passos: Marcar visita\n\nSentimento positivo · Temas: Visita" }]);
+    // Uma segunda análise da mesma chamada atualiza a mesma nota.
+    await hook("cidata.ready", { call_id: `c-${RUN}-9`, summary: { summary: "Visita marcada para sábado." } });
+    expect((await notes()).map((n) => n.body.split("\n")[0])).toEqual(["Visita marcada para sábado."]);
+    // Um transcript.ready sem transcrição disponível não apaga o resumo.
+    expect((await hook("transcript.ready", { call_id: `c-${RUN}-9` })).status).toBe(200);
+    expect((await calls(id))[0].meta.ci.summary).toBe("Visita marcada para sábado.");
+    expect((await gestor.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" })).error).toBeNull();
+    expect((await calls(id))[0].meta.ci).toBeUndefined();
+    expect(await notes()).toEqual([]);
+  });
+
   it("recusa webhooks sem assinatura nem chave, e os clientes não chamam as funções do webhook", async () => {
     expect((await hook("call.ended", {}, "x".repeat(64))).status).toBe(401);
     const res = await fetch(fn(), { method: "POST", headers: { "content-type": "application/json", "svix-id": "msg_1", "svix-timestamp": "1", "svix-signature": "v1,abc" }, body: "{}" });

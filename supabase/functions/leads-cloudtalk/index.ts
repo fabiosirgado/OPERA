@@ -4,7 +4,9 @@
 //   { action: "call", lead_id }       cria ou atualiza o contacto ("Nome · Cliente"), pede a chamada ao agente
 //                                     e regista a chamada na lead
 //   { action: "recording", call_id }  devolve o áudio da gravação (fica no registo de atividade)
-// Webhook da CloudTalk (assinado, cabeçalhos svix-*): call.ended e call.recording_ready.
+//   { action: "ci", call_id }         vai buscar outra vez o resumo, as notas e a transcrição da chamada
+// Webhook da CloudTalk (assinado, cabeçalhos svix-*): call.ended, call.recording_ready, e da Conversation
+// Intelligence transcript.ready e cidata.ready (resumo, notas inteligentes, sentimento, temas e transcrição).
 //
 // Segredos (Supabase, Edge Functions): CLOUDTALK_API_KEY_ID, CLOUDTALK_API_KEY_SECRET, CLOUDTALK_WEBHOOK_SECRET.
 // Sem as chaves, "call" devolve configured:false e a aplicação liga pelo telefone, como antes.
@@ -62,6 +64,142 @@ async function ctJson(method: string, path: string, body?: unknown) {
     throw new Error(`CloudTalk ${res.status}: ${String(data?.responseData?.message ?? data?.message ?? "erro").slice(0, 200)}`);
   }
   return data?.responseData ?? data;
+}
+
+// ------------------------------------------------------------ CONVERSATION INTELLIGENCE
+// Outro servidor (api.cloudtalk.io/v1), as mesmas chaves; as respostas não vêm dentro de responseData.
+const CI_API = "https://api.cloudtalk.io/v1/ai/calls";
+async function ciGet(callId: string, path: string, query = "") {
+  const res = await fetch(`${CI_API}/${encodeURIComponent(callId)}/${path}${query}`, {
+    headers: { Authorization: `Basic ${btoa(`${CT_ID}:${CT_SECRET}`)}`, Accept: "application/json" },
+  });
+  // Ainda não existe, a chamada não tem análise, ou o id não é de uma chamada da CloudTalk.
+  if ([400, 404, 422].includes(res.status)) return null;
+  if (res.status === 401 || res.status === 403) {
+    const body = await res.json().catch(() => ({}));
+    throw new CiDenied(`CloudTalk IA ${res.status} em ${path} (${String(body?.code ?? body?.responseData?.message ?? "sem código")})`);
+  }
+  if (!res.ok) throw new Error(`CloudTalk IA ${res.status} em ${path}`);
+  return await res.json().catch(() => null);
+}
+// A chave não dá acesso à IA (conta sem Conversation Intelligence ou chave sem acesso): não adianta repetir.
+class CiDenied extends Error {}
+
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
+const text = (v: unknown): string => typeof v === "string" ? v.trim()
+  : typeof v === "number" ? String(v)
+  : isObj(v) ? text(v.text ?? v.note ?? v.content ?? v.value ?? v.summary ?? v.name ?? v.title ?? "") : "";
+// Desce por data/summary/items até chegar ao conteúdo, seja qual for o embrulho.
+const unwrap = (v: unknown, keys: string[]): unknown => {
+  let cur = v;
+  for (let i = 0; i < 3 && isObj(cur); i++) {
+    const k = keys.find((x) => x in (cur as Obj));
+    if (!k) break;
+    cur = (cur as Obj)[k];
+  }
+  return cur;
+};
+// Notas inteligentes: lista de textos; os grupos (ex.: "action_items") ficam como prefixo, em português.
+const NOTE_GROUP: Record<string, string> = {
+  action_items: "Próximos passos", next_steps: "Próximos passos", decisions: "Decisões",
+  open_questions: "Perguntas em aberto", questions: "Perguntas", dates: "Datas", key_dates: "Datas",
+};
+function notesList(v: unknown): string[] {
+  const out: string[] = [];
+  const walk = (x: unknown, prefix: string) => {
+    if (Array.isArray(x)) x.forEach((y) => walk(y, prefix));
+    else if (typeof x === "string") x.split("\n").map((s) => s.replace(/^[-*•]\s*/, "").trim()).filter(Boolean).forEach((s) => out.push(prefix + s));
+    else if (isObj(x)) {
+      const t = text(x);
+      if (t) out.push(prefix + t);
+      else for (const [k, y] of Object.entries(x)) walk(y, `${NOTE_GROUP[k] ?? k.replace(/_/g, " ")}: `);
+    }
+  };
+  walk(v, "");
+  return out.slice(0, 50);
+}
+
+// Resumo, notas, sentimento e temas a partir das respostas (da API ou do próprio evento cidata.ready).
+function analysis(sum: unknown, notes: unknown, sent: unknown, topics: unknown) {
+  const sumVal = unwrap(sum, ["data", "summary"]);
+  const t = unwrap(topics, ["data", "topics"]);
+  return {
+    summary: typeof sumVal === "string" ? sumVal.trim() : text(sumVal),
+    notes: notesList(unwrap(notes, ["data", "smart_notes", "smartNotes", "notes"])),
+    sentiment: text(unwrap(sent, ["data", "overall_sentiment", "sentiment"])),
+    topics: (Array.isArray(t) ? t.map(text) : []).filter(Boolean).slice(0, 20),
+  };
+}
+// cidata.ready já traz a análise: summary (com smart_notes), sentiment e topics.
+export function analysisFromEvent(d: Obj) {
+  const sum = d.summary;
+  return analysis(sum, isObj(sum) ? (sum.smart_notes ?? sum.smartNotes) : d.smart_notes, d.sentiment ?? d.overall_sentiment, d.topics);
+}
+
+async function fetchTranscript(callId: string) {
+  const transcript: { s: string; t: number | null; x: string }[] = [];
+  let lang = "";
+  for (let offset = 0, page = 0; page < 40; page++) {
+    const r = await ciGet(callId, "transcription", `?limit=100&offset=${offset}`);
+    if (!r) break;
+    if (isObj(r) && !lang) lang = text(r.language ?? r.lang ?? (isObj(r.data) ? (r.data as Obj).language : ""));
+    const segs = unwrap(r, ["data", "transcription", "transcript", "segments", "items", "results"]);
+    const list = Array.isArray(segs) ? segs : [];
+    for (const s of list) {
+      if (!isObj(s)) continue;
+      const who = s.caller ?? s.speaker ?? s.participant ?? s.channel ?? s.role ?? "";
+      const x = text(s.text ?? s.transcript ?? s.content ?? s.sentence ?? "");
+      if (!x) continue;
+      const t = Number(s.start ?? s.start_time ?? s.from ?? s.offset ?? s.begin);
+      transcript.push({ s: text(who) || String(who ?? ""), t: Number.isFinite(t) ? t : null, x });
+    }
+    if (list.length < 100) break;
+    offset += list.length;
+  }
+  return { transcript, lang };
+}
+
+// Para diagnóstico: só os nomes dos campos, nunca o conteúdo.
+const keys = (v: unknown) => isObj(v) ? Object.keys(v) : Array.isArray(v) ? ["[array]"] : [];
+
+// part: "analysis" (resumo e afins), "transcript", ou "all". fromEvent: a análise que já veio no cidata.ready.
+async function storeCI(callId: string, part: "analysis" | "transcript" | "all", fromEvent?: Obj) {
+  let ci: Obj = {};
+  let shape: Obj = {};
+  try {
+    if (part !== "transcript") {
+      const ev = fromEvent ? analysisFromEvent(fromEvent) : null;
+      if (ev && (ev.summary || ev.notes.length || ev.sentiment || ev.topics.length)) {
+        ci = { ...ev };
+        shape = { evento: keys(fromEvent) };
+      } else {
+        const [sum, notes, sent, topics] = await Promise.all([
+          ciGet(callId, "summary"), ciGet(callId, "smart-notes"), ciGet(callId, "overall-sentiment"), ciGet(callId, "topics"),
+        ]);
+        ci = analysis(sum, notes, sent, topics);
+        shape = { summary: keys(sum), notes: keys(notes), sentiment: keys(sent), topics: keys(topics) };
+      }
+    }
+    if (part !== "analysis") {
+      const tr = await fetchTranscript(callId);
+      ci = { ...ci, ...tr };
+      shape = { ...shape, transcript: tr.transcript.length };
+    }
+  } catch (e) {
+    if (!(e instanceof CiDenied)) throw e;
+    console.error("leads-cloudtalk:", e.message);
+    if (!Object.keys(ci).length) {
+      return { status: "ignorado", motivo: "A chave da CloudTalk não tem acesso à análise das chamadas.", shape };
+    }
+  }
+  const has = (v: unknown) => Array.isArray(v) ? v.length > 0 : !!v;
+  const empty = !["summary", "notes", "sentiment", "topics", "transcript"].some((k) => has(ci[k]));
+  if (empty) return { status: "ignorado", motivo: "A CloudTalk ainda não tem análise desta chamada.", shape };
+  // Só o que veio preenchido: uma parte vazia não apaga o que já estava guardado.
+  const p = Object.fromEntries(Object.entries(ci).filter(([, v]) => has(v)));
+  const r = await must(admin.rpc("leads_cloudtalk_ci", { p_call_id: callId, p }), "Análise da chamada") as Obj;
+  return { ...r, shape };
 }
 
 // Telefone em E.164 (a CloudTalk exige-o). Números portugueses de 9 dígitos ganham o +351.
@@ -130,6 +268,13 @@ async function webhook(req: Request) {
     } else if (type === "call.recording_ready") {
       result = await must(admin.rpc("leads_cloudtalk_recording_ready", { p_call_id: String(d.call_id ?? "") }),
         "Gravação") as Record<string, unknown>;
+    } else if (d.call_id && (type === "cidata.ready" || (type === "transcript.ready" && CT_ID && CT_SECRET))) {
+      const { shape, ...r } = type === "cidata.ready"
+        ? await storeCI(String(d.call_id), "analysis", d)
+        : await storeCI(String(d.call_id), "transcript");
+      // Só os nomes dos campos que a CloudTalk devolveu, para confirmar o formato; nunca o conteúdo.
+      console.log(`leads-cloudtalk: ${type}`, r.status, JSON.stringify(shape));
+      result = r;
     }
     // A conta da CloudTalk envia todas as chamadas; das que não são de nenhuma lead não se guarda o conteúdo (RGPD).
     await admin.from("cloudtalk_events")
@@ -221,6 +366,15 @@ async function app(req: Request) {
     const res = await ct("GET", `/calls/recording/${encodeURIComponent(body.call_id)}.json`, undefined, "audio/x-wav, audio/*");
     if (!res.ok) return fail("A gravação não está disponível.", 404);
     return new Response(res.body, { headers: { ...CORS, "Content-Type": res.headers.get("Content-Type") ?? "audio/x-wav" } });
+  }
+
+  if (body.action === "ci") {
+    // O RLS decide se quem pede vê esta chamada.
+    const { data: ev } = await userDb.from("lead_events").select("id").eq("type", "call")
+      .eq("meta->>call_id", String(body.call_id ?? "")).maybeSingle();
+    if (!ev) return fail("Chamada não encontrada.", 404);
+    if (!CT_ID || !CT_SECRET) return fail("A CloudTalk ainda não está ligada.");
+    return json(await storeCI(String(body.call_id), "all"));
   }
 
   return fail("Ação desconhecida.");
