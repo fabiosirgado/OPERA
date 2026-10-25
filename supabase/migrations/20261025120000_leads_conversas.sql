@@ -165,7 +165,7 @@ end;
 $$;
 
 -- Lista de conversas de quem chama, com a última mensagem e as por ler (as escritas por outras pessoas
--- depois da última leitura). A equipa OPERA vê os clientes ativos, sem o cliente interno (a própria OPERA).
+-- depois da última leitura). A equipa OPERA vê os clientes ativos (ver 20261025140000_leads_conversas_opera.sql).
 create function public.leads_conversations()
 returns table (client_id uuid, client_name text, client_color text, last_at timestamptz, last_body text,
                last_author text, unread integer)
