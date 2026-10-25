@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Entrar na OPERA</title>
+<style>
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;
+       background:linear-gradient(160deg,#0B1B3A,#13254A);font-family:Inter,system-ui,sans-serif;color:#0F172A}
+  .card{width:100%;max-width:420px;background:#fff;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:14px}
+  .brand{font-size:20px;letter-spacing:.08em;font-weight:700;color:#0B1B3A}
+  h1{margin:0;font-size:22px}
+  p{margin:0;color:#334155;line-height:1.5}
+  button,a.btn{min-height:48px;border-radius:8px;border:0;background:#2563EB;color:#fff;font:inherit;font-weight:600;
+       font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+  button:disabled{opacity:.5;cursor:wait}
+  .err{background:#FDECEC;color:#7F1D1D;border-radius:8px;padding:12px}
+  small{color:#64748B}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">OPERA</div>
+  <h1 id="title">Entrar na OPERA</h1>
+  <p id="text">Carregue no botão para continuar.</p>
+  <button id="go" type="button">Continuar</button>
+  <div id="err" class="err" role="alert" hidden></div>
+  <a id="back" class="btn" href="/leads/" hidden>Voltar ao início</a>
+  <small>O link do email só funciona uma vez. Por isso só é usado quando carrega no botão (os programas de email que verificam os links já não o gastam).</small>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="/crm/config.js"></script>
+<script>
+  // Links dos emails de login (convite, link de entrada, nova palavra passe, confirmação de email).
+  // O email traz token_hash, type e next; o token só é trocado por uma sessão quando a pessoa carrega no botão.
+  // A sessão fica guardada para todo o site (opera-os.com), por isso serve o OPERA Leads e o CRM.
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var tokenHash = q.get("token_hash");
+    var type = q.get("type");
+    var TYPES = ["invite", "magiclink", "recovery", "signup", "email", "email_change"];
+    // Só volta para páginas deste site.
+    var next = (function () {
+      try {
+        var u = new URL(q.get("next") || "/leads/", location.origin);
+        return u.origin === location.origin ? u.pathname + u.search : "/leads/";
+      } catch (e) { return "/leads/"; }
+    })();
+    var $ = function (id) { return document.getElementById(id); };
+    var COPY = {
+      invite: ["Aceitar o convite", "Carregue no botão para aceitar o convite e definir a sua palavra passe.", "Aceitar o convite"],
+      recovery: ["Nova palavra passe", "Carregue no botão para definir uma nova palavra passe.", "Continuar"],
+      magiclink: ["Entrar na OPERA", "Carregue no botão para entrar.", "Entrar"],
+      email_change: ["Confirmar o novo email", "Carregue no botão para confirmar o novo email.", "Confirmar"],
+    };
+    var c = COPY[type] || COPY.magiclink;
+    $("title").textContent = c[0]; $("text").textContent = c[1]; $("go").textContent = c[2];
+    $("back").href = next;
+    var fail = function (msg) {
+      $("err").textContent = msg; $("err").hidden = false; $("go").hidden = true; $("back").hidden = false;
+    };
+    if (!tokenHash || TYPES.indexOf(type) < 0) return fail("Este link não está completo. Peça um novo na página de entrada.");
+
+    var sb = window.supabase.createClient(window.OPERA_CONFIG.SUPABASE_URL, window.OPERA_CONFIG.SUPABASE_ANON_KEY);
+    $("go").addEventListener("click", function () {
+      $("go").disabled = true;
+      sb.auth.verifyOtp({ token_hash: tokenHash, type: type }).then(function (r) {
+        if (r.error) {
+          $("go").disabled = false;
+          return fail(/expired|invalid|not found/i.test(r.error.message)
+            ? "Este link já foi usado ou expirou. Peça um novo na página de entrada."
+            : "Não foi possível continuar. Tente outra vez daqui a pouco.");
+        }
+        // Na nova palavra passe, o OPERA Leads precisa de saber que a pessoa veio para a definir.
+        var dest = next + (type === "recovery" ? (next.indexOf("?") < 0 ? "?" : "&") + "via=recovery" : "");
+        location.replace(dest);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
