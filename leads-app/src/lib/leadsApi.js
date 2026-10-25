@@ -120,6 +120,26 @@ export const deleteLabel = (id) => must(sb.from("lead_labels").delete().eq("id",
 export const labelUsage = () => must(sb.from("lead_label_links").select("label_id"))
   .then((rows) => rows.reduce((m, r) => ({ ...m, [r.label_id]: (m[r.label_id] || 0) + 1 }), {}));
 
+// ---------- Conversas entre a OPERA e cada cliente (só texto; mudar ou apagar nos primeiros 15 minutos)
+export const EDIT_WINDOW_MS = 15 * 60 * 1000;
+export const conversations = () => must(sb.rpc("leads_conversations"));
+export const conversation = (clientId, before = null, limit = 50) =>
+  must(sb.rpc("leads_conversation", { p_client_id: clientId, p_before: before, p_limit: limit })).then((r) => r.reverse());
+export const sendMessage = (clientId, body, leadId = null) =>
+  must(sb.rpc("leads_message_send", { p_client_id: clientId, p_body: body, p_lead_id: leadId }));
+export const editMessage = (id, body) => must(sb.rpc("leads_message_edit", { p_id: id, p_body: body }));
+export const deleteMessage = (id) => must(sb.rpc("leads_message_delete", { p_id: id }));
+export const markConversationRead = (clientId) => must(sb.rpc("leads_conversation_mark_read", { p_client_id: clientId }));
+// Leads que se podem juntar a uma mensagem: do mesmo cliente, a partir de Lead Qualificada.
+export const attachableLeads = (clientId, stageIds, q) => {
+  let query = sb.from("leads").select("id,name,stage_id").eq("client_id", clientId).eq("anonymized", false)
+    .in("stage_id", stageIds).order("name").limit(20);
+  const term = (q || "").replace(/[%_,()*\\]/g, " ").trim();
+  if (term) query = query.ilike("name", `%${term}%`);
+  return must(query);
+};
+export const exportConversation = (clientId) => must(sb.rpc("leads_messages_export", { p_client_id: clientId }));
+
 // ---------- Tempo real: avisa quando muda alguma coisa nas leads que quem está na sessão pode ver.
 // O tempo real filtra pelas regras de acesso com a sessão do momento em que se liga. Logo a seguir à verificação em
 // dois passos, a ligação ainda pode ter a sessão anterior (sem os dois passos) e a equipa OPERA não receberia nada:
@@ -142,7 +162,7 @@ export function subscribeChanges(onChange) {
     const again = !!ch;
     if (ch) await sb.removeChannel(ch);
     ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
-    for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
+    for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links", "client_messages", "client_message_reads"]) {
       ch.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => onChange(table, payload));
     }
     // Ao voltar a ligar, pede os dados outra vez: o que mudou entretanto não se perde.

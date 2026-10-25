@@ -139,10 +139,10 @@ export function exportRows(list, { history = false, pipedrive = false } = {}) {
   });
 }
 
-export function downloadXlsx(rows, fileName) {
+export function downloadXlsx(rows, fileName, sheet = "Leads") {
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Leads");
+  XLSX.utils.book_append_sheet(wb, ws, sheet);
   XLSX.writeFile(wb, fileName);
 }
 
