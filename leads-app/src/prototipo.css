@@ -75,6 +75,8 @@ main{flex:999 1 560px;min-width:0;padding:24px 28px;display:flex;flex-direction:
 .cardL .pinline{font-size:12px;background:var(--pin);color:var(--pinText);border-radius:6px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px}
+/* Lead que entrou por uma entrada automática e em que ainda ninguém pegou. */
+.nova{font-size:11px;font-weight:700;color:#fff;background:#15803D;padding:3px 8px;border-radius:6px}
 .src{font-size:11px;color:var(--mute);padding:3px 8px;border-radius:6px;background:#F1F5F9}
 .cname{font-size:14px;font-weight:600}
 .cint{font-size:12px;color:var(--mute)}

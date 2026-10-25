@@ -77,6 +77,18 @@ suite("Entradas automáticas", () => {
     expect(count).toBe(0);
   });
 
+  it("a lead que entra sozinha tem o sinal Nova até alguém lhe ligar; as criadas à mão nunca o têm", async () => {
+    const r = await send(meta("n1", "Nina Entradas", "+351 912 000 011"));
+    const novas = async () => Object.fromEntries(((await gestor.rpc("leads_pipeline", { p_client: clientE, p_limit: 200 })).data ?? [])
+      .map((l) => [l.name, l.is_new]));
+    const { data: manual } = await gestor.from("leads")
+      .insert({ client_id: clientE, name: "Manual Entradas", phone: "912000012", stage_id: stages.meta, entry_stage: "meta" }).select("id").single();
+    expect(await novas()).toMatchObject({ "Nina Entradas": true, "Manual Entradas": false });
+    expect((await gestor.rpc("leads_register_call", { p_lead_id: r.body.lead_id, p_meta: { via: "telefone" } })).error).toBeNull();
+    expect((await novas())["Nina Entradas"]).toBe(false);
+    await admin.from("leads").delete().in("id", [r.body.lead_id, manual.id]);
+  });
+
   it("o mesmo pedido repetido pelo Make não cria outra lead", async () => {
     const r = await send(meta("m1", "Marta Entradas", "+351 912 000 001"));
     expect(r.body.status).toBe("duplicado");
