@@ -1,6 +1,7 @@
 // Dados do pipeline e da ficha da lead. As listas vêm de funções no servidor, que filtram, ordenam e paginam.
 import { sb, SUPABASE_URL } from "../supabase.js";
 import { PAGE } from "./format.js";
+import { sessionEnded } from "./api.js";
 
 const must = async (query) => {
   const { data, error } = await query;
@@ -64,6 +65,7 @@ async function cloudtalk(payload, asBlob = false) {
     },
     body: JSON.stringify(payload),
   });
+  if (res.status === 401) await sessionEnded();
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || "A CloudTalk não respondeu. Tenta outra vez.");

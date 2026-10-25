@@ -60,8 +60,15 @@ async function usersFn(payload) {
     body: JSON.stringify({ redirect_to: appUrl(), ...payload }),
   });
   const body = await res.json().catch(() => ({}));
+  if (res.status === 401) await sessionEnded();
   if (!res.ok) throw new Error(body.error || "Não foi possível concluir o pedido.");
   return body;
+}
+// Sessão que o servidor já não reconhece (por exemplo, entrou outra conta neste browser, ao abrir um convite):
+// sai e volta ao login, em vez de mostrar um erro.
+export async function sessionEnded() {
+  await sb.auth.signOut({ scope: "local" }).catch(() => {});
+  throw new Error("A sessão terminou, provavelmente porque entrou outra conta neste browser. Entra outra vez.");
 }
 export const inviteUser = ({ email, name, role, client_id }) => usersFn({ action: "invite", email, name, role, client_id });
 export const resendInvite = (userId) => usersFn({ action: "resend", user_id: userId });
