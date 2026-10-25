@@ -120,6 +120,45 @@ export const deleteLabel = (id) => must(sb.from("lead_labels").delete().eq("id",
 export const labelUsage = () => must(sb.from("lead_label_links").select("label_id"))
   .then((rows) => rows.reduce((m, r) => ({ ...m, [r.label_id]: (m[r.label_id] || 0) + 1 }), {}));
 
+// ---------- Conversas entre a OPERA e cada cliente (só texto; mudar ou apagar nos primeiros 15 minutos)
+export const EDIT_WINDOW_MS = 15 * 60 * 1000;
+export const conversations = () => must(sb.rpc("leads_conversations"));
+export const conversation = (clientId, before = null, limit = 50) =>
+  must(sb.rpc("leads_conversation", { p_client_id: clientId, p_before: before, p_limit: limit })).then((r) => r.reverse());
+export const sendMessage = (clientId, body, leadId = null, audio = null) =>
+  must(sb.rpc("leads_message_send", {
+    p_client_id: clientId, p_body: body || null, p_lead_id: leadId,
+    p_audio_path: audio?.path ?? null, p_audio_seconds: audio?.seconds ?? null,
+  }));
+// Mensagens de voz: ficheiro privado na pasta do cliente; ouve-se com um link assinado que dura uma hora.
+export const VOICE_MAX_SECONDS = 300;
+const VOICE_EXT = { "audio/webm": "webm", "audio/mp4": "mp4", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/aac": "aac" };
+export async function uploadVoice(clientId, blob) {
+  const type = (blob.type || "audio/webm").split(";")[0];
+  const ext = VOICE_EXT[type];
+  if (!ext) throw new Error("Este browser grava num formato que não é aceite. Experimenta o Chrome ou o Safari.");
+  const path = `${clientId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await sb.storage.from("conversas").upload(path, blob, { contentType: type, upsert: false });
+  if (error) throw new Error("Não foi possível guardar a gravação. Tenta outra vez.");
+  return path;
+}
+export const voiceUrl = (path) => sb.storage.from("conversas").createSignedUrl(path, 3600).then(({ data, error }) => {
+  if (error) throw error;
+  return data.signedUrl;
+});
+export const editMessage = (id, body) => must(sb.rpc("leads_message_edit", { p_id: id, p_body: body }));
+export const deleteMessage = (id) => must(sb.rpc("leads_message_delete", { p_id: id }));
+export const markConversationRead = (clientId) => must(sb.rpc("leads_conversation_mark_read", { p_client_id: clientId }));
+// Leads que se podem juntar a uma mensagem: do mesmo cliente, em qualquer etapa (o cliente só vê as suas).
+export const attachableLeads = (clientId, q) => {
+  let query = sb.from("leads").select("id,name,stage_id").eq("client_id", clientId).eq("anonymized", false)
+    .order("updated_at", { ascending: false }).limit(20);
+  const term = (q || "").replace(/[%_,()*\\]/g, " ").trim();
+  if (term) query = query.ilike("name", `%${term}%`);
+  return must(query);
+};
+export const exportConversation = (clientId) => must(sb.rpc("leads_messages_export", { p_client_id: clientId }));
+
 // ---------- Tempo real: avisa quando muda alguma coisa nas leads que quem está na sessão pode ver.
 // O tempo real filtra pelas regras de acesso com a sessão do momento em que se liga. Logo a seguir à verificação em
 // dois passos, a ligação ainda pode ter a sessão anterior (sem os dois passos) e a equipa OPERA não receberia nada:
@@ -142,7 +181,7 @@ export function subscribeChanges(onChange) {
     const again = !!ch;
     if (ch) await sb.removeChannel(ch);
     ch = sb.channel(`leads-${Math.random().toString(36).slice(2)}`);
-    for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links"]) {
+    for (const table of ["leads", "lead_tasks", "lead_events", "lead_label_links", "client_messages", "client_message_reads"]) {
       ch.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => onChange(table, payload));
     }
     // Ao voltar a ligar, pede os dados outra vez: o que mudou entretanto não se perde.

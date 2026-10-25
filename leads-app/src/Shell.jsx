@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sb } from "./supabase.js";
 import { ROLE_LABEL, initials } from "./lib/format.js";
-import { activeClients, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
+import { activeClients, conversations, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
 import GlobalSearch from "./ui/GlobalSearch.jsx";
 import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
 import Clientes from "./screens/Clientes.jsx";
@@ -12,6 +12,7 @@ import Hoje from "./screens/Hoje.jsx";
 import ImportExport from "./screens/ImportExport.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Entradas from "./screens/Entradas.jsx";
+import Conversas from "./screens/Conversas.jsx";
 import LeadModal from "./screens/LeadModal.jsx";
 import { LabelsModal, NewLeadModal, StageModal } from "./screens/smallModals.jsx";
 
@@ -25,8 +26,8 @@ export default function Shell({ access }) {
   const { profile, client: myClient, opera } = access;
   const role = profile.leads_role;
   const items = opera
-    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
-    : [["pipeline", "As vossas leads"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
+    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
+    : [["pipeline", "As vossas leads"], ["conversa", "Conversa com a OPERA"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
   const [view, setView] = useState(() => (items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
 
@@ -39,6 +40,9 @@ export default function Shell({ access }) {
   const [dueToday, setDueToday] = useState(0);
   const [newCount, setNewCount] = useState(0);
   const [alerts, setAlerts] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [chatVersion, setChatVersion] = useState(0);
+  const [chatClient, setChatClient] = useState(null);
   const setFilterClient = (id) => { setFilterClientState(id); write(CLIENT_KEY, id); };
 
   const loadRefs = useCallback(async () => {
@@ -58,7 +62,14 @@ export default function Shell({ access }) {
   // Lead nova vinda de uma entrada automática: aviso no ecrã (só a equipa OPERA as vê nas etapas de entrada).
   const refs = useRef({ stages: [], clients: [] });
   refs.current = { stages, clients };
+  const chatTimer = useRef();
   const onChange = useCallback((table, payload) => {
+    // Mensagens das conversas: só a conversa e os números por ler voltam a pedir os dados.
+    if (table === "client_messages" || table === "client_message_reads" || table === "*") {
+      clearTimeout(chatTimer.current);
+      chatTimer.current = setTimeout(() => setChatVersion((v) => v + 1), 250);
+      if (table !== "*") return;
+    }
     bump();
     if (!opera || table !== "leads" || payload?.eventType !== "INSERT") return;
     const l = payload.new;
@@ -69,6 +80,13 @@ export default function Shell({ access }) {
   }, [bump, opera]);
   useEffect(() => subscribeChanges(onChange), [onChange]);
   const closeAlert = (id) => setAlerts((a) => (id === "*" ? [] : a.filter((x) => x.id !== id)));
+
+  // Conversas: mensagens por ler em cada cliente (número no menu e nos clientes ativos).
+  const loadChats = useCallback(() => { conversations().then(setChats).catch(() => {}); }, []);
+  useEffect(() => { loadChats(); }, [loadChats, chatVersion]);
+  const unreadBy = Object.fromEntries(chats.map((c) => [c.client_id, c.unread]));
+  const unread = chats.reduce((n, c) => n + (c.unread || 0), 0);
+  const openChat = (id) => { setChatClient(id); go(opera ? "conversas" : "conversa"); };
 
   // Número no menu "Pipeline geral": leads novas em que ainda ninguém pegou.
   useEffect(() => {
@@ -99,12 +117,16 @@ export default function Shell({ access }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [profile.id, opera, myClient, stages, labels, clients, version, filterClient, bump, loadRefs]);
 
-  // Link "Abrir a lead" dos emails de aviso: ?lead=<id> abre logo a ficha (depois do login) e sai do endereço.
+  // Links dos emails de aviso: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login); depois sai do endereço.
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("lead");
-    if (!id) return;
-    if (/^[0-9a-f-]{36}$/i.test(id)) setModal({ kind: "lead", id });
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("lead");
+    const chat = params.get("conversa");
+    if (!id && !chat) return;
+    if (id && /^[0-9a-f-]{36}$/i.test(id)) setModal({ kind: "lead", id });
+    else if (chat && /^[0-9a-f-]{36}$/i.test(chat)) openChat(chat);
     window.history.replaceState(null, "", window.location.pathname);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const closeModal = useCallback(() => setModal(null), []);
@@ -120,6 +142,7 @@ export default function Shell({ access }) {
             <button key={k} type="button" className={view === k ? "on" : ""} aria-current={view === k ? "page" : undefined} onClick={() => go(k)}>
               {label}{k === "hoje" && dueToday > 0 && <span className="badge">{dueToday}</span>}
               {k === "pipeline" && newCount > 0 && <span className="badge new" title="Leads novas por pegar">{newCount}</span>}
+              {(k === "conversas" || k === "conversa") && unread > 0 && <span className="badge msg" title="Mensagens por ler">{unread}</span>}
             </button>
           ))}
         </div>
@@ -129,7 +152,9 @@ export default function Shell({ access }) {
             <div className="clients">
               {clients.map((c) => (
                 <button key={c.id} type="button" onClick={() => { setFilterClient(c.id); go("pipeline"); }}>
-                  <span className="dot" style={{ background: c.color }}></span>{c.name}<small>{c.leads_count}</small>
+                  <span className="dot" style={{ background: c.color }}></span>{c.name}
+                  {unreadBy[c.id] > 0 && <span className="ubadge" title="Mensagens por ler na conversa">{unreadBy[c.id]}<span className="vh"> mensagens por ler</span></span>}
+                  <small>{c.leads_count}</small>
                 </button>
               ))}
             </div>
@@ -150,6 +175,9 @@ export default function Shell({ access }) {
         {stages.length > 0 && view === "pipeline" && <Pipeline ctx={ctx} />}
         {stages.length > 0 && view === "hoje" && <Hoje ctx={ctx} />}
         {stages.length > 0 && view === "io" && <ImportExport ctx={ctx} />}
+        {(view === "conversas" || view === "conversa") && (
+          <Conversas ctx={ctx} list={chats} selected={chatClient} onSelect={setChatClient} chatVersion={chatVersion} onRead={loadChats} />
+        )}
         {view === "dash" && <Dashboard ctx={ctx} isAdmin={role === "admin"} opera={opera} />}
         {view === "entradas" && <Entradas ctx={ctx} isAdmin={role === "admin"} />}
         {view === "clientes" && <Clientes profile={profile} />}

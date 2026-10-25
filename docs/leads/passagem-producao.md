@@ -126,6 +126,16 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 ## Depois da passagem: Fase 8
 Conversa entre a OPERA e cada cliente dentro do OPERA Leads. Começa quando a Etapa 8 (período em paralelo) estiver a correr bem. Plano em [fase-8-plano.md](fase-8-plano.md).
 
+Feita e testada no ambiente de testes (2026-10-25): texto e mensagens de voz (até 5 minutos, guardadas no Supabase na UE e apagadas com a mensagem), junta qualquer lead do cliente (em qualquer etapa), mudar ou apagar nos primeiros 15 minutos, aviso por email se ficar por ler 15 minutos (no máximo um por hora; do lado da OPERA só o gestor do cliente). Para pôr em produção, depois do teu sim:
+
+| Passo | Quem | O quê |
+|---|---|---|
+| 8.1 | Eu | Aplicar `20261025120000_leads_conversas.sql` e `20261025130000_leads_conversas_voz.sql` na produção e confirmar com `verifica_crm`. |
+| 8.2 | Eu | Publicar a função `leads-notify` nova na produção (mesmo código do ambiente de testes). |
+| 8.3 | Tu | Juntar o pull request ao main (o site publica sozinho). |
+| 8.4 | Eu | Confirmar que o ecrã Conversas lista os 4 clientes (a OPERA, por ser interna, fica de fora). A primeira mensagem a um cliente escreves tu, quando quiseres. |
+| 8.5 | Tu | Gravar uma mensagem de voz no iPhone e ouvi-la no computador (e o contrário), para confirmar os dois formatos. |
+
 ---
 
 ## Resumo do teu tempo
