@@ -292,3 +292,4 @@ body.out main{padding:0}
   .thread .th .back{display:inline-flex}
   .msg{max-width:92%}
 }
+.mlead.off{border-left-color:#94A3B8;background:#F8FAFC}

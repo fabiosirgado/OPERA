@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   EDIT_WINDOW_MS, attachableLeads, conversation, deleteMessage, editMessage, markConversationRead, sendMessage,
 } from "../lib/leadsApi.js";
-import { QUALIFIED_POSITION, fmtWhen, initials } from "../lib/format.js";
+import { fmtWhen, initials } from "../lib/format.js";
 import { useAction } from "../ui/feedback.jsx";
 
 const MAX = 4000;
@@ -174,11 +174,13 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
               ) : (
                 <p>{m.deleted_at ? "Mensagem apagada" : m.body}</p>
               )}
-              {m.lead_id && !m.deleted_at && (
+              {m.lead_id && !m.deleted_at && (m.lead_open ? (
                 <button type="button" className="mlead" onClick={() => ctx.onOpenLead(m.lead_id)}>
                   <b>{m.lead_name}</b><small>{m.lead_stage}</small>
                 </button>
-              )}
+              ) : (
+                <div className="mlead off"><b>{m.lead_name}</b><small>{m.lead_stage}</small></div>
+              ))}
               {canChange(m) && editing?.id !== m.id && (
                 <div className="mtools">
                   <button type="button" className="link" onClick={() => setEditing({ id: m.id, body: m.body })}>Mudar</button>
@@ -210,18 +212,16 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
   );
 }
 
-// Escolher uma lead do cliente (a partir de Lead Qualificada) para juntar à mensagem.
+// Escolher uma lead do cliente, em qualquer etapa, para juntar à mensagem.
 function LeadPicker({ clientId, stages, onPick, onClose }) {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState(null);
   const [run] = useAction();
-  const ids = stages.filter((s) => s.position >= QUALIFIED_POSITION).map((s) => s.id);
   const stageName = Object.fromEntries(stages.map((s) => [s.id, s.name]));
-  const key = ids.join(",");
   useEffect(() => {
-    const t = setTimeout(() => run(() => attachableLeads(clientId, key.split(","), q)).then((r) => r && setRows(r)), q ? 300 : 0);
+    const t = setTimeout(() => run(() => attachableLeads(clientId, q)).then((r) => r && setRows(r)), q ? 300 : 0);
     return () => clearTimeout(t);
-  }, [clientId, key, q, run]);
+  }, [clientId, q, run]);
   return (
     <div className="picker">
       <div className="row">
@@ -231,7 +231,7 @@ function LeadPicker({ clientId, stages, onPick, onClose }) {
         <button type="button" className="btn sm" onClick={onClose}>Fechar</button>
       </div>
       <div className="plist">
-        {rows && !rows.length && <div className="empty">Sem leads a partir de Lead Qualificada{q ? " com esse nome" : ""}.</div>}
+        {rows && !rows.length && <div className="empty">{q ? "Sem leads com esse nome." : "Este cliente ainda não tem leads."}</div>}
         {(rows || []).map((l) => (
           <button key={l.id} type="button" onClick={() => onPick(l)}><b>{l.name}</b><small>{stageName[l.stage_id]}</small></button>
         ))}

@@ -126,7 +126,7 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 ## Depois da passagem: Fase 8
 Conversa entre a OPERA e cada cliente dentro do OPERA Leads. Começa quando a Etapa 8 (período em paralelo) estiver a correr bem. Plano em [fase-8-plano.md](fase-8-plano.md).
 
-Feita e testada no ambiente de testes (2026-10-25): só texto, lead junta a partir de Lead Qualificada, mudar ou apagar nos primeiros 15 minutos, aviso por email se ficar por ler 15 minutos (no máximo um por hora; do lado da OPERA só o gestor do cliente). Para pôr em produção, depois do teu sim:
+Feita e testada no ambiente de testes (2026-10-25): só texto, junta qualquer lead do cliente (em qualquer etapa), mudar ou apagar nos primeiros 15 minutos, aviso por email se ficar por ler 15 minutos (no máximo um por hora; do lado da OPERA só o gestor do cliente). Para pôr em produção, depois do teu sim:
 
 | Passo | Quem | O quê |
 |---|---|---|

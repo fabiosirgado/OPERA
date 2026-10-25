@@ -130,10 +130,10 @@ export const sendMessage = (clientId, body, leadId = null) =>
 export const editMessage = (id, body) => must(sb.rpc("leads_message_edit", { p_id: id, p_body: body }));
 export const deleteMessage = (id) => must(sb.rpc("leads_message_delete", { p_id: id }));
 export const markConversationRead = (clientId) => must(sb.rpc("leads_conversation_mark_read", { p_client_id: clientId }));
-// Leads que se podem juntar a uma mensagem: do mesmo cliente, a partir de Lead Qualificada.
-export const attachableLeads = (clientId, stageIds, q) => {
+// Leads que se podem juntar a uma mensagem: do mesmo cliente, em qualquer etapa (o cliente só vê as suas).
+export const attachableLeads = (clientId, q) => {
   let query = sb.from("leads").select("id,name,stage_id").eq("client_id", clientId).eq("anonymized", false)
-    .in("stage_id", stageIds).order("name").limit(20);
+    .order("updated_at", { ascending: false }).limit(20);
   const term = (q || "").replace(/[%_,()*\\]/g, " ").trim();
   if (term) query = query.ilike("name", `%${term}%`);
   return must(query);

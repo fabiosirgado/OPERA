@@ -92,22 +92,28 @@ suite("Conversas", () => {
     expect((await send(aUser, clientA, "x".repeat(4001))).error).not.toBeNull();
   });
 
-  it("só se junta uma lead do mesmo cliente, a partir de Lead Qualificada", async () => {
+  it("junta-se qualquer lead do mesmo cliente, em qualquer etapa", async () => {
     const early = await lead(clientA, { name: `${TAG} Inês`, phone: "912340001" });
     const qualified = await lead(clientA, { name: `${TAG} Pedro`, phone: "912340002", qualification: { Objetivo: "Comprador" } });
     await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", qualified);
-    const otherClient = await lead(clientB, { name: `${TAG} Rita`, phone: "912340003", qualification: { Objetivo: "Comprador" } });
-    await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", otherClient);
+    const otherClient = await lead(clientB, { name: `${TAG} Rita`, phone: "912340003" });
 
-    expect((await send(gestor, clientA, `${TAG} cedo`, early)).error).not.toBeNull();
     expect((await send(gestor, clientA, `${TAG} outro cliente`, otherClient)).error).not.toBeNull();
+    expect((await send(aUser, clientA, `${TAG} intruso`, otherClient)).error).not.toBeNull();
+    const { data: earlyMsg, error: e1 } = await send(gestor, clientA, `${TAG} esta ainda é nossa`, early);
+    expect(e1).toBeNull();
     const { data: id, error } = await send(gestor, clientA, `${TAG} vê esta`, qualified);
     expect(error).toBeNull();
-    const m = (await thread(aUser, clientA)).find((x) => x.id === id);
-    expect(m.lead_id).toBe(qualified);
-    expect(m.lead_name).toBe(`${TAG} Pedro`);
-    // O cliente também junta as suas leads qualificadas.
-    expect((await send(aUser, clientA, `${TAG} e esta?`, qualified)).error).toBeNull();
+
+    const seen = await thread(aUser, clientA);
+    for (const [msg, name] of [[id, `${TAG} Pedro`], [earlyMsg, `${TAG} Inês`]]) {
+      const m = seen.find((x) => x.id === msg);
+      expect(m.lead_name).toBe(name);
+      expect(m.lead_open).toBe(true);
+    }
+    // Lead de outro cliente nunca aparece, nem para quem a juntasse por engano.
+    expect((await thread(bAdmin, clientB)).some((x) => x.lead_name?.startsWith(TAG))).toBe(false);
+    expect((await send(aUser, clientA, `${TAG} e esta?`, early)).error).toBeNull();
   });
 
   it("exportar a conversa é só para a equipa OPERA", async () => {

@@ -2,8 +2,8 @@
 -- Plano: docs/leads/fase-8-plano.md. Decidido a 2026-10-25: só texto (anexos ficam para uma 8b); o email de aviso
 -- do lado da OPERA vai para o gestor do cliente; os avisos ao cliente saem a qualquer hora.
 --
--- Mensagens: texto até 4000 caracteres, com quem escreveu e quando. Pode juntar uma lead (a partir de Lead
--- Qualificada, do mesmo cliente). Quem escreveu pode editar ou apagar durante 15 minutos.
+-- Mensagens: texto até 4000 caracteres, com quem escreveu e quando. Pode juntar uma lead do mesmo
+-- cliente, em qualquer etapa. Quem escreveu pode editar ou apagar durante 15 minutos.
 -- Por ler: cada pessoa tem a hora da última leitura de cada conversa (client_message_reads).
 -- Aviso por email: uma mensagem por ler há 15 minutos gera um aviso a quem a devia ler; no máximo 1 por hora
 -- por conversa e por lado. Sai pela função leads-notify, como os avisos das leads.
@@ -82,12 +82,11 @@ begin
   if not private.leads_can_chat(p_client_id) then raise exception 'Sem acesso a esta conversa.'; end if;
   if v_body is null then raise exception 'Escreve a mensagem primeiro.'; end if;
   if char_length(v_body) > 4000 then raise exception 'A mensagem é demasiado longa (máximo 4000 caracteres).'; end if;
-  -- Só se junta uma lead que o cliente vê: deste cliente e a partir de Lead Qualificada.
+  -- Junta-se qualquer lead deste cliente, em qualquer etapa, desde que quem escreve a veja.
   if p_lead_id is not null and not exists (
        select 1 from public.leads l
-        where l.id = p_lead_id and l.client_id = p_client_id and not l.anonymized
-          and private.lead_stage_position(l.stage_id) >= 50 and private.leads_can_read(l.id)) then
-    raise exception 'Só se pode juntar uma lead deste cliente a partir de Lead Qualificada.';
+        where l.id = p_lead_id and l.client_id = p_client_id and not l.anonymized and private.leads_can_read(l.id)) then
+    raise exception 'Só se pode juntar uma lead deste cliente.';
   end if;
   insert into public.client_messages (client_id, author_id, body, lead_id)
   values (p_client_id, auth.uid(), v_body, p_lead_id)
@@ -145,17 +144,19 @@ $$;
 -- Mensagens de uma conversa, das mais recentes para trás (p_before para carregar as anteriores).
 create function public.leads_conversation(p_client_id uuid, p_before timestamptz default null, p_limit integer default 50)
 returns table (id uuid, author_id uuid, author_name text, side text, body text, lead_id uuid, lead_name text,
-               lead_stage text, created_at timestamptz, edited_at timestamptz, deleted_at timestamptz)
+               lead_stage text, lead_open boolean, created_at timestamptz, edited_at timestamptz, deleted_at timestamptz)
 language plpgsql stable security definer set search_path = public as $$
 begin
   if not private.leads_can_chat(p_client_id) then raise exception 'Sem acesso a esta conversa.'; end if;
   return query
     select m.id, m.author_id, coalesce(p.full_name, p.email, 'Utilizador apagado'),
            coalesce(private.leads_message_side(m.author_id), 'opera'), m.body, l.id, l.name, s.name,
+           -- Abre a ficha só quem a pode ver (por exemplo, não depois de o cliente perder o acesso).
+           l.id is not null and private.leads_can_read(l.id),
            m.created_at, m.edited_at, m.deleted_at
       from public.client_messages m
       left join public.profiles p on p.id = m.author_id
-      left join public.leads l on l.id = m.lead_id and private.lead_stage_position(l.stage_id) >= 50
+      left join public.leads l on l.id = m.lead_id and not l.anonymized
       left join public.lead_stages s on s.id = l.stage_id
      where m.client_id = p_client_id and (p_before is null or m.created_at < p_before)
      order by m.created_at desc
