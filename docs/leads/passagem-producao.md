@@ -133,7 +133,7 @@ Feita e testada no ambiente de testes (2026-10-25): texto e mensagens de voz (at
 | 8.1 | Eu | Aplicar `20261025120000_leads_conversas.sql` e `20261025130000_leads_conversas_voz.sql` na produção e confirmar com `verifica_crm`. |
 | 8.2 | Eu | Publicar a função `leads-notify` nova na produção (mesmo código do ambiente de testes). |
 | 8.3 | Tu | Juntar o pull request ao main (o site publica sozinho). |
-| 8.4 | Eu | Confirmar que o ecrã Conversas lista os 4 clientes (a OPERA, por ser interna, fica de fora). A primeira mensagem a um cliente escreves tu, quando quiseres. |
+| 8.4 | Eu | Confirmar que o ecrã Conversas lista os 4 clientes (e também a OPERA, desde 2026-10-25, para falar com quem entra como cliente OPERA). A primeira mensagem a um cliente escreves tu, quando quiseres. |
 | 8.5 | Tu | Gravar uma mensagem de voz no iPhone e ouvi-la no computador (e o contrário), para confirmar os dois formatos. |
 
 ---
