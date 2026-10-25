@@ -92,6 +92,7 @@ Legenda: **Tu** = passo teu (contas, chaves, decisões). **Eu** = passo meu. ⏱
 | 7.5a | Feito | 2026-10-25: webhook da CloudTalk para a produção (call.ended, call.recording_ready, cidata.ready, transcript.ready), com a chave de assinatura em `CLOUDTALK_WEBHOOK_SECRET`; testado com o evento de teste da CloudTalk (200). O webhook do opera-testes foi desligado. Falta ver a primeira chamada real com a nota do resumo. |
 | 7.2 | Eu | Registar no ecrã Entradas automáticas os formulários do Meta de cada cliente. |
 | 7.3 | Eu | **Emails dos portais:** criar o cenário de produção (mailhook novo) e guardar o endereço no ecrã. |
+| 7.3a | Feito | 2026-10-25: cenário "OPERA Leads (produção), emails dos portais" criado e ligado, com mailhook novo `7bmdc8tfehes9yamnppab1uzq1m6mv7x@hook.eu1.make.com` (guardado no ecrã Entradas automáticas) e a chave do Make. Ainda nenhum cliente tem endereço de receção registado: os emails que chegarem ficam por atribuir até se registar o endereço de cada cliente. |
 | 7.4 | Tu | Enviar a cada cliente as instruções de reencaminhamento (botão no ecrã); quando chegarem os códigos do Gmail, enviar-lhos. |
 | 7.5 | Tu (comigo no Chrome) | **CloudTalk:** mudar o endereço do webhook para a produção (assim o opera-testes deixa de receber as chamadas reais). Confirmar que cada pessoa da equipa tem o mesmo email na CloudTalk e na OPERA Leads. |
 | 7.6 | Tu | Uma chamada real e um email de portal real, confirmados na lead. |
