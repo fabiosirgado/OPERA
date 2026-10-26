@@ -4,6 +4,8 @@ import { ROLE_LABEL, initials } from "./lib/format.js";
 import { activeClients, conversations, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
 import GlobalSearch from "./ui/GlobalSearch.jsx";
 import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
+import AppSetup from "./ui/AppSetup.jsx";
+import { forgetDevice } from "./lib/push.js";
 import Clientes from "./screens/Clientes.jsx";
 import Equipa from "./screens/Equipa.jsx";
 import Privacidade from "./screens/Privacidade.jsx";
@@ -117,15 +119,25 @@ export default function Shell({ access }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [profile.id, opera, myClient, stages, labels, clients, version, filterClient, bump, loadRefs]);
 
-  // Links dos emails de aviso: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login); depois sai do endereço.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+  // Links dos emails e das notificações: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login).
+  const openFromLink = (search) => {
+    const params = new URLSearchParams(search);
     const id = params.get("lead");
     const chat = params.get("conversa");
-    if (!id && !chat) return;
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setModal({ kind: "lead", id });
     else if (chat && /^[0-9a-f-]{36}$/i.test(chat)) openChat(chat);
-    window.history.replaceState(null, "", window.location.pathname);
+  };
+  const openRef = useRef(openFromLink);
+  openRef.current = openFromLink;
+  useEffect(() => {
+    if (window.location.search) {
+      openFromLink(window.location.search);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    // Tocar numa notificação com a app já aberta: o service worker pede para abrir a lead ou a conversa.
+    const onMessage = (e) => { if (e.data?.type === "abrir") openRef.current(new URL(e.data.url).search); };
+    navigator.serviceWorker?.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMessage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -168,7 +180,8 @@ export default function Shell({ access }) {
               <small>{ROLE_LABEL[role]}{myClient ? ` · ${myClient.name}` : ""}</small>
             </div>
           </div>
-          <button type="button" onClick={() => sb.auth.signOut()}>Terminar sessão</button>
+          <AppSetup />
+          <button type="button" onClick={() => forgetDevice().finally(() => sb.auth.signOut())}>Terminar sessão</button>
         </div>
       </nav>
       <main>
