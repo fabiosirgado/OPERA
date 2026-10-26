@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  addNote, addTask, businessMinutes, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
+  addNote, addTask, businessMinutes, updateTask, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
   callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
-  LABEL_COLORS, OBJETIVOS, QUALIFIED_POSITION, QUAL_FIELDS, TASK_TYPES, objetivoTipos, fmtDur, fmtRel, localInput, waLink,
+  LABEL_COLORS, OBJETIVOS, QUALIFIED_POSITION, QUAL_FIELDS, TASK_TYPES, objetivoTipos, dueFrom, dueParts, fmtDur, fmtRel, waLink,
 } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags, TaskTag } from "../ui/bits.jsx";
@@ -23,6 +23,32 @@ function presetTime(key) {
   if (key === "tom") { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0); return d.getTime(); }
   return n + 3600e3;
 }
+// Formulário de tarefa: tipo, dia, hora (opcional) e nota.
+const newTask = (ms = Date.now() + 3600e3, extra = {}) => ({ type: "call", ...dueParts(ms), note: "", ...extra });
+
+function TaskFields({ form, set }) {
+  return (
+    <>
+      <div className="chips" role="group" aria-label="Tipo de tarefa">
+        {Object.entries(TASK_TYPES).map(([k, v]) => (
+          <button key={k} type="button" className={`btn xs ${form.type === k ? "on" : ""}`} aria-pressed={form.type === k}
+            onClick={() => set({ ...form, type: k })}>{v}</button>
+        ))}
+      </div>
+      <div className="g2">
+        <label className="f">Dia<input type="date" value={form.date} onChange={(e) => set({ ...form, date: e.target.value })} /></label>
+        <label className="f">Hora <span style={{ fontWeight: 400, color: "var(--mute)" }}>(opcional)</span>
+          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="time" value={form.time} onChange={(e) => set({ ...form, time: e.target.value })} style={{ flex: 1 }} />
+            {form.time && <button type="button" className="link" onClick={() => set({ ...form, time: "" })}>Sem hora</button>}
+          </span>
+        </label>
+      </div>
+      <label className="f">Nota da tarefa<input value={form.note} onChange={(e) => set({ ...form, note: e.target.value })}
+        placeholder={form.type === "meeting" ? "Ex.: Reunião por videochamada" : form.type === "followup" ? "Ex.: Enviar imóveis" : "Ex.: Ligar de novo"} /></label>
+    </>
+  );
+}
 
 // Ficha da lead. ctx: { me, opera, stages, labels, clients, onChanged, onOpenLabels }
 export default function LeadModal({ id, ctx, onClose }) {
@@ -31,7 +57,8 @@ export default function LeadModal({ id, ctx, onClose }) {
   const [events, setEvents] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
-  const [tForm, setTForm] = useState({ type: "call", due: localInput(Date.now() + 3600e3), note: "" });
+  const [tForm, setTForm] = useState(() => newTask());
+  const [editTask, setEditTask] = useState(null);
   const [note, setNote] = useState({ body: "", pinned: false });
   const [editing, setEditing] = useState(null);
   const [audio, setAudio] = useState({});
@@ -103,7 +130,7 @@ export default function LeadModal({ id, ctx, onClose }) {
   const chip = (o) => {
     setNote((n) => ({ ...n, body: n.body ? `${n.body}. ${o}` : o }));
     if (o === "Não atendeu" || o === "Pediu para ligar mais tarde") {
-      setTForm({ type: "call", due: localInput(Date.now() + (o === "Não atendeu" ? 3 : 24) * 3600e3), note: "Ligar de novo" });
+      setTForm(newTask(Date.now() + (o === "Não atendeu" ? 3 : 24) * 3600e3, { note: "Ligar de novo" }));
       toast("Sugestão: cria a chamada seguinte nas tarefas");
     }
     if (o === "Marcou visita") setTForm((t) => ({ ...t, type: "meeting", note: "Visita" }));
@@ -115,9 +142,16 @@ export default function LeadModal({ id, ctx, onClose }) {
       .then((ok) => ok && setNote({ body: "", pinned: false }));
   };
   const saveTask = () => {
-    if (!tForm.due) return toast("Escolhe quando");
-    after(() => addTask(lead.id, tForm.type, tForm.due, tForm.note.trim()), `${TASK_TYPES[tForm.type]} marcada para ${fmtRel(tForm.due)}`)
-      .then((ok) => ok && setTForm({ type: "call", due: localInput(Date.now() + 3600e3), note: "" }));
+    if (!tForm.date) return toast("Escolhe o dia");
+    const due = dueFrom(tForm.date, tForm.time);
+    after(() => addTask(lead.id, tForm.type, due, tForm.note.trim()), `${TASK_TYPES[tForm.type]} marcada para ${fmtRel(due)}`)
+      .then((ok) => ok && setTForm(newTask()));
+  };
+  const saveEdit = () => {
+    if (!editTask.date) return toast("Escolhe o dia");
+    const due = dueFrom(editTask.date, editTask.time);
+    after(() => updateTask(editTask.id, { type: editTask.type, due, note: editTask.note.trim() }), "Tarefa atualizada")
+      .then((ok) => ok && setEditTask(null));
   };
   const erase = () => {
     if (prompt(`Apagar os dados pessoais de ${lead.name}? Não se pode desfazer. Escreve APAGAR para confirmar.`) !== "APAGAR") return;
@@ -280,7 +314,15 @@ export default function LeadModal({ id, ctx, onClose }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3>Tarefas</h3><span className="sub" style={{ margin: 0, fontSize: 12 }}>{openTasks.length} em aberto</span>
             </div>
-            {openTasks.length ? openTasks.map((t) => (
+            {openTasks.length ? openTasks.map((t) => editTask?.id === t.id ? (
+              <div key={t.id} className="task" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
+                <TaskFields form={editTask} set={setEditTask} />
+                <div className="actions">
+                  <button type="button" className="btn sm" onClick={() => setEditTask(null)}>Cancelar</button>
+                  <button type="button" className="btn sm primary" disabled={busy} onClick={saveEdit}>Guardar</button>
+                </div>
+              </div>
+            ) : (
               <div key={t.id} className="task">
                 <span className={`when ${new Date(t.due_at) < Date.now() ? "late" : ""}`}>{fmtRel(t.due_at)}</span>
                 <TaskTag type={t.type} /><span className="nt">{t.note}</span>
@@ -288,6 +330,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                   <>
                     <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => completeTask(t.id), "Tarefa concluída")}>Feita</button>
                     <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => snoozeTask(t))}>Adiar 1 dia</button>
+                    <button type="button" className="btn xs" onClick={() => setEditTask({ id: t.id, type: t.type, ...dueParts(t.due_at), note: t.note ?? "" })}>Editar</button>
                     {opera && <button type="button" className="link" disabled={busy} style={{ color: "var(--mute)" }}
                       onClick={() => after(() => deleteTask(t.id), "Tarefa apagada")}>Apagar</button>}
                   </>
@@ -296,23 +339,14 @@ export default function LeadModal({ id, ctx, onClose }) {
             )) : <div className="sub" style={{ margin: "4px 0" }}>Sem tarefas em aberto. Uma lead sem próxima tarefa é uma lead esquecida.</div>}
             {!readOnly && !lead.anonymized && (
               <div style={{ borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-                <div className="chips" role="group" aria-label="Tipo de tarefa">
-                  <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 600 }}>Nova tarefa:</span>
-                  {Object.entries(TASK_TYPES).map(([k, v]) => (
-                    <button key={k} type="button" className={`btn xs ${tForm.type === k ? "on" : ""}`} aria-pressed={tForm.type === k}
-                      onClick={() => setTForm({ ...tForm, type: k })}>{v}</button>
-                  ))}
-                </div>
-                <div className="g2">
-                  <label className="f">Quando<input type="datetime-local" value={tForm.due} onChange={(e) => setTForm({ ...tForm, due: e.target.value })} /></label>
-                  <label className="f">Nota da tarefa<input value={tForm.note} onChange={(e) => setTForm({ ...tForm, note: e.target.value })}
-                    placeholder={tForm.type === "meeting" ? "Ex.: Reunião por videochamada" : tForm.type === "followup" ? "Ex.: Enviar imóveis" : "Ex.: Ligar de novo"} /></label>
-                </div>
+                <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 600 }}>Nova tarefa</span>
+                <TaskFields form={tForm} set={setTForm} />
                 <div className="chips">
                   <span style={{ fontSize: 12, color: "var(--mute)" }}>Rápido:</span>
                   {[["1h", "Daqui a 1 h"], ["3h", "Daqui a 3 h"], ["tom", "Amanhã 10:00"], ["3d", "Daqui a 3 dias"]].map(([k, v]) => (
-                    <button key={k} type="button" className="chip" onClick={() => setTForm({ ...tForm, due: localInput(presetTime(k)) })}>{v}</button>
+                    <button key={k} type="button" className="chip" onClick={() => setTForm({ ...tForm, ...dueParts(presetTime(k)) })}>{v}</button>
                   ))}
+                  <button type="button" className="chip" onClick={() => setTForm({ ...tForm, ...dueParts(presetTime("tom")), time: "" })}>Amanhã, sem hora</button>
                   <button type="button" className="btn sm primary" style={{ marginLeft: "auto" }} disabled={busy} onClick={saveTask}>Criar tarefa</button>
                 </div>
               </div>
