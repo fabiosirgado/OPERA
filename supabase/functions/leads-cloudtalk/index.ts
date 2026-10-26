@@ -298,7 +298,17 @@ async function agentFor(p: Profile) {
   const list = await ctJson("GET", "/agents/index.json?limit=1000");
   const agents = (list?.data ?? []).map((x: { Agent?: Record<string, unknown> }) => x.Agent ?? x);
   const me = agents.find((a: Record<string, unknown>) => String(a.email ?? "").toLowerCase() === (p.email ?? "").toLowerCase());
-  if (!me) throw new Error("O teu email não corresponde a nenhum agente da CloudTalk. Pede ao admin para o criar com o mesmo email.");
+  if (!me) {
+    // Por agora a equipa OPERA partilha a conta da CloudTalk do admin: quem não tem agente próprio liga por ela.
+    // Não fica guardado no perfil, para passar a usar o agente próprio assim que for criado com o mesmo email.
+    if (["admin", "gestor"].includes(p.leads_role ?? "")) {
+      const { data: shared } = await admin.from("profiles").select("cloudtalk_agent_id")
+        .eq("leads_role", "admin").eq("leads_status", "ativo").not("cloudtalk_agent_id", "is", null)
+        .order("created_at").limit(1).maybeSingle<{ cloudtalk_agent_id: number }>();
+      if (shared?.cloudtalk_agent_id) return shared.cloudtalk_agent_id;
+    }
+    throw new Error("O teu email não corresponde a nenhum agente da CloudTalk. Pede ao admin para o criar com o mesmo email.");
+  }
   await must(admin.from("profiles").update({ cloudtalk_agent_id: Number(me.id) }).eq("id", p.id), "Guardar agente");
   return Number(me.id);
 }
