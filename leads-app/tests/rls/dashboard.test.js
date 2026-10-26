@@ -5,6 +5,19 @@ import { loadEnv, USERS, anonClient, signIn, signInWithMfa } from "./helpers.js"
 const env = loadEnv();
 const suite = env ? describe : describe.skip;
 const ago = (min) => new Date(Date.now() - min * 60000).toISOString();
+// O Time to Lead conta só o horário de trabalho (segunda a sexta, 9:30 às 19:00): as leads com chamada ficam num dia
+// útil recente às 11:00 UTC (11:00 ou 12:00 em Lisboa), para o resultado não depender da hora a que o teste corre.
+const FIXED_HOLIDAYS = ["01-01", "04-25", "05-01", "06-10", "08-15", "10-05", "11-01", "12-01", "12-08", "12-25"];
+const workday = (() => {
+  for (let back = 1; back < 7; back++) {
+    const d = new Date(Date.now() - back * 86400000);
+    if (d.getUTCDay() >= 1 && d.getUTCDay() <= 5 && !FIXED_HOLIDAYS.includes(d.toISOString().slice(5, 10))) {
+      return d.toISOString().slice(0, 10);
+    }
+  }
+  throw new Error("Sem dia útil nos últimos 6 dias.");
+})();
+const at = (hhmm) => `${workday}T${hhmm}:00Z`;
 
 suite("Dashboard", () => {
   let admin, gestor, aAdmin, clientD, stages, me;
@@ -32,8 +45,8 @@ suite("Dashboard", () => {
     const event = (lead_id, row) => gestor.from("lead_events").insert({ lead_id, author_id: me, ...row });
 
     // 1 e 2: Time to Lead de 10 e 40 minutos (Meta e portal).
-    const l1 = await lead({ name: "D1", source: "Meta", entry_stage: "meta", stage_id: stages.followup, created_at: ago(120), first_call_at: ago(110) });
-    const l2 = await lead({ name: "D2", source: "Idealista", entry_stage: "imoveis", stage_id: stages.followup, created_at: ago(180), first_call_at: ago(140) });
+    const l1 = await lead({ name: "D1", source: "Meta", entry_stage: "meta", stage_id: stages.followup, created_at: at("11:00"), first_call_at: at("11:10") });
+    const l2 = await lead({ name: "D2", source: "Idealista", entry_stage: "imoveis", stage_id: stages.followup, created_at: at("10:20"), first_call_at: at("11:00") });
     // 3: Meta por contactar.
     await lead({ name: "D3", source: "Meta", entry_stage: "meta", stage_id: stages.meta, created_at: ago(60) });
     // 4: BD trabalhada e recuperada (passou a qualificada).
@@ -42,8 +55,8 @@ suite("Dashboard", () => {
     // 5: Meta desqualificada sem chamada (não conta como por contactar).
     const l5 = await lead({ name: "D5", source: "Meta", entry_stage: "meta", stage_id: stages.desq, created_at: ago(30) });
 
-    await event(l1, { type: "call", title: "Chamada", meta: { answered: true }, created_at: ago(110) });
-    await event(l2, { type: "call", title: "Chamada", meta: { answered: false }, created_at: ago(140) });
+    await event(l1, { type: "call", title: "Chamada", meta: { answered: true }, created_at: at("11:10") });
+    await event(l2, { type: "call", title: "Chamada", meta: { answered: false }, created_at: at("11:00") });
     await event(l4, { type: "call", title: "Chamada", meta: { answered: true }, created_at: ago(100) });
     await event(l4, { type: "stage", from_stage_id: stages.followup, to_stage_id: stages.qualificada, created_at: ago(90) });
     await event(l5, { type: "stage", from_stage_id: stages.meta, to_stage_id: stages.desq, created_at: ago(20) });
@@ -72,6 +85,23 @@ suite("Dashboard", () => {
     expect(d.ttl_in_60).toBe(2);
     expect(d.pending).toBe(1);
     expect(d.ttl_buckets).toEqual([1, 0, 1, 0, 0, 1]);
+  });
+
+  it("o Time to Lead conta só o horário de trabalho, sem fins de semana nem feriados", async () => {
+    const cases = [
+      ["2026-10-26T10:00:00+00:00", "2026-10-26T10:12:00+00:00", 12], // segunda, dentro do horário
+      ["2026-10-24T15:00:00+01:00", "2026-10-26T09:40:00+00:00", 10], // sábado, ligada segunda às 9:40
+      ["2026-10-24T15:00:00+01:00", "2026-10-26T09:15:00+00:00", 0],  // ligada antes de abrir
+      ["2026-10-23T18:50:00+01:00", "2026-10-26T09:40:00+00:00", 20], // sexta 18:50, segunda 9:40
+      ["2026-10-27T20:30:00+00:00", "2026-10-28T09:45:00+00:00", 15], // depois das 19:00
+      ["2026-12-31T18:00:00+00:00", "2027-01-04T09:40:00+00:00", 70], // 1 de janeiro é feriado
+      ["2027-03-26T10:00:00+00:00", "2027-03-29T09:40:01+01:00", 10], // Sexta Feira Santa
+    ];
+    for (const [from, to, minutes] of cases) {
+      const { data, error } = await gestor.rpc("leads_business_minutes", { p_from: from, p_to: to });
+      expect(error).toBeNull();
+      expect(Number(data)).toBeCloseTo(minutes, 0);
+    }
   });
 
   it("conta entradas, chamadas, atividades, qualificação e recuperadas", async () => {

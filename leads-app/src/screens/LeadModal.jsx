@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  addNote, addTask, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
+  addNote, addTask, businessMinutes, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
   callAnalysis, callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
@@ -35,6 +35,7 @@ export default function LeadModal({ id, ctx, onClose }) {
   const [note, setNote] = useState({ body: "", pinned: false });
   const [editing, setEditing] = useState(null);
   const [audio, setAudio] = useState({});
+  const [firstCallMin, setFirstCallMin] = useState(null);
   const [run, busy] = useAction();
   const toast = useToast();
 
@@ -43,6 +44,8 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (!l) { toast("Esta lead já não está disponível."); onClose(); return; }
     setLead(l); setEvents(e); setTasks(t);
     clientUsers(l.client_id).then(setUsers).catch(() => setUsers([]));
+    if (l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
+    else setFirstCallMin(null);
   }, [id, onClose, toast]);
   useEffect(() => { load().catch((e) => toast(e.message)); }, [load, toast]);
   // Atualiza sozinha quando alguém mexe nesta lead (tempo real).
@@ -59,7 +62,6 @@ export default function LeadModal({ id, ctx, onClose }) {
   const openTasks = tasks.filter((t) => !t.done_at);
   const pins = events.filter((e) => e.pinned);
   const labelIds = lead.links.map((x) => x.label_id);
-  const firstCallMin = lead.first_call_at ? (new Date(lead.first_call_at) - new Date(lead.created_at)) / 60000 : null;
   const after = async (fn, ok) => { const r = await run(fn, ok); if (r) { await load(); ctx.onChanged(); } return r; };
 
   const save = (patch) => after(() => updateLead(lead.id, patch));

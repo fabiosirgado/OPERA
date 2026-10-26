@@ -51,6 +51,8 @@ export const updateLead = (id, patch) => must(sb.from("leads").update(patch).eq(
 export const createLead = (p) => must(sb.rpc("leads_create", { p }));
 export const findDuplicate = (clientId, phone, email) =>
   must(sb.rpc("leads_find_duplicate", { p_client_id: clientId, p_phone: phone || null, p_email: email || null })).then((r) => r[0] || null);
+// Time to Lead: minutos dentro do horário de trabalho (segunda a sexta, 9:30 às 19:00, sem feriados), como no Dashboard.
+export const businessMinutes = (from, to) => must(sb.rpc("leads_business_minutes", { p_from: from, p_to: to })).then(Number);
 export const registerCall = (id, meta = {}) => must(sb.rpc("leads_register_call", { p_lead_id: id, p_meta: meta }));
 
 // ---------- CloudTalk (função leads-cloudtalk; as chaves ficam no servidor)

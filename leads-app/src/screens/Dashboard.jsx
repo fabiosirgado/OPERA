@@ -62,7 +62,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             <span className="lbl">Time to Lead (mediana)</span>
             <span className="big">{d.ttl_median == null ? "—" : fmtDur(d.ttl_median)}</span>
             <TtlStatus m={d.ttl_median} target={d.ttl_target} />
-            <span className="meta">Tempo entre a chegada da lead ao sistema e a primeira chamada, atendida ou não. Conta só leads Meta e de portais; as leads BD ficam de fora.{" "}
+            <span className="meta">Tempo entre a chegada da lead ao sistema e a primeira chamada, atendida ou não, contado só no horário de trabalho (segunda a sexta, das 9:30 às 19:00, sem feriados). Conta só leads Meta e de portais; as leads BD ficam de fora.{" "}
               Objetivo: até {isAdmin
                 ? <input aria-label="Objetivo do Time to Lead em minutos" type="number" min={1} max={240} defaultValue={d.ttl_target} key={d.ttl_target}
                     onBlur={(e) => Number(e.target.value) !== d.ttl_target && setTarget(e.target.value)}
