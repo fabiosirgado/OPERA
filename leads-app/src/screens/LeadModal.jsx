@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   addNote, addTask, businessMinutes, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
-  callAnalysis, callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
+  callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
@@ -44,9 +44,9 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (!l) { toast("Esta lead já não está disponível."); onClose(); return; }
     setLead(l); setEvents(e); setTasks(t);
     clientUsers(l.client_id).then(setUsers).catch(() => setUsers([]));
-    if (l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
+    if (opera && l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
     else setFirstCallMin(null);
-  }, [id, onClose, toast]);
+  }, [id, onClose, toast, opera]);
   useEffect(() => { load().catch((e) => toast(e.message)); }, [load, toast]);
   // Atualiza sozinha quando alguém mexe nesta lead (tempo real).
   useEffect(() => { if (ctx.version) load().catch(() => {}); }, [ctx.version, load]);
@@ -89,6 +89,7 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (r.status !== "processado") throw new Error(r.status === "ignorado" && r.motivo?.includes("chave")
       ? r.motivo : "A CloudTalk ainda não tem o resumo desta chamada. Tenta daqui a uns minutos.");
   }, "Resumo da chamada atualizado");
+  const rewriteNote = (callId) => after(() => callNote(callId), "Resumo da chamada escrito de novo");
   const qualSave = (field, value) => {
     const q = { ...lead.qualification };
     if (value.trim()) q[field] = value.trim(); else delete q[field];
@@ -152,7 +153,7 @@ export default function LeadModal({ id, ctx, onClose }) {
           <ClientTag name={lead.client.name} color={lead.client.color} />
           {lead.source && <span className="src">Origem: {lead.source}</span>}
           <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 400 }}>
-            Entrou {fmtRel(lead.created_at)}{firstCallMin != null && ` · Time to Lead ${fmtDur(firstCallMin)}`}
+            Entrou {fmtRel(lead.created_at)}{opera && firstCallMin != null && ` · Time to Lead ${fmtDur(firstCallMin)}`}
           </span>
         </div>
         <span>{lead.name}</span>
@@ -339,6 +340,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                   <span className="ic" style={{ background: bg, color: fg }}>{label}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b>{eventTitle(e)}</b>{e.pinned && <span style={{ color: "var(--pinText)" }}> <Icon.pin /></span>}
+                    {e.internal && <span className="tag" style={{ marginLeft: 8, background: "#EEF2F7", color: "#334155" }} title="O cliente não vê esta nota">Só equipa OPERA</span>}
                     <span className="w">{fmtRel(e.when)} · {author(e)}{e.edited_at ? " · editada" : ""}</span>
                     {editing?.id === e.id ? (
                       <>
@@ -354,8 +356,12 @@ export default function LeadModal({ id, ctx, onClose }) {
                     ) : (
                       <>
                         {body && <p>{body}</p>}
-                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !e.meta?.ci && (
-                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo e transcrição</button></div>
+                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !events.some((n) => n.meta?.ci_call_id === e.meta.call_id) && (
+                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo da chamada</button></div>
+                        )}
+                        {e.kind === "note" && opera && e.meta?.ci_call_id && (
+                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => rewriteNote(e.meta.ci_call_id)}>
+                            {e.meta.ai ? "Refazer o resumo detalhado" : "Escrever o resumo detalhado"}</button></div>
                         )}
                         {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (
                           audio[e.meta.call_id]

@@ -58,7 +58,8 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
 
       {!d ? <div className="empty">A calcular…</div> : (
         <div className="dgrid">
-          <div className={`panel ${opera ? "s6" : "s12"} hero`}>
+          {/* Time to Lead: só a equipa OPERA vê (mede a rapidez da OPERA, não do cliente). */}
+          {opera && <div className="panel s6 hero">
             <span className="lbl">Time to Lead (mediana)</span>
             <span className="big">{d.ttl_median == null ? "—" : fmtDur(d.ttl_median)}</span>
             <TtlStatus m={d.ttl_median} target={d.ttl_target} />
@@ -70,7 +71,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
                 : d.ttl_target} min. Média {d.ttl_avg == null ? "—" : fmtDur(d.ttl_avg)}.</span>
             <span className="meta"><b>{pct(d.ttl_in_target, d.ttl_n)}</b> contactadas em até {d.ttl_target} min · <b>{pct(d.ttl_in_60, d.ttl_n)}</b> em até 1 h · <b>{d.pending}</b> ainda por contactar</span>
             <Bars items={TTL_BUCKETS.map((l, i) => ({ l, v: d.ttl_buckets[i] }))} muteLast />
-          </div>
+          </div>}
 
           {opera && <div className="panel s6">
             <h3>Taxa de ocupação por gestor de leads</h3>
