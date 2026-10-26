@@ -29,3 +29,14 @@
   from = "/leads/*"
   to = "/leads/index.html"
   status = 200
+
+# App instalável: o manifesto com o tipo certo e o service worker sempre na versão mais recente.
+[[headers]]
+  for = "/leads/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/leads/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
