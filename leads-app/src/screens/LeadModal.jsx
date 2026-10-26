@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   addNote, addTask, businessMinutes, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
-  callAnalysis, callLead, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
+  callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
@@ -89,6 +89,7 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (r.status !== "processado") throw new Error(r.status === "ignorado" && r.motivo?.includes("chave")
       ? r.motivo : "A CloudTalk ainda não tem o resumo desta chamada. Tenta daqui a uns minutos.");
   }, "Resumo da chamada atualizado");
+  const rewriteNote = (callId) => after(() => callNote(callId), "Resumo da chamada escrito de novo");
   const qualSave = (field, value) => {
     const q = { ...lead.qualification };
     if (value.trim()) q[field] = value.trim(); else delete q[field];
@@ -356,7 +357,11 @@ export default function LeadModal({ id, ctx, onClose }) {
                       <>
                         {body && <p>{body}</p>}
                         {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !events.some((n) => n.meta?.ci_call_id === e.meta.call_id) && (
-                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo e transcrição</button></div>
+                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo da chamada</button></div>
+                        )}
+                        {e.kind === "note" && opera && e.meta?.ci_call_id && (
+                          <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => rewriteNote(e.meta.ci_call_id)}>
+                            {e.meta.ai ? "Refazer o resumo detalhado" : "Escrever o resumo detalhado"}</button></div>
                         )}
                         {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (
                           audio[e.meta.call_id]

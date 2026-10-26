@@ -85,6 +85,8 @@ export async function callLead(lead) {
 }
 export const callRecording = (callId) => cloudtalk({ action: "recording", call_id: callId }, true);
 export const callAnalysis = (callId) => cloudtalk({ action: "ci", call_id: callId });
+// Nota da chamada escrita pelo Claude a partir da transcrição (pede outra vez, mesmo que já exista).
+export const callNote = (callId) => cloudtalk({ action: "nota", call_id: callId });
 export const eraseSubject = (id) => must(sb.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" }));
 
 export const toggleLabel = (leadId, labelId, on) => on

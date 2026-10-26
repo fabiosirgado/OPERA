@@ -5,12 +5,20 @@
 //                                     e regista a chamada na lead
 //   { action: "recording", call_id }  devolve o áudio da gravação (fica no registo de atividade)
 //   { action: "ci", call_id }         vai buscar outra vez o resumo, as notas e a transcrição da chamada
+//   { action: "nota", call_id }       pede outra vez ao Claude a nota da chamada (a partir da transcrição guardada)
 // Webhook da CloudTalk (assinado, cabeçalhos svix-*): call.ended, call.recording_ready, e da Conversation
 // Intelligence transcript.ready e cidata.ready (resumo, notas inteligentes, sentimento, temas e transcrição).
 //
+// A nota da chamada que o cliente vê é escrita pelo Claude a partir da transcrição, como se fosse o gestor do cliente:
+// um diagnóstico de qualificação detalhado, sem a transcrição. A transcrição fica só para a equipa OPERA.
+//
 // Segredos (Supabase, Edge Functions): CLOUDTALK_API_KEY_ID, CLOUDTALK_API_KEY_SECRET, CLOUDTALK_WEBHOOK_SECRET.
+// Opcional: ANTHROPIC_API_KEY (sem ela, a nota fica com o resumo curto da CloudTalk).
 // Sem as chaves, "call" devolve configured:false e a aplicação liga pelo telefone, como antes.
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
+import Anthropic from "npm:@anthropic-ai/sdk@1.3.0";
+
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
 const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const SECRET_KEY = (() => {
@@ -27,6 +35,9 @@ const CT_ID = Deno.env.get("CLOUDTALK_API_KEY_ID");
 const CT_SECRET = Deno.env.get("CLOUDTALK_API_KEY_SECRET");
 const CT_WEBHOOK = Deno.env.get("CLOUDTALK_WEBHOOK_SECRET");
 const CT_API = "https://my.cloudtalk.io/api";
+const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const claude = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY }) : null;
+const NOTE_MODEL = "claude-opus-5-5";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -202,6 +213,104 @@ async function storeCI(callId: string, part: "analysis" | "transcript" | "all", 
   return { ...r, shape };
 }
 
+// ------------------------------------------------------------ NOTA DA CHAMADA (CLAUDE)
+const NOTE_SYSTEM = `Escreves notas de chamadas para o OPERA Leads, o sistema onde a OPERA (a equipa que contacta e qualifica leads imobiliárias para agências e consultores) regista o trabalho feito com cada lead.
+
+Recebes a transcrição de uma chamada feita pelo gestor da OPERA a uma lead de um cliente, e os dados que já existem sobre a lead. Escreve a nota que esse gestor escreveria no histórico logo a seguir à chamada: na primeira pessoa, em português de Portugal, com um tom profissional e direto, como um consultor experiente que passa a um colega tudo o que apurou. Não é uma transcrição nem um resumo genérico: é um diagnóstico de qualificação, o mais completo e detalhado possível, com tudo o que for útil a quem vai trabalhar esta lead a seguir. Quem a lê é a equipa OPERA e o cliente (o consultor ou a agência que vai acompanhar a lead).
+
+Regras:
+Usa só o que foi dito na chamada ou consta dos dados da lead. Nunca inventes nem deduzas valores, datas, zonas ou nomes; quando um ponto não foi falado, escreve "não falado".
+Escreve números, valores, zonas, tipologias, prazos, nomes e datas exatamente como foram ditos.
+Não cites a conversa palavra a palavra e não incluas a transcrição.
+Escreve texto simples, sem markdown (sem cardinais, asteriscos ou tabelas). Não uses travessões nem hífenes como pontuação.
+Se não houve conversa útil (caixa de correio, número errado, pediu para ligar mais tarde, desligou), escreve só duas ou três frases a dizer o que aconteceu e qual é o próximo passo.
+
+Estrutura, com cada título numa linha própria:
+Resumo
+Três a cinco frases: quem é, o que procura ou quer fazer, em que ponto está e como correu a chamada.
+
+Diagnóstico de qualificação
+Objetivo: comprar, vender, arrendar, crédito ou investir, e porquê.
+Imóvel procurado ou a vender: tipologia, zona, características e estado.
+Budget:
+Financiamento: crédito, capitais próprios, pré aprovação, banco.
+Prazo:
+Tem imóvel para vender:
+Disponibilidade para visita:
+Quem decide e situação: só o que for relevante e tiver sido dito.
+
+Motivação e contexto
+
+Objeções, dúvidas ou receios
+
+Temperatura: quente, morno ou frio, e porquê.
+
+Próximos passos: o que ficou combinado, com datas e horas se foram ditas.`;
+
+type Ci = { summary?: string; notes?: string[]; transcript?: { s: string; t: number | null; x: string }[] };
+
+// Escreve (ou volta a escrever) a nota da chamada com o Claude. Só corre quando já há transcrição.
+async function writeAiNote(callId: string, force = false) {
+  if (!claude) return { status: "sem_chave" };
+  const { data: ins } = await admin.from("lead_call_insights").select("lead_id,ci").eq("call_id", callId).maybeSingle();
+  const ci = (ins?.ci ?? {}) as Ci;
+  if (!ins || !ci.transcript?.length) return { status: "sem_transcricao" };
+  const { data: current } = await admin.from("lead_events").select("meta").eq("lead_id", ins.lead_id).eq("type", "note")
+    .eq("meta->>ci_call_id", callId).maybeSingle();
+  if (!force && (current?.meta as Obj | undefined)?.ai) return { status: "ja_escrita" };
+
+  const { data: lead } = await admin.from("leads")
+    .select("name,interest,source,qualification,created_at,client_id,anonymized").eq("id", ins.lead_id).single();
+  if (!lead || lead.anonymized) return { status: "sem_lead" };
+  const { data: client } = await admin.from("clients").select("name,manager_id").eq("id", lead.client_id).single();
+  const { data: manager } = client?.manager_id
+    ? await admin.from("profiles").select("full_name").eq("id", client.manager_id).maybeSingle() : { data: null };
+  const { data: form } = await admin.from("lead_events").select("body").eq("lead_id", ins.lead_id).eq("type", "note")
+    .eq("title", "Respostas do formulário").limit(1).maybeSingle();
+  const { data: call } = await admin.from("lead_events").select("created_at,meta").eq("type", "call")
+    .eq("meta->>call_id", callId).limit(1).maybeSingle();
+
+  const gestor = manager?.full_name ?? "o gestor da OPERA";
+  const qual = Object.entries((lead.qualification ?? {}) as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join("\n");
+  const context = [
+    `Gestor da OPERA que fez a chamada: ${gestor}`,
+    `Cliente da OPERA (quem vai acompanhar a lead): ${client?.name ?? ""}`,
+    `Lead: ${lead.name}`,
+    lead.interest ? `Interesse registado: ${lead.interest}` : "",
+    lead.source ? `Origem: ${lead.source}` : "",
+    `Chamada: ${call?.created_at ?? ""}, ${(call?.meta as Obj | undefined)?.duration_s ?? "?"} segundos de conversa`,
+    qual ? `Qualificação já registada:\n${qual}` : "",
+    form?.body ? `Respostas do formulário:\n${form.body}` : "",
+    ci.summary ? `Resumo automático da CloudTalk (pode estar incompleto):\n${ci.summary}` : "",
+  ].filter(Boolean).join("\n\n");
+  const transcript = ci.transcript.map((x) => `${x.s || "Interlocutor"}: ${x.x}`).join("\n");
+
+  const response = await claude.beta.messages.create({
+    model: NOTE_MODEL,
+    max_tokens: 16000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "medium" },
+    system: NOTE_SYSTEM,
+    messages: [{
+      role: "user",
+      content: `${context}\n\nTranscrição da chamada (o agente é ${gestor}):\n${transcript}\n\nEscreve a nota de ${gestor} sobre esta chamada.`,
+    }],
+  });
+  if (response.stop_reason === "refusal") return { status: "recusada" };
+  const body = response.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n").trim();
+  if (!body) return { status: "vazia" };
+  return await must(admin.rpc("leads_cloudtalk_ai_note", { p_call_id: callId, p_body: body, p_model: response.model }),
+    "Nota da chamada") as Obj;
+}
+
+// Depois de responder à CloudTalk: a nota demora alguns segundos e a CloudTalk não espera por ela.
+function writeAiNoteLater(callId: string) {
+  const job = writeAiNote(callId).then((r) => console.log("leads-cloudtalk: nota", r.status))
+    .catch((e) => console.error("leads-cloudtalk: nota:", e instanceof Error ? e.message.slice(0, 200) : "erro"));
+  if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(job);
+}
+
 // Telefone em E.164 (a CloudTalk exige-o). Números portugueses de 9 dígitos ganham o +351.
 export function e164(phone: string) {
   const raw = phone.trim();
@@ -275,6 +384,7 @@ async function webhook(req: Request) {
       // Só os nomes dos campos que a CloudTalk devolveu, para confirmar o formato; nunca o conteúdo.
       console.log(`leads-cloudtalk: ${type}`, r.status, JSON.stringify(shape));
       result = r;
+      if (r.status === "processado") writeAiNoteLater(String(d.call_id));
     }
     // A conta da CloudTalk envia todas as chamadas; das que não são de nenhuma lead não se guarda o conteúdo (RGPD).
     await admin.from("cloudtalk_events")
@@ -384,7 +494,21 @@ async function app(req: Request) {
       .eq("meta->>call_id", String(body.call_id ?? "")).maybeSingle();
     if (!ev) return fail("Chamada não encontrada.", 404);
     if (!CT_ID || !CT_SECRET) return fail("A CloudTalk ainda não está ligada.");
-    return json(await storeCI(String(body.call_id), "all"));
+    const r = await storeCI(String(body.call_id), "all");
+    if (r.status === "processado") writeAiNoteLater(String(body.call_id));
+    return json(r);
+  }
+
+  if (body.action === "nota") {
+    // O RLS decide se quem pede vê esta chamada.
+    const { data: ev } = await userDb.from("lead_events").select("id").eq("type", "call")
+      .eq("meta->>call_id", String(body.call_id ?? "")).maybeSingle();
+    if (!ev) return fail("Chamada não encontrada.", 404);
+    if (!claude) return fail("Falta a chave do Claude (ANTHROPIC_API_KEY) no Supabase.");
+    const r = await writeAiNote(String(body.call_id), true);
+    if (r.status === "sem_transcricao") return fail("Esta chamada ainda não tem transcrição.");
+    if (r.status !== "processado") return fail("Não foi possível escrever a nota. Tenta outra vez.");
+    return json(r);
   }
 
   return fail("Ação desconhecida.");
