@@ -5,8 +5,7 @@
 -- 1. Notas internas: lead_events.internal. O cliente não as vê (RLS), nem na pesquisa nem na exportação.
 --    Uma nota interna não se afixa, porque as notas afixadas aparecem ao cliente (cartões e email de lead qualificada).
 -- 2. A análise sai de lead_events.meta.ci para lead_call_insights, que só a equipa OPERA lê.
--- 3. As chamadas da equipa OPERA também são internas: o cliente não vê as linhas "Chamada CloudTalk, atendida".
---    As chamadas importadas do histórico (Pipedrive) continuam visíveis, porque são o trabalho do próprio cliente.
+-- O cliente continua a ver que houve uma chamada (atendida ou não), sem o conteúdo.
 
 alter table public.lead_events add column internal boolean not null default false;
 
@@ -33,7 +32,6 @@ select distinct on (e.meta ->> 'call_id') e.meta ->> 'call_id', e.lead_id, e.met
 on conflict (call_id) do nothing;
 update public.lead_events set meta = meta - 'ci' where type = 'call' and meta ? 'ci';
 update public.lead_events set internal = true, pinned = false where type = 'note' and meta ? 'ci_call_id';
-update public.lead_events set internal = true, pinned = false where type = 'call' and not (meta ? 'imported');
 set local session_replication_role = origin;
 
 alter table public.lead_events add constraint lead_events_interna_sem_afixar check (not (internal and pinned));
@@ -89,40 +87,6 @@ end;
 $$;
 revoke execute on function public.leads_cloudtalk_ci(text, jsonb) from public, anon, authenticated;
 grant execute on function public.leads_cloudtalk_ci(text, jsonb) to service_role;
-
--- As chamadas registam-se sempre como internas (só a equipa OPERA liga).
-create or replace function private.leads_apply_call(p_lead_id uuid, p_title text, p_meta jsonb, p_at timestamptz, p_author uuid)
-returns uuid
-language plpgsql security definer set search_path = public as $$
-declare
-  v_lead public.leads; v_key text; v_task uuid; v_event uuid;
-begin
-  select * into v_lead from public.leads where id = p_lead_id for update;
-  if v_lead.id is null then raise exception 'Lead não encontrada.'; end if;
-
-  update public.leads
-     set attempts = attempts + 1,
-         first_call_at = least(coalesce(first_call_at, p_at), p_at),
-         last_contact_at = greatest(coalesce(last_contact_at, p_at), p_at)
-   where id = p_lead_id;
-
-  insert into public.lead_events (lead_id, type, title, meta, author_id, created_at, internal)
-  values (p_lead_id, 'call', p_title, coalesce(p_meta, '{}'::jsonb), p_author, p_at, true)
-  returning id into v_event;
-
-  select id into v_task from public.lead_tasks
-   where lead_id = p_lead_id and type = 'call' and done_at is null and canceled_at is null
-   order by due_at limit 1;
-  if v_task is not null then update public.lead_tasks set done_at = p_at where id = v_task; end if;
-
-  select key into v_key from public.lead_stages where id = v_lead.stage_id;
-  if v_key in ('meta', 'imoveis', 'bd') then
-    update public.leads set stage_id = (select id from public.lead_stages where key = 'followup') where id = p_lead_id;
-  end if;
-  return v_event;
-end;
-$$;
-revoke execute on function private.leads_apply_call(uuid, text, jsonb, timestamptz, uuid) from public, anon, authenticated;
 
 -- Anonimização: a análise das chamadas também sai.
 create or replace function private.leads_anonymize(p_lead_id uuid, p_reason text) returns void

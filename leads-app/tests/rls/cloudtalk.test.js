@@ -180,7 +180,7 @@ suite("CloudTalk", () => {
     expect(await notes()).toEqual([]);
   });
 
-  it("o cliente não vê as chamadas da OPERA, o resumo nem a transcrição", async () => {
+  it("o cliente vê que houve uma chamada, mas não o resumo nem a transcrição", async () => {
     const clientA = (await admin.from("clients").select("id").eq("name", "Cliente Teste A").single()).data.id;
     const p = phone();
     const id = await lead(clientA, { name: `Privada ${RUN}`, phone: p });
@@ -188,8 +188,7 @@ suite("CloudTalk", () => {
       await hook("call.ended", { call_id: `c-${RUN}-10`, direction: "outgoing", external_number: `+351${p}`, talking_time: 50 });
       await hook("cidata.ready", { call_id: `c-${RUN}-10`, summary: { summary: `Segredo ${RUN}: tem crédito aprovado.` } });
       const seen = (await aAdmin.from("lead_events").select("type,title,body,meta").eq("lead_id", id)).data;
-      expect(seen.some((e) => e.type === "call")).toBe(false);
-      expect((await gestor.from("lead_events").select("id").eq("lead_id", id).eq("type", "call")).data).toHaveLength(1);
+      expect(seen.some((e) => e.type === "call")).toBe(true);
       expect(seen.some((e) => e.type === "note" && (e.body ?? "").includes(`Segredo ${RUN}`))).toBe(false);
       expect(seen.every((e) => !e.meta?.ci)).toBe(true);
       expect((await aAdmin.from("lead_call_insights").select("call_id").eq("lead_id", id)).data).toEqual([]);
