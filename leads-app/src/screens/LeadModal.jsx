@@ -339,6 +339,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                   <span className="ic" style={{ background: bg, color: fg }}>{label}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b>{eventTitle(e)}</b>{e.pinned && <span style={{ color: "var(--pinText)" }}> <Icon.pin /></span>}
+                    {e.internal && <span className="tag" style={{ marginLeft: 8, background: "#EEF2F7", color: "#334155" }} title="O cliente não vê esta nota">Só equipa OPERA</span>}
                     <span className="w">{fmtRel(e.when)} · {author(e)}{e.edited_at ? " · editada" : ""}</span>
                     {editing?.id === e.id ? (
                       <>
@@ -354,7 +355,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                     ) : (
                       <>
                         {body && <p>{body}</p>}
-                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !e.meta?.ci && (
+                        {e.kind === "call" && opera && e.meta?.call_id && e.meta?.answered && !events.some((n) => n.meta?.ci_call_id === e.meta.call_id) && (
                           <div className="tools"><button type="button" className="link" disabled={busy} onClick={() => fetchAnalysis(e.meta.call_id)}>Buscar resumo e transcrição</button></div>
                         )}
                         {e.kind === "call" && opera && e.meta?.recorded && e.meta?.call_id && (

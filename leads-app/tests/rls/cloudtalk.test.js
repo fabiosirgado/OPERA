@@ -37,6 +37,8 @@ suite("CloudTalk", () => {
   };
   const get = (id) => gestor.from("leads").select("attempts,first_call_at,stage_id").eq("id", id).single().then((r) => r.data);
   const calls = (id) => gestor.from("lead_events").select("title,meta,created_at").eq("lead_id", id).eq("type", "call").then((r) => r.data);
+  // A análise das chamadas fica numa tabela só da equipa OPERA.
+  const insight = (callId, sb = gestor) => sb.from("lead_call_insights").select("ci").eq("call_id", callId).maybeSingle().then((r) => r.data?.ci);
 
   beforeAll(async () => {
     admin = await signInWithMfa(env, USERS.admin, "TOTP_ADMIN");
@@ -144,6 +146,7 @@ suite("CloudTalk", () => {
       expect(r.body.status).toBe("ignorado");
     }
     expect((await calls(id))[0].meta.ci).toBeUndefined();
+    expect(await insight(`c-${RUN}-8`)).toBeUndefined();
     expect((await aAdmin.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
     expect((await gestor.rpc("leads_cloudtalk_ci", { p_call_id: `c-${RUN}-8`, p: { summary: "x" } })).error).toBeTruthy();
   });
@@ -158,22 +161,48 @@ suite("CloudTalk", () => {
       sentiment: { overall_sentiment: "positive" }, topics: [{ name: "Visita" }],
     });
     expect(r.body).toMatchObject({ status: "processado", lead_id: id });
-    const ci = (await calls(id))[0].meta.ci;
+    expect((await calls(id))[0].meta.ci).toBeUndefined();
+    const ci = await insight(`c-${RUN}-9`);
     expect(ci).toMatchObject({ summary: "Quer visitar o T2 no sábado.", sentiment: "positive", topics: ["Visita"] });
     expect(ci.notes).toEqual(["Próximos passos: Marcar visita"]);
     // No histórico fica uma nota normal, como no Pipedrive.
-    const notes = () => gestor.from("lead_events").select("title,body,edited_at").eq("lead_id", id).eq("type", "note").then((x) => x.data);
-    expect(await notes()).toEqual([{ title: "Resumo da chamada (CloudTalk)", edited_at: null,
+    const notes = () => gestor.from("lead_events").select("title,body,edited_at,internal").eq("lead_id", id).eq("type", "note").then((x) => x.data);
+    expect(await notes()).toEqual([{ title: "Resumo da chamada (CloudTalk)", edited_at: null, internal: true,
       body: "Quer visitar o T2 no sábado.\n\n• Próximos passos: Marcar visita\n\nSentimento positivo · Temas: Visita" }]);
     // Uma segunda análise da mesma chamada atualiza a mesma nota.
     await hook("cidata.ready", { call_id: `c-${RUN}-9`, summary: { summary: "Visita marcada para sábado." } });
     expect((await notes()).map((n) => n.body.split("\n")[0])).toEqual(["Visita marcada para sábado."]);
     // Um transcript.ready sem transcrição disponível não apaga o resumo.
     expect((await hook("transcript.ready", { call_id: `c-${RUN}-9` })).status).toBe(200);
-    expect((await calls(id))[0].meta.ci.summary).toBe("Visita marcada para sábado.");
+    expect((await insight(`c-${RUN}-9`)).summary).toBe("Visita marcada para sábado.");
     expect((await gestor.rpc("leads_erase_subject", { p_lead_id: id, p_confirm: "APAGAR" })).error).toBeNull();
-    expect((await calls(id))[0].meta.ci).toBeUndefined();
+    expect(await insight(`c-${RUN}-9`)).toBeUndefined();
     expect(await notes()).toEqual([]);
+  });
+
+  it("o cliente vê que houve uma chamada, mas não o resumo nem a transcrição", async () => {
+    const clientA = (await admin.from("clients").select("id").eq("name", "Cliente Teste A").single()).data.id;
+    const p = phone();
+    const id = await lead(clientA, { name: `Privada ${RUN}`, phone: p });
+    try {
+      await hook("call.ended", { call_id: `c-${RUN}-10`, direction: "outgoing", external_number: `+351${p}`, talking_time: 50 });
+      await hook("cidata.ready", { call_id: `c-${RUN}-10`, summary: { summary: `Segredo ${RUN}: tem crédito aprovado.` } });
+      const seen = (await aAdmin.from("lead_events").select("type,title,body,meta").eq("lead_id", id)).data;
+      expect(seen.some((e) => e.type === "call")).toBe(true);
+      expect(seen.some((e) => e.type === "note" && (e.body ?? "").includes(`Segredo ${RUN}`))).toBe(false);
+      expect(seen.every((e) => !e.meta?.ci)).toBe(true);
+      expect((await aAdmin.from("lead_call_insights").select("call_id").eq("lead_id", id)).data).toEqual([]);
+      expect(((await aAdmin.rpc("leads_search", { p_q: `Segredo ${RUN}` })).data ?? []).map((x) => x.id)).not.toContain(id);
+      const exp = (await aAdmin.rpc("leads_export", { p_client: clientA, p_history: true })).data;
+      expect(JSON.stringify(exp)).not.toContain(`Segredo ${RUN}`);
+      // A equipa OPERA vê a nota e a pesquisa encontra-a; a nota interna não se afixa (as afixadas vão ao cliente).
+      const note = (await gestor.from("lead_events").select("id,internal").eq("lead_id", id).eq("type", "note").single()).data;
+      expect(note.internal).toBe(true);
+      expect(((await gestor.rpc("leads_search", { p_q: `Segredo ${RUN}` })).data ?? []).map((x) => x.id)).toContain(id);
+      expect((await admin.from("lead_events").update({ pinned: true }).eq("id", note.id)).error).toBeTruthy();
+    } finally {
+      await admin.from("leads").delete().eq("id", id);
+    }
   });
 
   it("recusa webhooks sem assinatura nem chave, e os clientes não chamam as funções do webhook", async () => {
