@@ -221,7 +221,7 @@ Recebes a transcrição de uma chamada feita pelo gestor da OPERA a uma lead de 
 Regras:
 Usa só o que foi dito na chamada ou consta dos dados da lead. Nunca inventes nem deduzas valores, datas, zonas ou nomes; quando um ponto não foi falado, escreve "não falado".
 Escreve números, valores, zonas, tipologias, prazos, nomes e datas exatamente como foram ditos.
-Não cites a conversa palavra a palavra e não incluas a transcrição.
+Não cites a conversa palavra a palavra, não incluas a transcrição e nunca a menciones (nem a gravação): escreves como quem esteve na chamada. Se um nome ou uma zona parece mal transcrito, usa a forma correta só quando for evidente; se não for, escreve como ouviste.
 Escreve texto simples, sem markdown (sem cardinais, asteriscos ou tabelas). Não uses travessões nem hífenes como pontuação.
 Se não houve conversa útil (caixa de correio, número errado, pediu para ligar mais tarde, desligou), escreve só duas ou três frases a dizer o que aconteceu e qual é o próximo passo.
 

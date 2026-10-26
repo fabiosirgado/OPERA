@@ -52,9 +52,10 @@ export default function LeadModal({ id, ctx, onClose }) {
   useEffect(() => { if (ctx.version) load().catch(() => {}); }, [ctx.version, load]);
 
   const stageById = useMemo(() => Object.fromEntries(stages.map((s) => [s.id, s])), [stages]);
-  if (!lead) return <Modal title="A carregar…" onClose={onClose} wide><div className="empty">A carregar…</div></Modal>;
+  const cur = lead && stageById[lead.stage_id];
+  // A ficha pode abrir antes das etapas (link ?lead= de um email): espera por elas em vez de falhar.
+  if (!lead || !cur) return <Modal title="A carregar…" onClose={onClose} wide><div className="empty">A carregar…</div></Modal>;
 
-  const cur = stageById[lead.stage_id];
   const cols = stages.filter((s) => s.client_id === null || s.client_id === lead.client_id);
   const ci = cols.findIndex((s) => s.id === lead.stage_id);
   const readOnly = !opera && cur.position < QUALIFIED_POSITION;
