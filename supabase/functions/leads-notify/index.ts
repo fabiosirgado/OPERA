@@ -1,14 +1,17 @@
-// OPERA Leads: avisos por email (Resend, região UE). Corre no Supabase (UE).
+// OPERA Leads: avisos por email (Resend, região UE) e notificações no telemóvel (web push). Corre no Supabase (UE).
 //
 // Chamada pela própria base de dados (pg_net), com a chave das entradas automáticas no cabeçalho x-opera-secret:
-//   { action: "process" }             envia os avisos pendentes (até 20 de cada vez) e apaga as mensagens de voz apagadas
+//   { action: "process" }             envia os avisos pendentes (até 20 de cada vez), as notificações no telemóvel
+//                                     e apaga as mensagens de voz apagadas
 //   { action: "preview", id }         devolve o email de um aviso sem o enviar (testes)
 //   { action: "preview_mensagens", id } o mesmo para um aviso de mensagens por ler nas conversas
 //
 // Segredos (Supabase, Edge Functions): RESEND_API_KEY. Opcional: LEADS_EMAIL_FROM ("OPERA Leads <leads@opera-os.com>").
 // Sem RESEND_API_KEY os avisos ficam pendentes e saem quando a chave existir.
 // No ambiente de testes, private.leads_config.email_redirect_to manda todos os emails para um só endereço.
+// Web push: as chaves VAPID são criadas aqui na primeira vez e guardadas na base de dados (private.leads_push_keys).
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
+import webpush from "npm:web-push@3.6.7";
 
 const SECRET_KEY = (() => {
   const keys = Deno.env.get("SUPABASE_SECRET_KEYS");
@@ -135,6 +138,51 @@ async function removeGoneFiles() {
   return data.length;
 }
 
+// Notificações no telemóvel: cada aviso vai para todos os dispositivos da pessoa. Um dispositivo que já não existe sai.
+let vapidReady = false;
+async function setupVapid() {
+  if (vapidReady) return true;
+  let { data } = await db.rpc("leads_push_keys");
+  if (!data) {
+    const k = webpush.generateVAPIDKeys();
+    ({ data } = await db.rpc("leads_push_keys", { p_public: k.publicKey, p_private: k.privateKey }));
+  }
+  if (!data?.public || !data?.private) return false;
+  webpush.setVapidDetails("mailto:leads@opera-os.com", data.public, data.private);
+  return (vapidReady = true);
+}
+
+type Push = { id: number; title: string; body: string | null; url: string | null; tag: string | null;
+              subs: { id: string; endpoint: string; p256dh: string; auth: string }[] };
+
+async function sendPushes() {
+  if (!(await setupVapid())) return { error: "Sem chaves VAPID." };
+  const { data, error } = await db.rpc("leads_push_claim", { p_limit: 50 });
+  if (error) return { error: "Não foi possível ler a fila das notificações." };
+  const ok: string[] = [], gone: string[] = [], failed: number[] = [];
+  let lastError: string | null = null;
+  for (const p of (data ?? []) as Push[]) {
+    const payload = JSON.stringify({ title: p.title, body: p.body ?? "", url: p.url ?? "/leads/", tag: p.tag ?? undefined });
+    let delivered = 0;
+    for (const s of p.subs) {
+      try {
+        await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload,
+                                       { TTL: 60 * 60 * 24, urgency: "high" });
+        ok.push(s.id); delivered++;
+      } catch (e) {
+        const status = (e as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 410) gone.push(s.id);
+        else { lastError = `Push ${status ?? ""}: ${String((e as Error).message ?? e).slice(0, 200)}`; console.error("leads-notify:", lastError); }
+      }
+    }
+    if (!delivered && p.subs.length) failed.push(p.id);
+  }
+  if (ok.length || gone.length || failed.length) {
+    await db.rpc("leads_push_done", { p_ok: ok, p_gone: gone, p_failed: failed, p_error: lastError });
+  }
+  return { pushed: ok.length, gone: gone.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Só POST." }, 405);
   const ok = await db.rpc("leads_inbound_verify", { p_secret: req.headers.get("x-opera-secret") ?? "" });
@@ -158,7 +206,9 @@ Deno.serve(async (req) => {
 
   if (body.action === "process") {
     const files = await removeGoneFiles();
-    if (!RESEND_KEY) return json({ configured: false, files });
+    let push: unknown;
+    try { push = await sendPushes(); } catch (e) { push = { error: e instanceof Error ? e.message.slice(0, 200) : "erro" }; }
+    if (!RESEND_KEY) return json({ configured: false, files, push });
     const { data, error } = await db.rpc("leads_notifications_claim", { p_limit: 20 });
     const msgs = await db.rpc("leads_message_notifications_claim", { p_limit: 20 });
     if (error || msgs.error) return json({ error: "Não foi possível ler a fila." }, 500);
@@ -171,7 +221,7 @@ Deno.serve(async (req) => {
       if (!r.ok) console.error(`leads-notify: ${p.kind === "mensagens" ? "aviso de conversa" : "aviso"} ${p.id}:`, r.error);
       results.push({ id: p.id, ok: r.ok });
     }
-    return json({ configured: true, files, sent: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length });
+    return json({ configured: true, files, push, sent: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length });
   }
 
   return json({ error: "Ação desconhecida." }, 400);

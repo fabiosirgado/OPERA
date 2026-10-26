@@ -1,0 +1,18 @@
+{
+  "name": "OPERA Leads",
+  "short_name": "OPERA Leads",
+  "description": "As leads da OPERA e dos clientes, no telemóvel.",
+  "lang": "pt-PT",
+  "id": "/leads/",
+  "start_url": "/leads/",
+  "scope": "/leads/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1B3A",
+  "theme_color": "#0B1B3A",
+  "icons": [
+    { "src": "/leads/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/leads/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/leads/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -227,6 +227,11 @@ body.out main{padding:0}
 .ubox .who{display:flex;align-items:center;gap:10px}
 .av{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 32px}
 .ubox small{color:var(--navyMute);font-size:12px}
+.appSetup{display:flex;flex-direction:column;gap:6px}
+.appSetup button{width:100%}
+.appSetup button[aria-pressed="true"]{background:transparent;color:var(--navyText)}
+.appSetup small{line-height:1.4}
+.appSetup .err{color:#FCA5A5}
 .ubox select,.ubox button{min-height:36px;border-radius:8px;border:1px solid var(--navy2);background:var(--navy2);color:#fff;padding:0 10px;font-size:13px}
 .state{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap}
 .state.ok{background:var(--greenSoft);color:var(--greenText)}.state.inv{background:#DCE8FF;color:#1E3A8A}.state.off{background:#E5E7EB;color:#374151}.state.del{background:var(--redSoft);color:var(--redText)}
