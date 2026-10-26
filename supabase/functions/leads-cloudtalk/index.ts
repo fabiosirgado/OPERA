@@ -11,6 +11,7 @@
 //
 // A nota da chamada que o cliente vê é escrita pelo Claude a partir da transcrição, como se fosse o gestor do cliente:
 // um diagnóstico de qualificação detalhado, sem a transcrição. A transcrição fica só para a equipa OPERA.
+// Com a nota vêm os campos de qualificação ouvidos na chamada; a lead só recebe os que ainda estão vazios.
 //
 // Segredos (Supabase, Edge Functions): CLOUDTALK_API_KEY_ID, CLOUDTALK_API_KEY_SECRET, CLOUDTALK_WEBHOOK_SECRET.
 // Opcional: ANTHROPIC_API_KEY (sem ela, a nota fica com o resumo curto da CloudTalk).
@@ -245,7 +246,52 @@ Objeções, dúvidas ou receios
 
 Temperatura: quente, morno ou frio, e porquê.
 
-Próximos passos: o que ficou combinado, com datas e horas se foram ditas.`;
+Próximos passos: o que ficou combinado, com datas e horas se foram ditas.
+
+Devolves também os campos de qualificação da lead, com o que foi dito na chamada, numa frase curta cada (por exemplo "300 000 €", "3 meses", "crédito com 10% de entrada, sem pré aprovação", "sim, T2 em Odivelas", "sábados de manhã"). Usa null quando o ponto não foi falado ou não ficou claro; nunca deduzas. No objetivo, escolhe só o que a pessoa disse querer: Comprador (quer comprar), Proprietário (quer vender ou arrendar um imóvel seu) e Crédito (quer ajuda com o crédito habitação); lista vazia se não ficou claro.`;
+
+// Formato da resposta: a nota e os campos de qualificação (structured outputs).
+const NOTE_FORMAT = {
+  type: "json_schema" as const,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["nota", "qualificacao"],
+    properties: {
+      nota: { type: "string" },
+      qualificacao: {
+        type: "object",
+        additionalProperties: false,
+        required: ["objetivo", "budget", "prazo", "financiamento", "imovel_para_vender", "disponibilidade_visita"],
+        properties: {
+          objetivo: { type: "array", items: { type: "string", enum: ["Comprador", "Proprietário", "Crédito"] } },
+          budget: { type: ["string", "null"] },
+          prazo: { type: ["string", "null"] },
+          financiamento: { type: ["string", "null"] },
+          imovel_para_vender: { type: ["string", "null"] },
+          disponibilidade_visita: { type: ["string", "null"] },
+        },
+      },
+    },
+  },
+};
+type NoteOut = {
+  nota: string;
+  qualificacao: { objetivo: string[]; budget: string | null; prazo: string | null; financiamento: string | null;
+                  imovel_para_vender: string | null; disponibilidade_visita: string | null };
+};
+// Nomes dos campos como estão na lead (iguais aos do ecrã de qualificação).
+function qualFields(q: NoteOut["qualificacao"]) {
+  const out: Record<string, string> = {};
+  const set = (k: string, v: string | null | undefined) => { if (v && v.trim()) out[k] = v.trim(); };
+  set("Objetivo", (q.objetivo ?? []).join(", "));
+  set("Budget", q.budget);
+  set("Prazo", q.prazo);
+  set("Financiamento", q.financiamento);
+  set("Tem imóvel para vender", q.imovel_para_vender);
+  set("Disponibilidade para visita", q.disponibilidade_visita);
+  return out;
+}
 
 type Ci = { summary?: string; notes?: string[]; transcript?: { s: string; t: number | null; x: string }[] };
 
@@ -285,23 +331,41 @@ async function writeAiNote(callId: string, force = false) {
   ].filter(Boolean).join("\n\n");
   const transcript = ci.transcript.map((x) => `${x.s || "Interlocutor"}: ${x.x}`).join("\n");
 
-  const response = await claude.beta.messages.create({
+  const ask = (withFields: boolean) => claude.beta.messages.create({
     model: NOTE_MODEL,
     max_tokens: 16000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
-    output_config: { effort: "medium" },
+    output_config: withFields ? { effort: "medium", format: NOTE_FORMAT } : { effort: "medium" },
     system: NOTE_SYSTEM,
     messages: [{
       role: "user",
       content: `${context}\n\nTranscrição da chamada (o agente é ${gestor}):\n${transcript}\n\nEscreve a nota de ${gestor} sobre esta chamada.`,
     }],
   });
+  // Se o formato com os campos for recusado, a nota sai na mesma, só sem preencher a qualificação.
+  let withFields = true;
+  let response;
+  try {
+    response = await ask(true);
+  } catch (e) {
+    if (!(e instanceof Anthropic.BadRequestError)) throw e;
+    console.error("leads-cloudtalk: formato da nota recusado:", e.message.slice(0, 200));
+    withFields = false;
+    response = await ask(false);
+  }
   if (response.stop_reason === "refusal") return { status: "recusada" };
-  const body = response.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("\n").trim();
-  if (!body) return { status: "vazia" };
-  return await must(admin.rpc("leads_cloudtalk_ai_note", { p_call_id: callId, p_body: body, p_model: response.model }),
-    "Nota da chamada") as Obj;
+  if (response.stop_reason === "max_tokens") return { status: "cortada" };
+  const raw = response.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
+  let out: NoteOut | null = null;
+  if (withFields) {
+    try { out = JSON.parse(raw); } catch { return { status: "formato_invalido" }; }
+  }
+  const nota = out ? out.nota : raw;
+  if (!nota?.trim()) return { status: "vazia" };
+  return await must(admin.rpc("leads_cloudtalk_ai_note", {
+    p_call_id: callId, p_body: nota, p_model: response.model, p_fields: out?.qualificacao ? qualFields(out.qualificacao) : {},
+  }), "Nota da chamada") as Obj;
 }
 
 // Depois de responder à CloudTalk: a nota demora alguns segundos e a CloudTalk não espera por ela.
