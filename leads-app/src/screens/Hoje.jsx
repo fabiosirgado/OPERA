@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { callLead, completeTask, today } from "../lib/leadsApi.js";
 import { useAction } from "../ui/feedback.jsx";
 import { ClientTag, Icon, TaskTag } from "../ui/bits.jsx";
+import { isAllDay } from "../lib/format.js";
 
 // "Hoje": tarefas atrasadas, de hoje e de amanhã, de todos os clientes.
 export default function Hoje({ ctx }) {
@@ -27,7 +28,7 @@ export default function Hoje({ ctx }) {
     const x = new Date(d);
     return x < now && x.toDateString() !== new Date().toDateString()
       ? x.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })
-      : x.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+      : isAllDay(x) ? "Sem hora" : x.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
   };
   const call = (r) => run(() => callLead({ id: r.lead_id, phone: r.phone }),
     (via) => (via === "cloudtalk" ? `A CloudTalk vai ligar-te primeiro e depois a ${r.lead_name}` : `A ligar a ${r.lead_name}`))

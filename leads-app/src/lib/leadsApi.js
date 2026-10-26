@@ -1,6 +1,6 @@
 // Dados do pipeline e da ficha da lead. As listas vêm de funções no servidor, que filtram, ordenam e paginam.
 import { sb, SUPABASE_URL } from "../supabase.js";
-import { PAGE } from "./format.js";
+import { PAGE, dueFrom, isAllDay, localInput } from "./format.js";
 import { sessionEnded } from "./api.js";
 
 const must = async (query) => {
@@ -98,8 +98,15 @@ export const addTask = async (leadId, type, dueAt, note) => {
   return must(sb.from("lead_tasks").insert({ lead_id: leadId, type, due_at: new Date(dueAt).toISOString(), note: note || null, created_by: s.user.id }));
 };
 export const completeTask = (taskId) => must(sb.from("lead_tasks").update({ done_at: new Date().toISOString() }).eq("id", taskId));
-export const snoozeTask = (task) =>
-  must(sb.from("lead_tasks").update({ due_at: new Date(Math.max(new Date(task.due_at), Date.now()) + 864e5).toISOString() }).eq("id", task.id));
+// Adiar 1 dia: a tarefa sem hora continua sem hora (no dia seguinte, mesmo com mudança de hora de verão).
+export const snoozeTask = (task) => {
+  const base = new Date(Math.max(new Date(task.due_at), Date.now()) + 864e5);
+  const due = isAllDay(task.due_at) ? dueFrom(localInput(base).slice(0, 10), "") : base.toISOString();
+  return must(sb.from("lead_tasks").update({ due_at: due }).eq("id", task.id));
+};
+export const updateTask = (taskId, { type, due, note }) =>
+  must(sb.from("lead_tasks").update({ type, due_at: due, note: note || null }).eq("id", taskId).select("id"))
+    .then((r) => { if (!r.length) throw new Error("Sem permissão para mudar esta tarefa."); });
 export const deleteTask = (taskId) => must(sb.from("lead_tasks").delete().eq("id", taskId));
 
 export const addNote = async (leadId, body, pinned, title = "Nota") => {

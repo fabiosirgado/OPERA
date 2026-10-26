@@ -54,16 +54,32 @@ const CLIENT_SOFT = {
 export const clientSoft = (color) => CLIENT_SOFT[color] || ["#E5E7EB", "#374151"];
 
 const hhmm = (d) => d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
-// "Hoje 10:30", "Ontem 18:00", "Amanhã 09:00" ou "22/10 10:30", como no protótipo.
+
+// Tarefa sem hora: fica guardada às 23:59:59 desse dia, para só ficar atrasada quando o dia acaba.
+// Nenhuma hora escolhida no formulário tem segundos, por isso a marca não se confunde com uma hora real.
+export const isAllDay = (ts) => {
+  const d = new Date(ts);
+  return d.getHours() === 23 && d.getMinutes() === 59 && d.getSeconds() === 59 && d.getMilliseconds() === 0;
+};
+// Dia (AAAA-MM-DD) e hora (HH:MM, ou vazia para "sem hora") do formulário, em ISO.
+export const dueFrom = (date, time) => new Date(`${date}T${time || "23:59:59"}`).toISOString();
+// Para preencher o formulário a partir de uma data: { date, time } ("" quando a tarefa não tem hora).
+export const dueParts = (ts) => {
+  const v = localInput(ts);
+  return { date: v.slice(0, 10), time: isAllDay(ts) ? "" : v.slice(11, 16) };
+};
+
+// "Hoje 10:30", "Ontem 18:00", "Amanhã 09:00" ou "22/10 10:30", como no protótipo. Sem hora: só o dia.
 export function fmtRel(ts) {
   if (!ts) return "";
   const d = new Date(ts), n = new Date();
   const y = new Date(n); y.setDate(n.getDate() - 1);
   const t = new Date(n); t.setDate(n.getDate() + 1);
-  if (d.toDateString() === n.toDateString()) return `Hoje ${hhmm(d)}`;
-  if (d.toDateString() === y.toDateString()) return `Ontem ${hhmm(d)}`;
-  if (d.toDateString() === t.toDateString()) return `Amanhã ${hhmm(d)}`;
-  return `${d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })} ${hhmm(d)}`;
+  const time = isAllDay(d) ? "" : ` ${hhmm(d)}`;
+  if (d.toDateString() === n.toDateString()) return `Hoje${time}`;
+  if (d.toDateString() === y.toDateString()) return `Ontem${time}`;
+  if (d.toDateString() === t.toDateString()) return `Amanhã${time}`;
+  return `${d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })}${time}`;
 }
 
 export function ago(ts) {
