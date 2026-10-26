@@ -44,9 +44,9 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (!l) { toast("Esta lead já não está disponível."); onClose(); return; }
     setLead(l); setEvents(e); setTasks(t);
     clientUsers(l.client_id).then(setUsers).catch(() => setUsers([]));
-    if (l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
+    if (opera && l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
     else setFirstCallMin(null);
-  }, [id, onClose, toast]);
+  }, [id, onClose, toast, opera]);
   useEffect(() => { load().catch((e) => toast(e.message)); }, [load, toast]);
   // Atualiza sozinha quando alguém mexe nesta lead (tempo real).
   useEffect(() => { if (ctx.version) load().catch(() => {}); }, [ctx.version, load]);
@@ -152,7 +152,7 @@ export default function LeadModal({ id, ctx, onClose }) {
           <ClientTag name={lead.client.name} color={lead.client.color} />
           {lead.source && <span className="src">Origem: {lead.source}</span>}
           <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 400 }}>
-            Entrou {fmtRel(lead.created_at)}{firstCallMin != null && ` · Time to Lead ${fmtDur(firstCallMin)}`}
+            Entrou {fmtRel(lead.created_at)}{opera && firstCallMin != null && ` · Time to Lead ${fmtDur(firstCallMin)}`}
           </span>
         </div>
         <span>{lead.name}</span>
