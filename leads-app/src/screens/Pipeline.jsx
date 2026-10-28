@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { pipeline, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
 import { exportLeads } from "../lib/exportLeads.js";
 import { fileSafe } from "../lib/excel.js";
-import { PAGE, QUALIFIED_POSITION, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
+import { PAGE, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
 import { useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags } from "../ui/bits.jsx";
 
@@ -33,7 +33,6 @@ export default function Pipeline({ ctx }) {
   const filters = useMemo(() => ({ client, label: prefs.label, q: qDebounced, mine: !opera && prefs.mine }),
     [client, prefs.label, qDebounced, opera, prefs.mine]);
   const columns = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === client), [stages, client]);
-  const posOf = useMemo(() => Object.fromEntries(stages.map((s) => [s.id, s.position])), [stages]);
 
   const loadBoard = useCallback(async () => {
     const [c, ...pages] = await Promise.all([
@@ -70,12 +69,10 @@ export default function Pipeline({ ctx }) {
   };
 
   // Arrastar entre etapas (computador). No telemóvel muda-se a etapa na ficha da lead.
-  const canMoveTo = (s) => opera || s.position >= QUALIFIED_POSITION;
   const drop = async (stage, leadId, fromStage) => {
     if (!leadId || stage.id === fromStage) return;
-    if (!canMoveTo(stage) || (!opera && posOf[fromStage] < QUALIFIED_POSITION)) return toast("Só a OPERA mexe nas etapas antes de Qualificada");
     if (stage.key === "desq" && !confirm("Passar esta lead para Lead desqualificada? As tarefas em aberto são canceladas.")) return;
-    if (await run(() => updateLead(leadId, { stage_id: stage.id }), stage.key === "qualificada" ? "Lead qualificada. O cliente vai ser avisado." : `Movida para ${stage.name}`)) loadBoard();
+    if (await run(() => updateLead(leadId, { stage_id: stage.id }), stage.key === "qualificada" ? (opera ? "Lead qualificada. O cliente vai ser avisado." : "Lead qualificada.") : `Movida para ${stage.name}`)) loadBoard();
     // Sem Objetivo não se qualifica: abre a ficha para o indicar.
     else if (stage.key === "qualificada") ctx.onOpenLead(leadId);
   };
@@ -207,7 +204,7 @@ export default function Pipeline({ ctx }) {
                   <span className="owner" style={{ color: ownerCol }}>{ownerTxt}</span>
                 </header>
                 {items.map((l) => <Card key={l.id} l={l} opera={opera} labels={labels}
-                  draggable={canMoveTo(s) && (opera || s.position >= QUALIFIED_POSITION)} onOpen={() => ctx.onOpenLead(l.id)} />)}
+                  draggable onOpen={() => ctx.onOpenLead(l.id)} />)}
                 {n > items.length && <button type="button" className="more" onClick={() => more(s.id)}>Mostrar mais {Math.min(PAGE, n - items.length)} de {n - items.length}</button>}
               </section>
             );
