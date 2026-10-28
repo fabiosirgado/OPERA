@@ -1,12 +1,25 @@
 import { useEffect, useState } from "react";
 import { sb } from "../supabase.js";
-import { MAX_CLIENTS_PER_MANAGER, fmtDur } from "../lib/format.js";
+import { MAX_CLIENTS_PER_MANAGER, fmtDur, localInput } from "../lib/format.js";
 import { useAction } from "../ui/feedback.jsx";
 
-const PERIODS = [["1", "Hoje"], ["7", "7 dias"], ["30", "30 dias"], ["0", "Tudo"]];
+const PERIODS = [["1", "Hoje"], ["7", "7 dias"], ["30", "30 dias"], ["0", "Tudo"], ["custom", "Personalizado"]];
 const TTL_BUCKETS = ["Até 15 min", "15 a 30 min", "30 a 60 min", "1 a 4 h", "Mais de 4 h", "Por contactar"];
 const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 const dec = (n) => n.toFixed(1).replace(".", ",");
+const todayISO = () => localInput(Date.now()).slice(0, 10);
+const monthStartISO = () => `${todayISO().slice(0, 8)}01`;
+
+// Gráfico por dia; em períodos de mais de 3 meses, os dias juntam-se por semana (a começar no primeiro dia).
+function perBucket(days) {
+  if (days.length <= 92) return { unit: "dia", data: days };
+  const data = [];
+  for (let i = 0; i < days.length; i += 7) {
+    const w = days.slice(i, i + 7);
+    data.push({ d: w[0].d, v: w.reduce((a, b) => a + b.v, 0) });
+  }
+  return { unit: "semana", data };
+}
 
 // Dashboard: a equipa OPERA vê todos os clientes; cada cliente vê só os seus números (sem a ocupação dos gestores).
 // Números calculados no servidor.
@@ -14,21 +27,25 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
   const { clients } = ctx;
   const [client, setClient] = useState("");
   const [period, setPeriod] = useState("7");
+  const [range, setRange] = useState(() => ({ from: monthStartISO(), to: todayISO() }));
+  const rangeOk = range.from && range.to && range.from <= range.to;
   const [d, setD] = useState(null);
   const [managers, setManagers] = useState([]);
   const [run] = useAction();
 
   useEffect(() => {
+    if (period === "custom" && !rangeOk) return;
+    const custom = period === "custom" ? { p_from: range.from, p_to: range.to } : {};
     run(async () => {
       const [dash, load] = await Promise.all([
-        sb.rpc("leads_dashboard", { p_client: client || null, p_period: period }),
+        sb.rpc("leads_dashboard", { p_client: client || null, p_period: period, ...custom }),
         opera ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
       ]);
       if (dash.error) throw dash.error;
       setD(dash.data);
       setManagers(load.data || []);
     });
-  }, [client, period, opera, ctx.version, run]);
+  }, [client, period, range.from, range.to, rangeOk, opera, ctx.version, run]);
 
   const setTarget = async (v) => {
     const m = Math.max(1, Math.min(240, Number(v) || 15));
@@ -53,6 +70,15 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           <div className="pills" role="group" aria-label="Período">
             {PERIODS.map(([v, l]) => <button key={v} type="button" className={`pill ${period === v ? "on" : ""}`} aria-pressed={period === v} onClick={() => setPeriod(v)}>{l}</button>)}
           </div>
+          {period === "custom" && (
+            <div className="row periodo" role="group" aria-label="Período personalizado">
+              <label className="f">De
+                <input type="date" value={range.from} max={range.to || undefined} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} /></label>
+              <label className="f">Até
+                <input type="date" value={range.to} min={range.from || undefined} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} /></label>
+              {!rangeOk && <span className="sub" role="alert" style={{ margin: 0, color: "var(--redText)" }}>A data de início tem de ser antes da data de fim.</span>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -98,14 +124,18 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           <div className="stat s3"><span>Qualificadas: crédito</span><b>{d.qual_types.credito}</b><small>{pct(d.qual_types.credito, d.qual)} das qualificadas</small></div>
           <div className="stat s3"><span>Qualificadas sem tipo</span><b>{d.qual_types.sem_tipo}</b><small>Uma lead pode ter mais de um tipo</small></div>
 
-          {period !== "1" && (
-            <div className="panel s12">
-              <div className="top" style={{ gap: 8 }}><h3>Leads que entraram por dia</h3>
-                <span className="sub" style={{ margin: 0, fontSize: 13 }}>
-                  Total {d.per_day.reduce((a, b) => a + b.v, 0)} · média {dec(d.per_day.reduce((a, b) => a + b.v, 0) / d.per_day.length)} por dia · máximo {Math.max(0, ...d.per_day.map((a) => a.v))}</span></div>
-              <LineChart data={d.per_day} />
-            </div>
-          )}
+          {d.per_day.length > 1 && (() => {
+            const b = perBucket(d.per_day);
+            const total = d.per_day.reduce((a, x) => a + x.v, 0);
+            return (
+              <div className="panel s12">
+                <div className="top" style={{ gap: 8 }}><h3>Leads que entraram por {b.unit}</h3>
+                  <span className="sub" style={{ margin: 0, fontSize: 13 }}>
+                    Total {total} · média {dec(total / d.per_day.length)} por dia · máximo {Math.max(0, ...b.data.map((a) => a.v))} por {b.unit}</span></div>
+                <LineChart data={b.data} endsToday={d.to === todayISO()} unit={b.unit} />
+              </div>
+            );
+          })()}
           <div className="panel s6"><h3>Leads por origem</h3>{d.by_source.length ? <Bars items={d.by_source} /> : <div className="empty">Sem leads no período.</div>}</div>
           <div className="panel s6"><h3>Atividades concluídas por tipo</h3>
             <Bars items={[{ l: "Chamada", v: d.acts.call }, { l: "Reunião", v: d.acts.meeting }, { l: "Follow up", v: d.acts.followup }]} /></div>
@@ -172,7 +202,7 @@ function Occupancy({ m }) {
 }
 
 // Linha das leads por dia, como no protótipo: grelha discreta, área suave e dica ao passar o rato em cada dia.
-function LineChart({ data }) {
+function LineChart({ data, endsToday, unit }) {
   const W = 900, H = 220, L = 36, R = 12, T = 14, B = 28, n = data.length;
   const raw = Math.max(1, ...data.map((a) => a.v));
   const step = raw <= 4 ? 1 : raw <= 10 ? 2 : raw <= 20 ? 5 : raw <= 100 ? 10 : Math.ceil(raw / 50) * 10;
@@ -186,19 +216,19 @@ function LineChart({ data }) {
   const every = Math.ceil(n / 8);
   const slot = (W - L - R) / Math.max(1, n - 1);
   return (
-    <svg className="lc" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Leads por dia, de ${fmtD(data[0].d)} a hoje`}>
+    <svg className="lc" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Leads por ${unit}, de ${fmtD(data[0].d)} a ${endsToday ? "hoje" : fmtD(data[n - 1].d)}`}>
       {grid.map((v) => (
         <g key={v}><line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className="gr" /><text x={L - 8} y={y(v) + 4} textAnchor="end" className="ax">{v}</text></g>))}
       <path d={area} className="ar" /><path d={line} className="ln" />
       {data.map((a, i) => ((i % every === 0 && n - 1 - i >= Math.ceil(every * 0.7)) || i === n - 1) && (
-        <text key={`x${i}`} x={x(i)} y={H - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} className="ax">{i === n - 1 ? "Hoje" : fmtD(a.d)}</text>))}
+        <text key={`x${i}`} x={x(i)} y={H - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} className="ax">{i === n - 1 && endsToday && unit === "dia" ? "Hoje" : fmtD(a.d)}</text>))}
       {data.map((a, i) => (
         <g key={`p${i}`} className="pt">
           <rect x={x(i) - slot / 2} y={T} width={slot} height={H - T - B} className="hit" />
           <line x1={x(i)} x2={x(i)} y1={T} y2={y(0)} className="cr" />
           <circle cx={x(i)} cy={y(a.v)} r={4.5} className="dt" />
           <text x={Math.min(Math.max(x(i), L + 40), W - R - 40)} y={Math.max(y(a.v) - 12, T + 10)} textAnchor="middle" className="tip">
-            {fmtD(a.d)}: {a.v} {a.v === 1 ? "lead" : "leads"}</text>
+            {unit === "semana" ? "Semana de " : ""}{fmtD(a.d)}: {a.v} {a.v === 1 ? "lead" : "leads"}</text>
         </g>))}
     </svg>
   );

@@ -148,6 +148,23 @@ suite("Dashboard", () => {
     expect(all.per_day).toHaveLength(30);
   });
 
+  it("período personalizado: do dia X ao dia Y, inclusive", async () => {
+    const day = (n) => new Date(Date.now() + n * 86400000).toLocaleDateString("sv-SE", { timeZone: "Europe/Lisbon" });
+    const { data: w } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom", p_from: day(-6), p_to: day(0) });
+    expect(w.days).toBe(7);
+    expect(w.per_day).toHaveLength(7);
+    expect(w.per_day[0].d).toBe(day(-6));
+    expect(w.to).toBe(day(0));
+    const { data: all } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "0" });
+    expect(w.leads_in).toBeLessThanOrEqual(all.leads_in);
+    // Um período no passado, antes de haver leads de teste, não conta nada.
+    const { data: old } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom", p_from: "2020-01-01", p_to: "2020-01-31" });
+    expect(old.leads_in).toBe(0);
+    expect(old.per_day).toHaveLength(31);
+    expect((await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom", p_from: day(0), p_to: day(-1) })).error).toBeTruthy();
+    expect((await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom" })).error).toBeTruthy();
+  });
+
   it("cada cliente vê só o seu dashboard; a ocupação dos gestores é só da equipa OPERA", async () => {
     // Mesmo pedindo outro cliente, o servidor devolve só os números do cliente de quem pede.
     const { data: mine, error } = await aAdmin.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
