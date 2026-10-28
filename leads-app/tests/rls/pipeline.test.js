@@ -106,6 +106,17 @@ suite("Pipeline e regras de negócio", () => {
       const { data: notif } = await gestor.from("lead_notifications").select("kind,status").eq("lead_id", id);
       expect(notif).toEqual([{ kind: "qualificada", status: "pendente" }]);
     });
+    it("as leads da própria OPERA (cliente interno) qualificam sem Objetivo", async () => {
+      // O Cliente Teste B passa a interno só durante este teste.
+      expect((await admin.rpc("leads_set_client_internal", { p_client_id: clientB, p_internal: true })).error).toBeNull();
+      try {
+        const id = await create(gestor, { client_id: clientB, name: "OPERA sem objetivo", phone: "944000009", source: "Referência" });
+        expect((await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id)).error).toBeNull();
+        expect((await lead(id)).stage_id).toBe(stages.qualificada);
+      } finally {
+        await admin.rpc("leads_set_client_internal", { p_client_id: clientB, p_internal: false });
+      }
+    });
     it("Lead desqualificada cancela as tarefas em aberto", async () => {
       const id = await create(gestor, { client_id: clientA, name: "A desqualificar", phone: "944000004", source: "Meta" });
       await gestor.from("lead_tasks").insert({ lead_id: id, type: "call", due_at: new Date().toISOString() });
