@@ -120,8 +120,30 @@ suite("CloudTalk", () => {
     expect(notes[0].body).toContain("Cliente CloudTalk 2");
   });
 
-  it("ignora chamadas recebidas e números sem lead", async () => {
-    expect((await hook("call.ended", { call_id: `c-${RUN}-4`, direction: "incoming", external_number: "+351930000000" })).body.status).toBe("ignorado");
+  it("chamada recebida: fica na lead como recebida, sem contar como tentativa; não atendida, fica tarefa para ligar de volta", async () => {
+    const p = phone();
+    const id = await lead(c1, { name: "Ligou de volta", phone: p, created_at: ago(60) });
+    const r = await hook("call.ended", {
+      call_id: `c-${RUN}-11`, direction: "incoming", external_number: `+351${p}`, started_at: ago(20), talking_time: 45, duration: 50,
+    });
+    expect(r.body).toMatchObject({ status: "processado", lead_id: id });
+    let l = await get(id);
+    expect(l.attempts).toBe(0);
+    expect(l.first_call_at).toBeNull();
+    expect(l.stage_id).toBe(stages.followup);
+    expect((await calls(id))[0]).toMatchObject({ title: "Chamada recebida, atendida" });
+    expect((await calls(id))[0].meta).toMatchObject({ direction: "incoming", answered: true, duration_s: 45 });
+
+    await hook("call.ended", { call_id: `c-${RUN}-12`, direction: "incoming", external_number: `+351${p}`, started_at: ago(5), talking_time: 0 });
+    l = await get(id);
+    expect(l.attempts).toBe(0);
+    const { data: tasks } = await gestor.from("lead_tasks").select("type,note").eq("lead_id", id).is("done_at", null);
+    expect(tasks).toEqual([{ type: "call", note: "A lead ligou e a chamada não foi atendida. Ligar de volta." }]);
+  });
+
+  it("ignora chamadas internas e números sem lead", async () => {
+    expect((await hook("call.ended", { call_id: `c-${RUN}-4`, direction: "internal", external_number: "+351930000000" })).body.status).toBe("ignorado");
+    expect((await hook("call.ended", { call_id: `c-${RUN}-4b`, direction: "incoming", external_number: "+351939999997" })).body.status).toBe("sem_lead");
     expect((await hook("call.ended", { call_id: `c-${RUN}-5`, direction: "outgoing", external_number: "+351939999998" })).body.status).toBe("sem_lead");
     expect((await hook("call.started", { call_id: `c-${RUN}-6` })).body.status).toBe("ignorado");
   });
