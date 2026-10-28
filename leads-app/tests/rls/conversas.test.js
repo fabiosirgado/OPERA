@@ -87,6 +87,20 @@ suite("Conversas", () => {
     expect((await aUser.rpc("leads_message_edit", { p_id: id, p_body: "de volta" })).error).not.toBeNull();
   });
 
+  it("lead qualificada: entra sozinha uma mensagem da OPERA na conversa, com a lead junta", async () => {
+    const id = await lead(clientA, { name: `${TAG} Sara`, phone: "912340009",
+      qualification: { Objetivo: "Comprador", Budget: "300 000 €", Financiamento: "crédito pré aprovado" } });
+    expect((await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id)).error).toBeNull();
+    const m = (await thread(aUser, clientA)).find((x) => x.lead_id === id && x.auto === "qualificada");
+    expect(m).toBeTruthy();
+    expect(m.side).toBe("opera");
+    expect(m.body).toContain(`Lead qualificada: ${TAG} Sara`);
+    expect(m.body).toContain("Comprador · Budget 300 000 € · Financiamento: crédito pré aprovado");
+    expect(m.lead_open).toBe(true);
+    // Só uma mensagem por qualificação.
+    expect((await thread(aUser, clientA)).filter((x) => x.lead_id === id && x.auto).length).toBe(1);
+  });
+
   it("mensagem vazia ou longa demais não entra", async () => {
     expect((await send(aUser, clientA, "   ")).error).not.toBeNull();
     expect((await send(aUser, clientA, "x".repeat(4001))).error).not.toBeNull();

@@ -166,7 +166,8 @@ function Thread({ ctx, clientId, title, chatVersion, onRead, onBack }) {
         {(msgs || []).map((m) => {
           const mine = m.author_id === me;
           return (
-            <div key={m.id} className={`msg ${mine ? "mine" : ""} ${m.side === "opera" ? "op" : ""} ${m.deleted_at ? "del" : ""}`}>
+            <div key={m.id} className={`msg ${mine ? "mine" : ""} ${m.side === "opera" ? "op" : ""} ${m.deleted_at ? "del" : ""} ${m.auto === "qualificada" && !m.deleted_at ? "qual" : ""}`}>
+              {m.auto === "qualificada" && !m.deleted_at && <span className="mtag">✓ Lead qualificada</span>}
               <div className="mm">
                 {!mine && <span className="av sm" aria-hidden="true">{initials(m.author_name)}</span>}
                 <b>{mine ? "Eu" : who(m)}</b><span>{fmtWhen(m.created_at)}</span>
