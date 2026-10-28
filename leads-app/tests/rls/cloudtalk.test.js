@@ -78,6 +78,9 @@ suite("CloudTalk", () => {
     const p = phone();
     const id = await lead(c1, { name: "Pedida", phone: `+351 ${p}`, created_at: ago(20) });
     expect((await gestor.rpc("leads_register_call", { p_lead_id: id, p_meta: { via: "cloudtalk" } })).error).toBeNull();
+    // Carregar outra vez em Ligar enquanto a CloudTalk ainda não deu o resultado não cria outro registo.
+    expect((await gestor.rpc("leads_register_call", { p_lead_id: id, p_meta: { via: "cloudtalk" } })).error).toBeNull();
+    expect(await calls(id)).toHaveLength(1);
     const r = await hook("call.ended", {
       call_id: `c-${RUN}-1`, direction: "outgoing", external_number: `+351${p}`, started_at: new Date().toISOString(),
       talking_time: 95, duration: 110, recorded: false, user: { id: 1, email: USERS.gestor },
