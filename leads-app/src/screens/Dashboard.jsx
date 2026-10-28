@@ -108,9 +108,11 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           </div>}
 
           <div className="stat s3"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia</small></div>
-          <div className="stat s3"><span>Chamadas feitas</span><b>{d.calls}</b><small>{pct(d.answered, d.calls)} atendidas · {d.leads_in ? dec(d.calls / d.leads_in) : "0"} por lead</small></div>
-          <div className="stat s3"><span>Atividades concluídas</span><b>{d.acts.call + d.acts.meeting + d.acts.followup}</b>
-            <small>{d.acts.call} chamadas · {d.acts.meeting} reuniões · {d.acts.followup} follow ups</small></div>
+          {/* Atendida: conversa de 10 segundos ou mais. O resto (não atendidas e mais curtas) são tentativas. */}
+          <div className="stat s3"><span>Chamadas atendidas</span><b>{d.answered}</b>
+            <small>{pct(d.answered, d.calls)} de {d.calls} chamadas · conversa de 10 s ou mais</small></div>
+          <div className="stat s3"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>
+            <small>Não atendidas ou com menos de 10 s · {d.leads_in ? dec(d.calls / d.leads_in) : "0"} chamadas por lead</small></div>
           <div className={`stat s3 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
           <div className="stat s3"><span>Leads qualificadas</span><b>{d.qual}</b><small>Tempo até qualificar: {d.time_to_qualify == null ? "—" : fmtDur(d.time_to_qualify)}</small></div>
           <div className="stat s3"><span>Leads desqualificadas</span><b>{d.desq}</b><small>No período</small></div>
@@ -138,6 +140,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           })()}
           <div className="panel s6"><h3>Leads por origem</h3>{d.by_source.length ? <Bars items={d.by_source} /> : <div className="empty">Sem leads no período.</div>}</div>
           <div className="panel s6"><h3>Atividades concluídas por tipo</h3>
+            <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>Total {d.acts.call + d.acts.meeting + d.acts.followup} no período</div>
             <Bars items={[{ l: "Chamada", v: d.acts.call }, { l: "Reunião", v: d.acts.meeting }, { l: "Follow up", v: d.acts.followup }]} /></div>
 
           {opera && !client && (

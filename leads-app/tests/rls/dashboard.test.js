@@ -55,9 +55,9 @@ suite("Dashboard", () => {
     // 5: Meta desqualificada sem chamada (não conta como por contactar).
     const l5 = await lead({ name: "D5", source: "Meta", entry_stage: "meta", stage_id: stages.desq, created_at: ago(30) });
 
-    await event(l1, { type: "call", title: "Chamada", meta: { answered: true }, created_at: at("11:10") });
+    await event(l1, { type: "call", title: "Chamada", meta: { answered: true, duration_s: 45 }, created_at: at("11:10") });
     await event(l2, { type: "call", title: "Chamada", meta: { answered: false }, created_at: at("11:00") });
-    await event(l4, { type: "call", title: "Chamada", meta: { answered: true }, created_at: ago(100) });
+    await event(l4, { type: "call", title: "Chamada", meta: { answered: true, duration_s: 6 }, created_at: ago(100) });
     await event(l4, { type: "stage", from_stage_id: stages.followup, to_stage_id: stages.qualificada, created_at: ago(90) });
     await event(l5, { type: "stage", from_stage_id: stages.meta, to_stage_id: stages.desq, created_at: ago(20) });
     // 6: lead importada (histórico de outro sistema) com uma chamada antiga importada: não conta em nada.
@@ -107,7 +107,8 @@ suite("Dashboard", () => {
   it("conta entradas, chamadas, atividades, qualificação e recuperadas", async () => {
     const { data: d } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
     expect(d.leads_in).toBe(5);
-    expect([d.calls, d.answered]).toEqual([3, 2]);
+    // A chamada atendida de 6 segundos conta como tentativa (atendida só com 10 segundos ou mais).
+    expect([d.calls, d.answered, d.attempts]).toEqual([3, 1, 2]);
     expect(d.acts).toEqual({ call: 1, meeting: 1, followup: 0 });
     expect([d.qual, d.desq]).toEqual([1, 1]);
     expect([d.recovered, d.bd_worked]).toEqual([1, 1]);
