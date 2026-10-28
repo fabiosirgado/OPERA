@@ -108,7 +108,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           </div>}
 
           <div className="stat s3"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia</small></div>
-          <div className="stat s3"><span>Chamadas feitas</span><b>{d.calls}</b><small>{pct(d.answered, d.calls)} atendidas · {d.leads_in ? dec(d.calls / d.leads_in) : "0"} por lead</small></div>
+          <div className="stat s3"><span>Chamadas feitas</span><b>{d.calls}</b><small>{d.answered} atendidas ({pct(d.answered, d.calls)}) · {d.attempts ?? d.calls - d.answered} tentativas · {d.leads_in ? dec(d.calls / d.leads_in) : "0"} por lead</small></div>
           <div className="stat s3"><span>Atividades concluídas</span><b>{d.acts.call + d.acts.meeting + d.acts.followup}</b>
             <small>{d.acts.call} chamadas · {d.acts.meeting} reuniões · {d.acts.followup} follow ups</small></div>
           <div className={`stat s3 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
