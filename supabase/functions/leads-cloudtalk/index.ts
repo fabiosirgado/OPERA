@@ -325,6 +325,8 @@ async function writeAiNote(callId: string, force = false) {
     lead.interest ? `Interesse registado: ${lead.interest}` : "",
     lead.source ? `Origem: ${lead.source}` : "",
     `Chamada: ${call?.created_at ?? ""}, ${(call?.meta as Obj | undefined)?.duration_s ?? "?"} segundos de conversa`,
+    (call?.meta as Obj | undefined)?.direction === "incoming"
+      ? `Chamada recebida: foi a lead que ligou para a OPERA (${gestor} atendeu).` : "",
     qual ? `Qualificação já registada:\n${qual}` : "",
     form?.body ? `Respostas do formulário:\n${form.body}` : "",
     ci.summary ? `Resumo automático da CloudTalk (pode estar incompleto):\n${ci.summary}` : "",
