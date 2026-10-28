@@ -107,13 +107,15 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             {isAdmin && <div className="row" style={{ marginTop: 8 }}><button type="button" className="btn sm" onClick={() => ctx.onGo("clientes")}>Atribuir clientes a gestores</button></div>}
           </div>}
 
-          <div className="stat s3"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia{d.calls_new != null ? ` · ${d.calls_new} ${d.calls_new === 1 ? "chamada" : "chamadas"} a estas leads` : ""}</small></div>
-          {/* Atendida: conversa de 10 segundos ou mais. O resto (não atendidas e mais curtas) são tentativas. */}
-          <div className="stat s3"><span>Chamadas atendidas</span><b>{d.answered}</b>
-            <small>{pct(d.answered, d.calls)} de {d.calls} chamadas, feitas a {d.leads_called ?? 0} leads · conversa de 10 s ou mais</small></div>
-          <div className="stat s3"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>
-            <small>{pct(d.attempts ?? d.calls - d.answered, d.calls)} de {d.calls} chamadas · não atendidas ou com menos de 10 s</small></div>
-          <div className={`stat s3 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
+          <div className="stat s6"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia{d.calls_new != null ? ` · ${d.calls_new} ${d.calls_new === 1 ? "chamada" : "chamadas"} a estas leads` : ""}</small></div>
+          <div className={`stat s6 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
+          {/* Chamadas feitas = atendidas (conversa de 10 segundos ou mais) + tentativas (não atendidas ou mais curtas). */}
+          <div className="stat s4"><span>Chamadas feitas</span><b>{d.calls}</b>
+            <small>A {d.leads_called ?? 0} leads · {d.leads_called ? dec(d.calls / d.leads_called) : "0"} por lead</small></div>
+          <div className="stat s4"><span>Chamadas atendidas</span><b>{d.answered}</b>
+            <small>{pct(d.answered, d.calls)} das chamadas feitas · conversa de 10 s ou mais</small></div>
+          <div className="stat s4"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>
+            <small>{pct(d.attempts ?? d.calls - d.answered, d.calls)} das chamadas feitas · não atendidas ou com menos de 10 s</small></div>
           <div className="stat s3"><span>Leads qualificadas</span><b>{d.qual}</b><small>Decididas no período, incluindo leads de antes · Tempo até qualificar: {d.time_to_qualify == null ? "—" : fmtDur(d.time_to_qualify)}</small></div>
           <div className="stat s3"><span>Leads desqualificadas</span><b>{d.desq}</b><small>Decididas no período, incluindo leads de antes</small></div>
           <div className="stat s3"><span>Taxa de qualificação</span><b>{pct(d.qual, d.qual + d.desq)}</b><small>Qualificadas sobre decididas</small></div>
