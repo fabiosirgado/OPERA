@@ -9,3 +9,7 @@
 .periodo .f{flex-direction:row;align-items:center;gap:6px}
 .periodo input[type="date"]{min-height:40px;border:1px solid var(--line2);border-radius:8px;padding:0 8px;font:inherit;background:#fff}
 @media (max-width:640px){.periodo{justify-content:flex-start}}
+
+/* Conversas: mensagem automática de lead qualificada, destacada a verde */
+.msg.qual,.msg.qual.mine,.msg.qual.op:not(.mine){background:var(--greenSoft);border:1px solid #A7E3C0;border-left:4px solid var(--greenText)}
+.msg .mtag{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--greenText);background:#fff;border:1px solid #A7E3C0;border-radius:999px;padding:2px 8px}
