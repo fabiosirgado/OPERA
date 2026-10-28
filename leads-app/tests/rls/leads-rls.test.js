@@ -144,19 +144,30 @@ suite("RLS do OPERA Leads", { timeout: 60_000 }, () => {
         .insert({ client_id: clientB, name: "Intrusa", stage_id: stages.bd, entry_stage: "bd" });
       expect(error).toBeTruthy();
     });
-    it("não mexe em leads antes de Lead Qualificada", async () => {
-      expect(await tryUpdate(aUser, "leads", { name: "Mexida" }, leads.aFollow.id)).toHaveLength(0);
-      expect(await tryUpdate(aUser, "leads", { stage_id: stages.qualificada }, leads.aFollow.id)).toHaveLength(0);
-      const { error } = await aUser.from("lead_events").insert({ lead_id: leads.aFollow.id, type: "note", body: "x", author_id: aUserId });
-      expect(error).toBeTruthy();
+    it("mexe nas suas leads e escreve notas em qualquer etapa (decisão de 2026-10-28)", async () => {
+      expect(await tryUpdate(aUser, "leads", { interest: "T3 em Almada" }, leads.aFollow.id)).toHaveLength(1);
+      const { error } = await aUser.from("lead_events").insert({ lead_id: leads.aFollow.id, type: "note", body: "Antes de qualificada", author_id: aUserId });
+      expect(error).toBeNull();
+    });
+    it("qualifica ele próprio uma lead sem se avisar a si mesmo", async () => {
+      const { data, error } = await admin.from("leads")
+        .insert({ client_id: clientA, name: "Teste aMove", phone: "+351 912 345 679", stage_id: stages.followup, entry_stage: "bd",
+                  qualification: { Objetivo: "Comprador" } }).select().single();
+      if (error) throw error;
+      leads.aMove = data;
+      expect(await tryUpdate(aUser, "leads", { stage_id: stages.qualificada }, data.id)).toHaveLength(1);
+      const { data: notif } = await admin.from("lead_notifications").select("id").eq("lead_id", data.id);
+      expect(notif).toEqual([]);
+      const { data: tasks } = await admin.from("lead_tasks").select("note").eq("lead_id", data.id);
+      expect(tasks).toEqual([]);
     });
     it("mexe em leads a partir de Lead Qualificada", async () => {
       expect(await tryUpdate(aUser, "leads", { interest: "T2 em Lisboa" }, leads.aQual.id)).toHaveLength(1);
       const { error } = await aUser.from("lead_events").insert({ lead_id: leads.aQual.id, type: "note", body: "Liguei", author_id: aUserId });
       expect(error).toBeNull();
     });
-    it("não devolve uma lead qualificada à OPERA", async () => {
-      expect(await tryUpdate(aUser, "leads", { stage_id: stages.followup }, leads.aQual.id)).toHaveLength(0);
+    it("também pode voltar uma lead para uma etapa anterior", async () => {
+      expect(await tryUpdate(aUser, "leads", { stage_id: stages.followup }, leads.aMove.id)).toHaveLength(1);
     });
     it("não mexe em leads de outro cliente, mesmo qualificadas", async () => {
       expect(await tryUpdate(aUser, "leads", { name: "Mexida" }, leads.bQual.id)).toHaveLength(0);

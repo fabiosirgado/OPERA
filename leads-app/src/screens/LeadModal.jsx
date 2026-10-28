@@ -85,8 +85,6 @@ export default function LeadModal({ id, ctx, onClose }) {
 
   const cols = stages.filter((s) => s.client_id === null || s.client_id === lead.client_id);
   const ci = cols.findIndex((s) => s.id === lead.stage_id);
-  const readOnly = !opera && cur.position < QUALIFIED_POSITION;
-  const canMoveTo = (s) => opera || s.position >= QUALIFIED_POSITION;
   const openTasks = tasks.filter((t) => !t.done_at);
   const pins = events.filter((e) => e.pinned);
   const labelIds = lead.links.map((x) => x.label_id);
@@ -97,7 +95,7 @@ export default function LeadModal({ id, ctx, onClose }) {
     if (s.id === lead.stage_id) return;
     if (s.key === "desq" && !confirm(`Passar ${lead.name} para Lead desqualificada? As tarefas em aberto são canceladas.`)) return;
     after(() => updateLead(lead.id, { stage_id: s.id }),
-      s.key === "qualificada" && cur.position < QUALIFIED_POSITION ? `Lead qualificada. ${lead.client.name} vai ser avisado.` : `Movida para ${s.name}`);
+      s.key === "qualificada" && cur.position < QUALIFIED_POSITION ? (opera ? `Lead qualificada. ${lead.client.name} vai ser avisado.` : "Lead qualificada.") : `Movida para ${s.name}`);
   };
   const changeClient = (clientId) => {
     const patch = { client_id: clientId, owner_user_id: null };
@@ -179,7 +177,7 @@ export default function LeadModal({ id, ctx, onClose }) {
     : e.body;
   // Sem autor: escrito pelo sistema (entradas automáticas, CloudTalk, avisos). Com autor apagado: alguém da OPERA.
   const author = (e) => e.author ? (e.author.full_name || e.author.email) : (!e.author_id ? "Automático" : "Equipa OPERA");
-  const canEdit = (e) => e.kind === "note" && !readOnly && (opera || e.author_id === me);
+  const canEdit = (e) => e.kind === "note" && (opera || e.author_id === me);
 
   return (
     <Modal wide onClose={onClose} title={
@@ -227,10 +225,9 @@ export default function LeadModal({ id, ctx, onClose }) {
         <div className="stagesBar" role="group" aria-label="Etapa da lead">
           {cols.map((s, i) => (
             <button key={s.id} type="button" className={i < ci ? "past" : i === ci ? "cur" : ""} aria-pressed={i === ci}
-              disabled={busy || readOnly || !canMoveTo(s) || lead.anonymized} onClick={() => moveTo(s)}>{s.name}</button>
+              disabled={busy || lead.anonymized} onClick={() => moveTo(s)}>{s.name}</button>
           ))}
         </div>
-        {readOnly && <span className="sub" style={{ margin: 0 }}>Esta lead ainda está a ser trabalhada pela OPERA. Passa a ser vossa quando ficar qualificada.</span>}
       </div>
 
       <div className="det">
@@ -245,7 +242,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                 const on = labelIds.includes(x.id);
                 const [bg, fg] = LABEL_COLORS[x.color] || LABEL_COLORS.cinzento;
                 return (
-                  <button key={x.id} type="button" className="chip" aria-pressed={on} disabled={busy || readOnly}
+                  <button key={x.id} type="button" className="chip" aria-pressed={on} disabled={busy}
                     onClick={() => after(() => toggleLabel(lead.id, x.id, !on))}
                     style={on ? { background: bg, color: fg, borderColor: fg, fontWeight: 600 } : undefined}>{on ? "✓ " : ""}{x.name}</button>
                 );
@@ -255,7 +252,7 @@ export default function LeadModal({ id, ctx, onClose }) {
           <div className="panel"><h3>Contacto</h3>
             {[["phone", "Telemóvel"], ["email", "Email"], ["interest", "Interesse ou imóvel"], ["name", "Nome"]].map(([f, label]) => (
               <label key={f} className="kv"><span>{label}</span>
-                <input defaultValue={lead[f] || ""} key={`${f}-${lead.updated_at}`} readOnly={readOnly}
+                <input defaultValue={lead[f] || ""} key={`${f}-${lead.updated_at}`}
                   onBlur={(e) => e.target.value.trim() !== (lead[f] || "") && save({ [f]: e.target.value.trim() || (f === "name" ? lead.name : null) })} /></label>
             ))}
           </div>
@@ -269,20 +266,20 @@ export default function LeadModal({ id, ctx, onClose }) {
               <div className="pills" role="group" aria-label="Objetivo (pode escolher vários)">
                 {OBJETIVOS.map((o) => {
                   const on = objetivoTipos(lead.qualification.Objetivo).includes(o);
-                  return <button key={o} type="button" className={`pill ${on ? "on" : ""}`} aria-pressed={on} disabled={readOnly || busy}
+                  return <button key={o} type="button" className={`pill ${on ? "on" : ""}`} aria-pressed={on} disabled={busy}
                     onClick={() => toggleObjetivo(o)}>{o}</button>;
                 })}
               </div></div>
             {QUAL_FIELDS.filter((q) => q !== "Objetivo").map((q) => (
               <label key={q} className="kv"><span>{q}</span>
-                <input defaultValue={lead.qualification[q] || ""} key={`${q}-${lead.updated_at}`} readOnly={readOnly}
+                <input defaultValue={lead.qualification[q] || ""} key={`${q}-${lead.updated_at}`}
                   placeholder={q === "Budget" ? "Ex.: 400 000 €" : "Por perguntar"}
                   onBlur={(e) => e.target.value.trim() !== (lead.qualification[q] || "") && qualSave(q, e.target.value)} /></label>
             ))}
           </div>
           <div className="panel"><h3>Responsável no cliente</h3>
             <label className="f" style={{ marginTop: 10 }}><span className="vh">Responsável</span>
-              <select value={lead.owner_user_id || ""} disabled={busy || readOnly} onChange={(e) => save({ owner_user_id: e.target.value || null })}>
+              <select value={lead.owner_user_id || ""} disabled={busy} onChange={(e) => save({ owner_user_id: e.target.value || null })}>
                 <option value="">Todos os utilizadores do cliente</option>
                 {users.map((u) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
               </select>
@@ -303,7 +300,7 @@ export default function LeadModal({ id, ctx, onClose }) {
               </div>
             </details>
           )}
-          {cur.key !== "desq" && !readOnly && !lead.anonymized && (
+          {cur.key !== "desq" && !lead.anonymized && (
             <button type="button" className="btn" disabled={busy} style={{ color: "#B91C1C" }}
               onClick={() => moveTo(stages.find((s) => s.key === "desq"))}>Desqualificar</button>
           )}
@@ -326,18 +323,14 @@ export default function LeadModal({ id, ctx, onClose }) {
               <div key={t.id} className="task">
                 <span className={`when ${new Date(t.due_at) < Date.now() ? "late" : ""}`}>{fmtRel(t.due_at)}</span>
                 <TaskTag type={t.type} /><span className="nt">{t.note}</span>
-                {!readOnly && (
-                  <>
-                    <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => completeTask(t.id), "Tarefa concluída")}>Feita</button>
-                    <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => snoozeTask(t))}>Adiar 1 dia</button>
-                    <button type="button" className="btn xs" onClick={() => setEditTask({ id: t.id, type: t.type, ...dueParts(t.due_at), note: t.note ?? "" })}>Editar</button>
-                    {opera && <button type="button" className="link" disabled={busy} style={{ color: "var(--mute)" }}
-                      onClick={() => after(() => deleteTask(t.id), "Tarefa apagada")}>Apagar</button>}
-                  </>
-                )}
+                <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => completeTask(t.id), "Tarefa concluída")}>Feita</button>
+                <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => snoozeTask(t))}>Adiar 1 dia</button>
+                <button type="button" className="btn xs" onClick={() => setEditTask({ id: t.id, type: t.type, ...dueParts(t.due_at), note: t.note ?? "" })}>Editar</button>
+                {opera && <button type="button" className="link" disabled={busy} style={{ color: "var(--mute)" }}
+                  onClick={() => after(() => deleteTask(t.id), "Tarefa apagada")}>Apagar</button>}
               </div>
             )) : <div className="sub" style={{ margin: "4px 0" }}>Sem tarefas em aberto. Uma lead sem próxima tarefa é uma lead esquecida.</div>}
-            {!readOnly && !lead.anonymized && (
+            {!lead.anonymized && (
               <div style={{ borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                 <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 600 }}>Nova tarefa</span>
                 <TaskFields form={tForm} set={setTForm} />
@@ -353,7 +346,7 @@ export default function LeadModal({ id, ctx, onClose }) {
             )}
           </div>
 
-          {!readOnly && !lead.anonymized && (
+          {!lead.anonymized && (
             <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <label className="f">Registar nota<textarea value={note.body} onChange={(e) => setNote({ ...note, body: e.target.value })} placeholder="O que aconteceu?" /></label>
               <div className="chips"><span style={{ fontSize: 12, color: "var(--mute)" }}>Resultado rápido:</span>
