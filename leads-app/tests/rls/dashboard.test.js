@@ -109,6 +109,9 @@ suite("Dashboard", () => {
     expect(d.leads_in).toBe(5);
     // A chamada atendida de 6 segundos conta como tentativa (atendida só com 10 segundos ou mais).
     expect([d.calls, d.answered, d.attempts]).toEqual([3, 1, 2]);
+    // As 3 chamadas foram a 3 leads diferentes, todas entradas nos 7 dias.
+    expect(d.leads_called).toBe(3);
+    expect(d.calls_new).toBe(3);
     expect(d.acts).toEqual({ call: 1, meeting: 1, followup: 0 });
     expect([d.qual, d.desq]).toEqual([1, 1]);
     expect([d.recovered, d.bd_worked]).toEqual([1, 1]);
