@@ -90,7 +90,7 @@ suite("Pipeline e regras de negócio", () => {
       const id = await create(gestor, { client_id: clientA, name: "Sem chamada do cliente", phone: "944000002", stage: "qualificada" });
       expect((await aUser.rpc("leads_register_call", { p_lead_id: id })).error).toBeTruthy();
     });
-    it("Lead Qualificada cancela tarefas, cria Follow up a 24 h e põe o aviso na fila", async () => {
+    it("Lead Qualificada cancela tarefas, não cria nenhuma e põe o aviso na fila", async () => {
       const id = await create(gestor, { client_id: clientA, name: "A qualificar", phone: "944000003", source: "Meta" });
       await gestor.from("lead_tasks").insert({ lead_id: id, type: "meeting", due_at: new Date(Date.now() + 864e5).toISOString() });
       // Sem Objetivo não se qualifica.
@@ -98,11 +98,7 @@ suite("Pipeline e regras de negócio", () => {
       expect(sem.error?.message).toContain("Indica o Objetivo");
       await gestor.from("leads").update({ qualification: { Objetivo: "Comprador, Crédito" } }).eq("id", id);
       expect((await gestor.from("leads").update({ stage_id: stages.qualificada }).eq("id", id)).error).toBeNull();
-      const open = await openTasks(id);
-      expect(open).toHaveLength(1);
-      expect(open[0]).toMatchObject({ type: "followup", note: "Confirmar com o cliente" });
-      const hours = (new Date(open[0].due_at) - Date.now()) / 3600e3;
-      expect(hours).toBeGreaterThan(23.5);
+      expect(await openTasks(id)).toHaveLength(0);
       const { data: notif } = await gestor.from("lead_notifications").select("kind,status").eq("lead_id", id);
       expect(notif).toEqual([{ kind: "qualificada", status: "pendente" }]);
     });
