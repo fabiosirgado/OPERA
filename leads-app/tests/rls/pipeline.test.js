@@ -42,9 +42,11 @@ suite("Pipeline e regras de negócio", () => {
       const meta = await lead(await create(gestor, { client_id: clientA, name: "Origem Meta", phone: "911111111", source: "Meta" }));
       const port = await lead(await create(gestor, { client_id: clientA, name: "Origem Idealista", phone: "911111112", source: "Idealista" }));
       const bd = await lead(await create(gestor, { client_id: clientA, name: "Origem BD", phone: "911111113", source: "Referência" }));
+      const portais = await lead(await create(gestor, { client_id: clientA, name: "Origem Portais", phone: "911111114", source: "Portais imobiliários" }));
       expect([meta.stage_id, meta.entry_stage]).toEqual([stages.meta, "meta"]);
       expect([port.stage_id, port.entry_stage]).toEqual([stages.imoveis, "imoveis"]);
       expect([bd.stage_id, bd.entry_stage]).toEqual([stages.bd, "bd"]);
+      expect([portais.stage_id, portais.entry_stage]).toEqual([stages.imoveis, "imoveis"]);
       expect(await openTasks(meta.id)).toHaveLength(0);
       expect(meta.next_task_at).toBeNull();
     });

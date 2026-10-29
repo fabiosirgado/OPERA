@@ -25,7 +25,7 @@ export const errorText = (e) => (e && (e.message || e.error)) || "Ocorreu um err
 
 // ---------- Fase 2: pipeline e ficha da lead
 export const TASK_TYPES = { call: "Chamada", meeting: "Reunião", followup: "Follow up" };
-export const SOURCES = ["Meta", "Idealista", "Imovirtual", "Casa Sapo", "Base de dados", "Referência", "Chamada recebida", "Evento", "Outra"];
+export const SOURCES = ["Meta", "Idealista", "Imovirtual", "Casa Sapo", "Portais imobiliários", "Base de dados", "Referência", "Chamada recebida", "Evento", "Outra"];
 export const QUAL_FIELDS = ["Objetivo", "Budget", "Prazo", "Financiamento", "Tem imóvel para vender", "Disponibilidade para visita"];
 export const ENTRY_KEYS = ["meta", "imoveis", "bd"];
 export const QUALIFIED_POSITION = 50;
