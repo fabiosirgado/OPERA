@@ -122,7 +122,7 @@ suite("Dashboard", () => {
     const row = d.per_client.find((c) => c.id === clientD);
     expect(row).toMatchObject({ leads_in: 5, calls: 3, qual: 1, desq: 1, recovered: 1, overdue: 1, ttl_in_target: 1 });
     // Qualificadas por tipo: uma lead pode contar em mais de um.
-    expect(d.qual_types).toEqual({ comprador: 1, proprietario: 0, credito: 1, sem_tipo: 0 });
+    expect(d.qual_types).toEqual({ comprador: 1, proprietario: 0, credito: 1, arrendamento: 0, senhorio: 0, sem_tipo: 0 });
   });
 
   it("um cliente interno não conta no dashboard geral, só quando é escolhido", async () => {
