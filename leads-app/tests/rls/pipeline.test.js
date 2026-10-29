@@ -161,6 +161,22 @@ suite("Pipeline e regras de negócio", () => {
       const { data: sa } = await aAdmin.rpc("leads_search", { p_q: "Origem" });
       expect(sa.length).toBeGreaterThanOrEqual(3);
     });
+    it("o quadro vem num só pedido, igual às consultas por etapa", async () => {
+      const args = { p_client: clientA, p_label: null, p_q: null, p_mine: false, p_sort: "name", p_dir: 1, p_limit: 2 };
+      const { data: b, error } = await gestor.rpc("leads_pipeline_board", { ...args, p_kpis: true });
+      expect(error).toBeNull();
+      const { data: counts } = await gestor.rpc("leads_pipeline_counts", { p_client: clientA });
+      expect(Object.fromEntries(counts.map((c) => [c.stage_id, Number(c.n)]))).toEqual(b.counts);
+      for (const [stage, rows] of Object.entries(b.cols)) {
+        const { data } = await gestor.rpc("leads_pipeline", { p_client: clientA, p_stage: stage, p_sort: "name", p_limit: 2 });
+        expect(rows.map((r) => r.id)).toEqual(data.map((r) => r.id));
+      }
+      expect(b.kpis).toHaveProperty("por_contactar");
+      // O cliente B só vê as suas leads, e sem os números da OPERA.
+      const { data: bb } = await bAdmin.rpc("leads_pipeline_board", { ...args, p_client: null, p_limit: 200 });
+      expect(Object.values(bb.cols).flat().every((r) => r.client_id === clientB)).toBe(true);
+      expect(bb.kpis).toBeNull();
+    });
     it("o filtro de texto trata % e _ como letras", async () => {
       const { data } = await gestor.rpc("leads_pipeline_counts", { p_client: clientA, p_q: "%" });
       expect(Object.values(data).length).toBe(0);
