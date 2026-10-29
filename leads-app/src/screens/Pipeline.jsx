@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { pipeline, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
+import { pipeline, pipelineBoard, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
 import { exportLeads } from "../lib/exportLeads.js";
 import { fileSafe } from "../lib/excel.js";
 import { PAGE, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
@@ -35,13 +35,11 @@ export default function Pipeline({ ctx }) {
   const columns = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === client), [stages, client]);
 
   const loadBoard = useCallback(async () => {
-    const [c, ...pages] = await Promise.all([
-      pipelineCounts(filters),
-      ...columns.map((s) => pipeline({ ...filters, stage: s.id, sort: prefs.sort, dir: BOARD_DIR[prefs.sort] || 1, limit: PAGE })),
-    ]);
-    setCounts(c);
-    setCols(Object.fromEntries(columns.map((s, i) => [s.id, pages[i]])));
-  }, [filters, columns, prefs.sort]);
+    const b = await pipelineBoard({ ...filters, sort: prefs.sort, dir: BOARD_DIR[prefs.sort] || 1, limit: PAGE, kpis: opera });
+    setCounts(b.counts);
+    setCols(b.cols);
+    if (b.kpis) setKpis(b.kpis);
+  }, [filters, prefs.sort, opera]);
 
   const loadList = useCallback(async (more = false) => {
     const offset = more ? list.rows.length : 0;
@@ -57,7 +55,8 @@ export default function Pipeline({ ctx }) {
   }, [filters, prefs.lsort, prefs.ldir, list.rows.length]);
 
   useEffect(() => {
-    (prefs.layout === "list" ? run(() => loadList(false)) : run(loadBoard));
+    if (prefs.layout !== "list") { run(loadBoard); return; }
+    run(() => loadList(false));
     if (opera) pipelineKpis(client).then(setKpis).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, prefs.layout, prefs.sort, prefs.lsort, prefs.ldir, version, columns.length]);

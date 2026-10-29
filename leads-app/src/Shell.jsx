@@ -56,11 +56,28 @@ export default function Shell({ access }) {
   useEffect(() => { loadRefs().catch(() => {}); }, [loadRefs]);
 
   // Tempo real: quando entra uma lead ou alguém muda uma etapa, os ecrãs voltam a pedir os dados.
+  // No máximo uma vez a cada 2 segundos, e nunca com a janela escondida: aí fica para quando se voltar a ela.
   const bumpTimer = useRef();
+  const bumpLast = useRef(0);
+  const bumpPending = useRef(false);
   const bump = useCallback(() => {
-    clearTimeout(bumpTimer.current);
-    bumpTimer.current = setTimeout(() => setVersion((v) => v + 1), 400);
+    if (document.visibilityState === "hidden") { bumpPending.current = true; return; }
+    if (bumpTimer.current) return;
+    bumpTimer.current = setTimeout(() => {
+      bumpTimer.current = null;
+      bumpLast.current = Date.now();
+      setVersion((v) => v + 1);
+    }, Math.max(400, bumpLast.current + 2000 - Date.now()));
   }, []);
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && bumpPending.current) { bumpPending.current = false; bump(); }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [bump]);
+  const modalRef = useRef(null);
+  modalRef.current = modal;
   // Lead nova vinda de uma entrada automática: aviso no ecrã (só a equipa OPERA as vê nas etapas de entrada).
   const refs = useRef({ stages: [], clients: [] });
   refs.current = { stages, clients };
@@ -72,6 +89,10 @@ export default function Shell({ access }) {
       chatTimer.current = setTimeout(() => setChatVersion((v) => v + 1), 250);
       if (table !== "*") return;
     }
+    // Nota ou registo novo no histórico: só interessa à ficha dessa lead, se estiver aberta, e às notas afixadas
+    // (que aparecem no quadro). Mudanças de etapa e chamadas também mexem na lead, e isso já chega por "leads".
+    if (table === "lead_events" && payload?.eventType === "INSERT" && !payload.new?.pinned
+        && !(modalRef.current?.kind === "lead" && modalRef.current.id === payload.new?.lead_id)) return;
     bump();
     if (!opera || table !== "leads" || payload?.eventType !== "INSERT") return;
     const l = payload.new;

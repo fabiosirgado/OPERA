@@ -25,7 +25,14 @@ export const pipelineCounts = ({ client, label, q, mine }) =>
   must(sb.rpc("leads_pipeline_counts", { p_client: client || null, p_label: label || null, p_q: q || null, p_mine: !!mine }))
     .then((rows) => Object.fromEntries(rows.map((r) => [r.stage_id, Number(r.n)])));
 
-export const pipelineKpis = (client) => must(sb.rpc("leads_pipeline_kpis", { p_client: client || null })).then((r) => r[0]);
+// O quadro inteiro num só pedido: contagens, a primeira página de cada etapa e (equipa OPERA) os números do topo.
+export const pipelineBoard = ({ client, label, q, mine, sort, dir = 1, limit = PAGE, kpis = false }) =>
+  must(sb.rpc("leads_pipeline_board", {
+    p_client: client || null, p_label: label || null, p_q: q || null, p_mine: !!mine,
+    p_sort: sort, p_dir: dir, p_limit: limit, p_kpis: kpis,
+  })).then((r) => ({ counts: Object.fromEntries(Object.entries(r.counts).map(([k, n]) => [k, Number(n)])), cols: r.cols, kpis: r.kpis }));
+
+export const pipelineKpis =(client) => must(sb.rpc("leads_pipeline_kpis", { p_client: client || null })).then((r) => r[0]);
 export const today = (client, q) => must(sb.rpc("leads_today", { p_client: client || null, p_q: q || null }));
 export const search = (q) => must(sb.rpc("leads_search", { p_q: q }));
 
