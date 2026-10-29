@@ -123,10 +123,12 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             <span style={{ color: "var(--greenText)" }}>Leads recuperadas</span><b style={{ color: "var(--greenText)" }}>{d.recovered}</b>
             <small style={{ color: "var(--greenText)" }}>Leads BD que passaram a qualificadas · {pct(d.recovered, d.bd_worked)} das leads BD trabalhadas</small></div>
 
-          <div className="stat s3"><span>Qualificadas: compradores</span><b>{d.qual_types.comprador}</b><small>{pct(d.qual_types.comprador, d.qual)} das qualificadas</small></div>
-          <div className="stat s3"><span>Qualificadas: proprietários</span><b>{d.qual_types.proprietario}</b><small>{pct(d.qual_types.proprietario, d.qual)} das qualificadas</small></div>
-          <div className="stat s3"><span>Qualificadas: crédito</span><b>{d.qual_types.credito}</b><small>{pct(d.qual_types.credito, d.qual)} das qualificadas</small></div>
-          <div className="stat s3"><span>Qualificadas sem tipo</span><b>{d.qual_types.sem_tipo}</b><small>Uma lead pode ter mais de um tipo</small></div>
+          <div className="stat s4"><span>Qualificadas: compradores</span><b>{d.qual_types.comprador}</b><small>{pct(d.qual_types.comprador, d.qual)} das qualificadas</small></div>
+          <div className="stat s4"><span>Qualificadas: proprietários</span><b>{d.qual_types.proprietario}</b><small>{pct(d.qual_types.proprietario, d.qual)} das qualificadas</small></div>
+          <div className="stat s4"><span>Qualificadas: crédito</span><b>{d.qual_types.credito}</b><small>{pct(d.qual_types.credito, d.qual)} das qualificadas</small></div>
+          <div className="stat s4"><span>Qualificadas: arrendamento</span><b>{d.qual_types.arrendamento ?? 0}</b><small>{pct(d.qual_types.arrendamento ?? 0, d.qual)} das qualificadas</small></div>
+          <div className="stat s4"><span>Qualificadas: senhorios</span><b>{d.qual_types.senhorio ?? 0}</b><small>{pct(d.qual_types.senhorio ?? 0, d.qual)} das qualificadas</small></div>
+          <div className="stat s4"><span>Qualificadas sem tipo</span><b>{d.qual_types.sem_tipo}</b><small>Uma lead pode ter mais de um tipo</small></div>
 
           {d.per_day.length > 1 && (() => {
             const b = perBucket(d.per_day);

@@ -31,10 +31,10 @@ export const ENTRY_KEYS = ["meta", "imoveis", "bd"];
 export const QUALIFIED_POSITION = 50;
 // Objetivo da lead qualificada: pode ter vários. Guardado como texto ("Comprador, Crédito").
 // Lê também o texto antigo, como a função private.leads_objetivo_tipos da base de dados.
-export const OBJETIVOS = ["Comprador", "Proprietário", "Crédito"];
+export const OBJETIVOS = ["Comprador", "Proprietário", "Crédito", "Arrendamento", "Senhorio"];
 export const objetivoTipos = (text) => {
   const t = text || "";
-  return OBJETIVOS.filter((o, i) => [/compr/i, /propriet|vend/i, /cr[eé]dito|financ/i][i].test(t));
+  return OBJETIVOS.filter((o, i) => [/compr/i, /propriet|vend/i, /cr[eé]dito|financ/i, /arrend|inquilin/i, /senhori/i][i].test(t));
 };
 export const PAGE = 50;
 
