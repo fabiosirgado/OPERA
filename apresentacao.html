@@ -797,7 +797,7 @@ enter[11]=()=>{const s=slides[11];s.querySelectorAll('.o,.line i').forEach(e=>{e
 
 // Simuladores (pack de 3 meses)
 const PR={
- single:{title:'Monta o teu plano',lead:'Pack de 3 meses.',bo:{pif:2550,inst:950},sa:{pif:3000,inst:1100},bundle:{pif:5100}}};
+ single:{title:'Monta o teu plano',lead:'Pack de 3 meses.',bo:{pif:2550,inst:950},sa:{pif:3000,inst:1100},bundle:{pif:5100,inst:1700}}};
 const sims={};
 document.querySelectorAll('.sim-root').forEach(root=>{
   const k=root.dataset.plan,d=PR[k],st={bo:true,sa:true,pay:'pif',shown:0,raf:0};
@@ -805,7 +805,7 @@ document.querySelectorAll('.sim-root').forEach(root=>{
    '<div class="opt-group"><h3>Serviços</h3><div class="opts two-col">'+
    '<button class="opt" data-s="bo"><b>OPERA BO</b><span>Operations, Legal e Finance, incluindo angariações.</span><em>'+eur(d.bo.pif)+' ou 3x '+eur(d.bo.inst)+'</em></button>'+
    '<button class="opt" data-s="sa"><b>OPERA SA</b><span>Atende, qualifica, faz follow-up, regista, agenda e recupera leads.</span><em>'+eur(d.sa.pif)+' ou 3x '+eur(d.sa.inst)+'</em></button></div>'+
-   '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> em pagamento integral.</p></div>'+
+   '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> ou <b>3x '+eur(d.bundle.inst)+'</b>.</p></div>'+
    '<div class="opt-group" style="margin:0"><h3>Pagamento</h3><div class="seg" role="group" aria-label="Pagamento"><button data-p="pif">Pagamento integral</button><button data-p="inst">3 prestações</button></div></div></div>'+
    '<div class="panel result" aria-live="polite"><p class="muted">Total do pack de 3 meses</p><div class="total"><span class="t"></span></div><p class="year sub"></p><div class="lines"></div>'+
    '</div></div>';
@@ -824,10 +824,10 @@ document.querySelectorAll('.sim-root').forEach(root=>{
       else total=st.bo?d.bo.pif:d.sa.pif;
       sub='Pagamento único. Equivale a '+eur(Math.round(total/3))+' por mês.';
     }else{
-      const m=(st.bo?d.bo.inst:0)+(st.sa?d.sa.inst:0);total=m*3;
+      const full=(st.bo?d.bo.inst:0)+(st.sa?d.sa.inst:0),m=both?d.bundle.inst:full;total=m*3;
       if(st.bo)lines+='<div><span>OPERA BO</span><span>3x '+eur(d.bo.inst)+'</span></div>';
       if(st.sa)lines+='<div><span>OPERA SA</span><span>3x '+eur(d.sa.inst)+'</span></div>';
-      if(both)lines+='<div class="muted"><span>Desconto bundle só no pagamento integral.</span></div>';
+      if(both)lines+='<div class="sv"><span>Desconto bundle</span><span>'+eur((full-m)*3)+'</span></div>';
       sub='3 prestações mensais de '+eur(m)+'.';
     }
     root.querySelector('.lines').innerHTML=lines;root.querySelector('.sub').textContent=sub;anim(total);}
