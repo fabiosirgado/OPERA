@@ -797,7 +797,7 @@ enter[11]=()=>{const s=slides[11];s.querySelectorAll('.o,.line i').forEach(e=>{e
 
 // Simuladores (pack de 3 meses)
 const PR={
- single:{title:'Monta o teu plano',lead:'Pack de 3 meses.',bo:{pif:2550,inst:950},sa:{pif:3000,inst:1100},bundle:{pif:5100},more:true}};
+ single:{title:'Monta o teu plano',lead:'Pack de 3 meses.',bo:{pif:2550,inst:950},sa:{pif:3000,inst:1100},bundle:{pif:5100}}};
 const sims={};
 document.querySelectorAll('.sim-root').forEach(root=>{
   const k=root.dataset.plan,d=PR[k],st={bo:true,sa:true,pay:'pif',shown:0,raf:0};
@@ -808,7 +808,7 @@ document.querySelectorAll('.sim-root').forEach(root=>{
    '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> em pagamento integral.</p></div>'+
    '<div class="opt-group" style="margin:0"><h3>Pagamento</h3><div class="seg" role="group" aria-label="Pagamento"><button data-p="pif">Pagamento integral</button><button data-p="inst">3 prestações</button></div></div></div>'+
    '<div class="panel result" aria-live="polite"><p class="muted">Total do pack de 3 meses</p><div class="total"><span class="t"></span></div><p class="year sub"></p><div class="lines"></div>'+
-   (d.more?'<p class="note" style="margin-top:auto">Mais de 3 consultores produtivos? Fala connosco para uma proposta à medida.</p>':'')+'</div></div>';
+   '</div></div>';
   const tEl=root.querySelector('.t');
   function anim(v){cancelAnimationFrame(st.raf);const from=st.shown,t0=performance.now();
     const step=t=>{const q=Math.min(1,(t-t0)/500),e=1-Math.pow(1-q,3);st.shown=Math.round(from+(v-from)*e);tEl.textContent=eur(st.shown);if(q<1)st.raf=requestAnimationFrame(step);};st.raf=requestAnimationFrame(step);}
