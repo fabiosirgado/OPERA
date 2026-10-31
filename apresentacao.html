@@ -612,23 +612,20 @@ table.plans{border-collapse:separate;border-spacing:0;width:100%;min-width:860px
   <div class="inner">
     <h2 class="mega wide" aria-label="OPERA"><span>O</span><span>P</span><span>E</span><span>R</span><span>A</span></h2>
     <p class="tagline">You sell. We operate.</p>
-    <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" data-go="14">Single</button><button class="btn primary" data-go="15">Team</button><button class="btn" data-go="1">Voltar ao início</button></div>
+    <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" data-go="14">Ver preços</button><button class="btn" data-go="1">Voltar ao início</button></div>
     <p class="foot">REAL ESTATE OPERATIONS AS A SERVICE</p>
   </div>
 </section>
 
-<!-- 14 Plano Single -->
-<section class="slide" data-title="Plano Single"><div class="inner"><div class="sim-root" data-plan="single"></div></div></section>
-
-<!-- 15 Plano Team -->
-<section class="slide" data-title="Plano Team"><div class="inner"><div class="sim-root" data-plan="team"></div></div></section>
+<!-- 14 Preços -->
+<section class="slide" data-title="Preços"><div class="inner"><div class="sim-root" data-plan="single"></div></div></section>
 
 </main>
 
 <nav class="nav" aria-label="Navegação">
   <span class="brand">OPERA</span>
   <div class="progress" aria-hidden="true"><i id="prog"></i></div>
-  <span class="count" id="count">1 / 15</span>
+  <span class="count" id="count">1 / 14</span>
   <button class="icon-btn" id="prev" aria-label="Diapositivo anterior"><span data-icon="left"></span></button>
   <button class="icon-btn" id="next" aria-label="Diapositivo seguinte"><span data-icon="right"></span></button>
   <button class="icon-btn" id="ovBtn" aria-label="Ver todos os diapositivos"><span data-icon="grid"></span></button>
@@ -800,8 +797,7 @@ enter[11]=()=>{const s=slides[11];s.querySelectorAll('.o,.line i').forEach(e=>{e
 
 // Simuladores (pack de 3 meses)
 const PR={
- single:{title:'Monta o teu plano Single',lead:'Para 1 consultor. Pack de 3 meses.',bo:{pif:2250,inst:900},sa:{pif:2550,inst:1000},bundle:{pif:4500,inst:1800}},
- team:{title:'Monta o teu plano Team',lead:'Para equipas até 10 comerciais. Pack de 3 meses.',bo:{pif:4500,inst:1800},sa:{pif:5100,inst:2000},bundle:{pif:9000,inst:3600},more:true}};
+ single:{title:'Monta o teu plano',lead:'Pack de 3 meses.',bo:{pif:2550,inst:950},sa:{pif:3000,inst:1100},bundle:{pif:5100},more:true}};
 const sims={};
 document.querySelectorAll('.sim-root').forEach(root=>{
   const k=root.dataset.plan,d=PR[k],st={bo:true,sa:true,pay:'pif',shown:0,raf:0};
@@ -809,10 +805,10 @@ document.querySelectorAll('.sim-root').forEach(root=>{
    '<div class="opt-group"><h3>Serviços</h3><div class="opts two-col">'+
    '<button class="opt" data-s="bo"><b>OPERA BO</b><span>Operations, Legal e Finance, incluindo angariações.</span><em>'+eur(d.bo.pif)+' ou 3x '+eur(d.bo.inst)+'</em></button>'+
    '<button class="opt" data-s="sa"><b>OPERA SA</b><span>Atende, qualifica, faz follow-up, regista, agenda e recupera leads.</span><em>'+eur(d.sa.pif)+' ou 3x '+eur(d.sa.inst)+'</em></button></div>'+
-   '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> ou <b>3x '+eur(d.bundle.inst)+'</b>.</p></div>'+
+   '<p class="hint">Juntos com desconto bundle: <b>'+eur(d.bundle.pif)+'</b> em pagamento integral.</p></div>'+
    '<div class="opt-group" style="margin:0"><h3>Pagamento</h3><div class="seg" role="group" aria-label="Pagamento"><button data-p="pif">Pagamento integral</button><button data-p="inst">3 prestações</button></div></div></div>'+
    '<div class="panel result" aria-live="polite"><p class="muted">Total do pack de 3 meses</p><div class="total"><span class="t"></span></div><p class="year sub"></p><div class="lines"></div>'+
-   (d.more?'<p class="note" style="margin-top:auto">Mais de 10 comerciais? Fala connosco para uma proposta à medida.</p>':'')+'</div></div>';
+   (d.more?'<p class="note" style="margin-top:auto">Mais de 3 consultores produtivos? Fala connosco para uma proposta à medida.</p>':'')+'</div></div>';
   const tEl=root.querySelector('.t');
   function anim(v){cancelAnimationFrame(st.raf);const from=st.shown,t0=performance.now();
     const step=t=>{const q=Math.min(1,(t-t0)/500),e=1-Math.pow(1-q,3);st.shown=Math.round(from+(v-from)*e);tEl.textContent=eur(st.shown);if(q<1)st.raf=requestAnimationFrame(step);};st.raf=requestAnimationFrame(step);}
@@ -828,10 +824,10 @@ document.querySelectorAll('.sim-root').forEach(root=>{
       else total=st.bo?d.bo.pif:d.sa.pif;
       sub='Pagamento único. Equivale a '+eur(Math.round(total/3))+' por mês.';
     }else{
-      const full=(st.bo?d.bo.inst:0)+(st.sa?d.sa.inst:0),m=both?d.bundle.inst:full;total=m*3;
+      const m=(st.bo?d.bo.inst:0)+(st.sa?d.sa.inst:0);total=m*3;
       if(st.bo)lines+='<div><span>OPERA BO</span><span>3x '+eur(d.bo.inst)+'</span></div>';
       if(st.sa)lines+='<div><span>OPERA SA</span><span>3x '+eur(d.sa.inst)+'</span></div>';
-      if(both)lines+='<div class="sv"><span>Desconto bundle</span><span>'+eur((full-m)*3)+'</span></div>';
+      if(both)lines+='<div class="muted"><span>Desconto bundle só no pagamento integral.</span></div>';
       sub='3 prestações mensais de '+eur(m)+'.';
     }
     root.querySelector('.lines').innerHTML=lines;root.querySelector('.sub').textContent=sub;anim(total);}
