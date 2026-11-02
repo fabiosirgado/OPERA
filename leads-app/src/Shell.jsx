@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sb } from "./supabase.js";
 import { ROLE_LABEL, initials } from "./lib/format.js";
 import { activeClients, conversations, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
@@ -6,17 +6,19 @@ import GlobalSearch from "./ui/GlobalSearch.jsx";
 import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
 import AppSetup from "./ui/AppSetup.jsx";
 import { forgetDevice } from "./lib/push.js";
-import Clientes from "./screens/Clientes.jsx";
-import Equipa from "./screens/Equipa.jsx";
-import Privacidade from "./screens/Privacidade.jsx";
 import Pipeline from "./screens/Pipeline.jsx";
 import Hoje from "./screens/Hoje.jsx";
-import ImportExport from "./screens/ImportExport.jsx";
-import Dashboard from "./screens/Dashboard.jsx";
-import Entradas from "./screens/Entradas.jsx";
-import Conversas from "./screens/Conversas.jsx";
 import LeadModal from "./screens/LeadModal.jsx";
 import { LabelsModal, NewLeadModal, StageModal } from "./screens/smallModals.jsx";
+
+// Ecrãs menos usados: só se carregam quando se abrem, para o Leads abrir mais depressa.
+const Clientes = lazy(() => import("./screens/Clientes.jsx"));
+const Equipa = lazy(() => import("./screens/Equipa.jsx"));
+const Privacidade = lazy(() => import("./screens/Privacidade.jsx"));
+const ImportExport = lazy(() => import("./screens/ImportExport.jsx"));
+const Dashboard = lazy(() => import("./screens/Dashboard.jsx"));
+const Entradas = lazy(() => import("./screens/Entradas.jsx"));
+const Conversas = lazy(() => import("./screens/Conversas.jsx"));
 
 const VIEW_KEY = "opera-leads-vista";
 const CLIENT_KEY = "opera-leads-cliente";
@@ -206,6 +208,7 @@ export default function Shell({ access }) {
         </div>
       </nav>
       <main>
+        <Suspense fallback={<div className="sub" style={{ padding: 24 }}>A carregar…</div>}>
         {stages.length > 0 && view === "pipeline" && <Pipeline ctx={ctx} />}
         {stages.length > 0 && view === "hoje" && <Hoje ctx={ctx} />}
         {stages.length > 0 && view === "io" && <ImportExport ctx={ctx} />}
@@ -217,6 +220,7 @@ export default function Shell({ access }) {
         {view === "clientes" && <Clientes profile={profile} />}
         {view === "equipa" && <Equipa profile={profile} client={myClient} />}
         {view === "privacidade" && <Privacidade />}
+        </Suspense>
       </main>
 
       <NewLeadAlerts alerts={alerts} onClose={closeAlert}
