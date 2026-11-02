@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { pipeline, pipelineBoard, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
-import { exportLeads } from "../lib/exportLeads.js";
-import { fileSafe } from "../lib/excel.js";
 import { PAGE, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
 import { useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags } from "../ui/bits.jsx";
@@ -81,7 +79,11 @@ export default function Pipeline({ ctx }) {
   const quickExport = async () => {
     setExporting(true);
     const name = client ? clients.find((c) => c.id === client)?.name : "todos";
-    await run(() => exportLeads({ client: client || null, history: true, fileName: `leads_${fileSafe(name)}.xlsx` }), (n) => `${n} leads exportadas`);
+    // O Excel só se carrega quando se exporta, para o Leads abrir mais depressa.
+    await run(async () => {
+      const [{ exportLeads }, { fileSafe }] = await Promise.all([import("../lib/exportLeads.js"), import("../lib/excel.js")]);
+      return exportLeads({ client: client || null, history: true, fileName: `leads_${fileSafe(name)}.xlsx` });
+    }, (n) => `${n} leads exportadas`);
     setExporting(false);
   };
 
