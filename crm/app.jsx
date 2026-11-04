@@ -643,6 +643,23 @@ function SectionTitle({ children }) {
   return <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10, marginTop: 4 }}>{children}</div>;
 }
 
+function useAutoRefresh(fn, ms = 60000) {
+  const ref = useRef(fn);
+  ref.current = fn;
+  useEffect(() => {
+    let last = Date.now();
+    const run = () => {
+      if (document.hidden || Date.now() - last < 4000) return;
+      last = Date.now();
+      try { Promise.resolve(ref.current()).catch(() => {}); } catch (e) {}
+    };
+    const iv = setInterval(run, ms);
+    document.addEventListener("visibilitychange", run);
+    window.addEventListener("focus", run);
+    return () => { clearInterval(iv); document.removeEventListener("visibilitychange", run); window.removeEventListener("focus", run); };
+  }, [ms]);
+}
+
 function Toggle({ on, onChange, disabled }) {
   return (
     <span onClick={() => !disabled && onChange(!on)}
@@ -2006,6 +2023,8 @@ function FinanceiroPanel({ clientId, clientName, isEquipa }) {
     return () => sb.removeChannel(channel);
   }, [clientId]);
 
+  useAutoRefresh(() => reload());
+
   if (loading) return <div style={{ fontSize: 13, color: C.muted, padding: 20 }}>A carregar…</div>;
   if (loadError) return <div style={{ fontSize: 13, color: C.red, padding: 20 }}>Erro ao carregar dados financeiros: {loadError}</div>;
 
@@ -2531,6 +2550,11 @@ function EquipaApp({ profile }) {
       .subscribe();
     return () => sb.removeChannel(channel);
   }, []);
+
+  useAutoRefresh(() => Promise.all([
+    reloadPedidos(), reloadDeals(), reloadClients(),
+    openClientIdRef.current ? reloadClientExtra(openClientIdRef.current) : null,
+  ]));
 
   const openClient = (id, tab) => { setOpenClientId(id); setOpenClientTab(tab || "geral"); reloadClientExtra(id); };
 
@@ -3553,6 +3577,8 @@ function ClientPortal({ profile }) {
       .subscribe();
     return () => sb.removeChannel(channel);
   }, [profile.client_id]);
+
+  useAutoRefresh(() => (profile.client_id ? reloadPedidos() : null));
 
   if (!profile.client_id) {
     return (
