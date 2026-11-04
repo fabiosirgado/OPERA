@@ -125,6 +125,20 @@ const fmtEUR = (n) => Number(n || 0).toLocaleString("pt-PT", { style: "currency"
 const fmtDate = (d) => d.toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 const fmtDateTime = (d) => `${d.toLocaleDateString("pt-PT")} ${d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}`;
 const pedidoTitle = (p) => (p.type === "Pedido Aberto" ? (p.customTitle || "Pedido Aberto") : p.type);
+// Pesquisa livre: ignora acentos/maiúsculas; todas as palavras têm de existir (em qualquer ordem) em qualquer campo do pedido.
+const normSearch = (v) => String(v == null ? "" : v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const pedidoMatches = (p, query) => {
+  const words = normSearch(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const fmt = (d) => (d instanceof Date && !isNaN(d) ? d.toLocaleDateString("pt-PT") : "");
+  const hay = normSearch([
+    pedidoTitle(p), p.type, p.client, p.description, p.propertyId, p.stage, p.owner, p.createdByName, p.id,
+    fmt(p.due), fmt(p.createdAt),
+    ...(p.tasks || []).map((t) => t.text), ...(p.notes || []).map((n) => n.text),
+    ...(p.messages || []).map((m) => m.text), ...(p.attachments || []).map((x) => x.name),
+  ].join(" "));
+  return words.every((w) => hay.includes(w));
+};
 const safeStorageName = (name) => name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
 // ================= DATA LAYER (Supabase) =================
@@ -2726,7 +2740,7 @@ function EquipaApp({ profile }) {
     if (p.archivedAt) return false;
     if (clientFilter !== "Todos" && p.client !== clientFilter) return false;
     if (typeFilter !== "Todos" && pedidoTitle(p) !== typeFilter) return false;
-    if (propertySearch.trim() && !p.propertyId.toLowerCase().includes(propertySearch.trim().toLowerCase())) return false;
+    if (!pedidoMatches(p, propertySearch)) return false;
     return true;
   });
   const archivedPedidos = pedidos.filter((p) => p.archivedAt).sort((a, b) => b.archivedAt - a.archivedAt);
@@ -2921,8 +2935,8 @@ function EquipaApp({ profile }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
               <div style={{ fontFamily: "Manrope, sans-serif", fontWeight: 700, fontSize: 20, color: C.text }}>Pedidos dos Clientes</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <input value={propertySearch} onChange={(e) => setPropertySearch(e.target.value)} placeholder="🔍 ID do imóvel..."
-                  style={{ background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, width: 160 }} />
+                <input value={propertySearch} onChange={(e) => setPropertySearch(e.target.value)} placeholder="🔍 Pesquisar cliente, imóvel, tipo, texto..."
+                  style={{ background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13, width: 260 }} />
                 <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
                   style={{ background: C.surface, color: C.text, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 12px", fontSize: 13 }}>
                   <option value="Todos">Todos os tipos</option>
@@ -3609,11 +3623,7 @@ function ClientPortal({ profile }) {
     if (filter === "curso" && p.stage === "Concluído") return false;
     if (filter === "concluidos" && p.stage !== "Concluído") return false;
     if (tipoFilter !== "todos" && p.type !== tipoFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const haystack = `${pedidoTitle(p)} ${p.description || ""} ${p.propertyId || ""}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
+    if (!pedidoMatches(p, searchQuery)) return false;
     return true;
   });
   const openPedido = pedidos.find((p) => p.id === openPedidoId);
@@ -3855,7 +3865,7 @@ function ClientPortal({ profile }) {
       </div>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-        <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="🔍 Pesquisar por título, descrição ou ID do imóvel..."
+        <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="🔍 Pesquisar por título, descrição, imóvel, estado, mensagens..."
           style={{ flex: "1 1 240px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13, boxSizing: "border-box" }} />
         <select value={tipoFilter} onChange={(e) => setTipoFilter(e.target.value)}
           style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", color: C.text, fontSize: 13 }}>
