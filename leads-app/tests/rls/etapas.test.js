@@ -41,7 +41,19 @@ suite("Gerir etapas", { timeout: 60_000 }, () => {
   it("as etapas base não mudam de nome nem de ordem, e as extra não saem do intervalo", async () => {
     const { data: q } = await admin.from("lead_stages").select("id").eq("key", "qualificada").single();
     expect(rows(await admin.from("lead_stages").update({ name: "x" }).eq("id", q.id).select("id"))).toHaveLength(0);
-    expect((await gestor.from("lead_stages").update({ position: 40 }).eq("id", stageOpera.id)).error).toBeTruthy();
+    expect((await gestor.from("lead_stages").update({ position: 20 }).eq("id", stageOpera.id)).error).toBeTruthy();
+    expect((await gestor.from("lead_stages").update({ position: 1000 }).eq("id", stageOpera.id)).error).toBeTruthy();
+  });
+
+  it("a OPERA cria uma etapa sua de um cliente depois de Nova Lead BD; o cliente não a cria nem apaga", async () => {
+    const { data: s, error } = await gestor.from("lead_stages")
+      .insert({ name: `${TAG} crédito`, position: 35, client_id: clientA, owner: "opera" }).select().single();
+    expect(error).toBeNull();
+    expect((await gestor.from("lead_stages").insert({ name: `${TAG} sem cliente`, position: 35, owner: "opera" })).error).toBeTruthy();
+    expect((await aAdmin.from("lead_stages").insert({ name: `${TAG} cliente cedo`, position: 35, client_id: clientA, owner: "cliente" })).error).toBeTruthy();
+    expect(rows(await aAdmin.from("lead_stages").select("id").eq("id", s.id))).toHaveLength(1);
+    expect(rows(await aAdmin.from("lead_stages").delete().eq("id", s.id).select("id"))).toHaveLength(0);
+    expect(rows(await gestor.from("lead_stages").delete().eq("id", s.id).select("id"))).toHaveLength(1);
   });
 
   it("uma etapa com leads não se apaga; sem leads apaga-se", async () => {
