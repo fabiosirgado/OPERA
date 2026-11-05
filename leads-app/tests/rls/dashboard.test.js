@@ -183,6 +183,20 @@ suite("Dashboard", () => {
     expect(g.clients.length).toBeLessThanOrEqual(8);
   });
 
+  it("rankings de qualificadas por cliente, gestor e tipo; só a equipa OPERA os vê", async () => {
+    const { data: r, error } = await gestor.rpc("leads_qualified_ranking", { p_client: clientD, p_period: "0" });
+    expect(error).toBeNull();
+    expect(r.total).toBe(1);
+    expect(r.types).toMatchObject({ comprador: 1, credito: 1, proprietario: 0, sem_tipo: 0 });
+    expect(r.by_client).toHaveLength(1);
+    expect(r.by_client[0]).toMatchObject({ id: clientD, total: 1, comprador: 1, credito: 1 });
+    expect(r.by_person).toHaveLength(1);
+    expect(r.by_person[0].total).toBe(1);
+    const { data: hoje } = await gestor.rpc("leads_qualified_ranking", { p_client: clientD, p_period: "custom", p_from: "2020-01-01", p_to: "2020-01-02" });
+    expect(hoje.total).toBe(0);
+    expect((await aAdmin.rpc("leads_qualified_ranking", { p_period: "0" })).error).toBeTruthy();
+  });
+
   it("só o admin muda o objetivo do Time to Lead", async () => {
     expect((await gestor.rpc("leads_set_ttl_target", { p_minutes: 20 })).error).toBeTruthy();
     expect((await admin.rpc("leads_set_ttl_target", { p_minutes: 20 })).error).toBeNull();
