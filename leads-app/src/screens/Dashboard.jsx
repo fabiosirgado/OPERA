@@ -31,19 +31,22 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
   const rangeOk = range.from && range.to && range.from <= range.to;
   const [d, setD] = useState(null);
   const [managers, setManagers] = useState([]);
+  const [rank, setRank] = useState(null);
   const [run] = useAction();
 
   useEffect(() => {
     if (period === "custom" && !rangeOk) return;
     const custom = period === "custom" ? { p_from: range.from, p_to: range.to } : {};
     run(async () => {
-      const [dash, load] = await Promise.all([
+      const [dash, load, rk] = await Promise.all([
         sb.rpc("leads_dashboard", { p_client: client || null, p_period: period, ...custom }),
         opera ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
+        opera ? sb.rpc("leads_qualified_ranking", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
       ]);
       if (dash.error) throw dash.error;
       setD(dash.data);
       setManagers(load.data || []);
+      setRank(rk.data || null);
     });
   }, [client, period, range.from, range.to, rangeOk, opera, ctx.version, run]);
 
@@ -163,9 +166,81 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
               </table></div>
             </div>
           )}
+
+          {opera && rank && <QualifiedRanking rank={rank} byClient={!client} periodAll={period === "0"} onClient={setClient} />}
         </div>
       )}
       <div className="foot">Os números são calculados a partir do histórico de cada lead: chamadas registadas, mudanças de etapa e tarefas concluídas.</div>
+    </>
+  );
+}
+
+const QUAL_TYPES = [["comprador", "Comprador"], ["proprietario", "Proprietário"], ["credito", "Crédito"],
+  ["arrendamento", "Arrendamento"], ["senhorio", "Senhorio"], ["sem_tipo", "Sem tipo"]];
+
+// Rankings de leads qualificadas (só a equipa OPERA): por cliente, por gestor e, em cada tipo, os clientes com mais.
+// Cada lead conta uma vez; uma lead pode ter vários tipos, por isso os tipos somam mais do que o total.
+function QualifiedRanking({ rank, byClient, periodAll, onClient }) {
+  const [sortBy, setSortBy] = useState("total");
+  const rows = [...rank.by_client].sort((a, b) => b[sortBy] - a[sortBy] || b.total - a.total || a.name.localeCompare(b.name));
+  const types = QUAL_TYPES.filter(([k]) => rank.types[k] > 0);
+  const scope = periodAll ? "Desde o início" : "No período escolhido";
+  return (
+    <>
+      {byClient && (
+        <div className="panel s12"><h3>Ranking de leads qualificadas por cliente</h3>
+          <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>{scope} · {rank.total} leads qualificadas · carrega num tipo para ordenar por ele. Uma lead pode ter mais de um tipo.</div>
+          {rows.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : (
+            <div className="tbl"><table>
+              <thead><tr><th className="n">#</th><th>Cliente</th>
+                {[["total", "Total"], ...types].map(([k, l]) => (
+                  <th key={k} className="n" aria-sort={sortBy === k ? "descending" : "none"}>
+                    <button type="button" className={`sort ${sortBy === k ? "on" : ""}`} onClick={() => setSortBy(k)}>{l}</button></th>))}</tr></thead>
+              <tbody>{rows.map((c, i) => (
+                <tr key={c.id}>
+                  <td className="n">{c[sortBy] ? i + 1 : "—"}</td>
+                  <td><button type="button" className="link" onClick={() => onClient(c.id)}>
+                    <span className="dot" style={{ width: 8, height: 8, flex: "0 0 8px", background: c.color, display: "inline-block", marginRight: 6 }}></span>{c.name}</button></td>
+                  {[["total"], ...types].map(([k]) => <td key={k} className="n">{k === sortBy || k === "total" ? <b>{c[k]}</b> : c[k]}</td>)}
+                </tr>))}</tbody>
+            </table></div>
+          )}
+        </div>
+      )}
+
+      <div className="panel s12"><h3>Ranking de leads qualificadas por gestor</h3>
+        <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>{scope} · quem passou a lead a qualificada</div>
+        {rank.by_person.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : (
+          <div className="tbl"><table>
+            <thead><tr><th className="n">#</th><th>Gestor</th><th className="n">Total</th>{types.map(([k, l]) => <th key={k} className="n">{l}</th>)}</tr></thead>
+            <tbody>{rank.by_person.map((p, i) => (
+              <tr key={p.name}><td className="n">{i + 1}</td><td>{p.name}</td><td className="n"><b>{p.total}</b></td>
+                {types.map(([k]) => <td key={k} className="n">{p[k]}</td>)}</tr>))}</tbody>
+          </table></div>
+        )}
+      </div>
+
+      <div className="panel s12"><h3>Leads qualificadas por tipo</h3>
+        <div className="sub" style={{ margin: "4px 0 10px", fontSize: 13 }}>{scope}{byClient ? " · ranking dos clientes em cada tipo" : ""}</div>
+        {types.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+            {types.map(([k, l]) => {
+              const top = byClient ? rank.by_client.filter((c) => c[k] > 0).sort((a, b) => b[k] - a[k] || a.name.localeCompare(b.name)) : [];
+              return (
+                <div key={k} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}><b>{l}</b>
+                    <span><b style={{ fontSize: 20 }}>{rank.types[k]}</b> <span className="sub" style={{ margin: 0, fontSize: 13 }}>{pct(rank.types[k], rank.total)}</span></span></div>
+                  {top.length > 0 && (
+                    <ol style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 13 }}>
+                      {top.map((c) => <li key={c.id} style={{ padding: "2px 0" }}><span style={{ display: "inline-flex", justifyContent: "space-between", width: "100%" }}>
+                        <span>{c.name}</span><b style={{ fontVariantNumeric: "tabular-nums" }}>{c[k]}</b></span></li>)}
+                    </ol>)}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </>
   );
 }
