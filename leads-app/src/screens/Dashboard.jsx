@@ -208,7 +208,7 @@ function QualifiedRanking({ rank, byClient, periodAll, onClient }) {
         </div>
       )}
 
-      <div className="panel s6"><h3>Ranking de leads qualificadas por gestor</h3>
+      <div className="panel s12"><h3>Ranking de leads qualificadas por gestor</h3>
         <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>{scope} · quem passou a lead a qualificada</div>
         {rank.by_person.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : (
           <div className="tbl"><table>
@@ -220,20 +220,26 @@ function QualifiedRanking({ rank, byClient, periodAll, onClient }) {
         )}
       </div>
 
-      <div className="panel s6"><h3>Leads qualificadas por tipo</h3>
-        <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>{scope}{byClient ? " · os clientes com mais leads de cada tipo" : ""}</div>
-        {types.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : types.map(([k, l]) => {
-          const top = byClient ? rank.by_client.filter((c) => c[k] > 0).sort((a, b) => b[k] - a[k] || a.name.localeCompare(b.name)) : [];
-          return (
-            <div key={k} style={{ padding: "8px 0", borderTop: "1px solid var(--line)" }}>
-              <div className="row" style={{ justifyContent: "space-between" }}><b>{l}</b>
-                <span><b>{rank.types[k]}</b> <span className="sub" style={{ margin: 0, fontSize: 13 }}>{pct(rank.types[k], rank.total)}</span></span></div>
-              {top.length > 0 && (
-                <div className="sub" style={{ margin: "2px 0 0", fontSize: 13 }}>
-                  {top.slice(0, 5).map((c, i) => `${i + 1}. ${c.name} ${c[k]}`).join(" · ")}{top.length > 5 ? ` · mais ${top.length - 5}` : ""}</div>)}
-            </div>
-          );
-        })}
+      <div className="panel s12"><h3>Leads qualificadas por tipo</h3>
+        <div className="sub" style={{ margin: "4px 0 10px", fontSize: 13 }}>{scope}{byClient ? " · ranking dos clientes em cada tipo" : ""}</div>
+        {types.length === 0 ? <div className="empty">Sem leads qualificadas.</div> : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+            {types.map(([k, l]) => {
+              const top = byClient ? rank.by_client.filter((c) => c[k] > 0).sort((a, b) => b[k] - a[k] || a.name.localeCompare(b.name)) : [];
+              return (
+                <div key={k} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}><b>{l}</b>
+                    <span><b style={{ fontSize: 20 }}>{rank.types[k]}</b> <span className="sub" style={{ margin: 0, fontSize: 13 }}>{pct(rank.types[k], rank.total)}</span></span></div>
+                  {top.length > 0 && (
+                    <ol style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 13 }}>
+                      {top.map((c) => <li key={c.id} style={{ padding: "2px 0" }}><span style={{ display: "inline-flex", justifyContent: "space-between", width: "100%" }}>
+                        <span>{c.name}</span><b style={{ fontVariantNumeric: "tabular-nums" }}>{c[k]}</b></span></li>)}
+                    </ol>)}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );
