@@ -183,12 +183,24 @@ suite("Dashboard", () => {
     expect(g.clients.length).toBeLessThanOrEqual(8);
   });
 
-  it("tempo médio de chamada: só as atendidas com conversa de 10 s ou mais", async () => {
+  it("conversas: só as chamadas atendidas com 1 minuto ou mais contam no tempo", async () => {
+    const { data: antes } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
+    // D1 tem uma chamada atendida de 45 s: é atendida, mas não é conversa.
+    expect(antes.answered).toBe(1);
+    expect(antes.call_time).toMatchObject({ n: 0, avg_s: null, total_s: 0 });
+    const { data: l } = await admin.from("leads").select("id").eq("client_id", clientD).eq("name", "D1").single();
+    await gestor.from("lead_events").insert([
+      { lead_id: l.id, author_id: me, type: "call", title: "Chamada", meta: { answered: true, duration_s: 90 }, created_at: ago(30) },
+      { lead_id: l.id, author_id: me, type: "call", title: "Chamada", meta: { answered: true, duration_s: 150 }, created_at: ago(25) },
+      { lead_id: l.id, author_id: me, type: "call", title: "Chamada", meta: { answered: true, duration_s: 300, direction: "incoming" }, created_at: ago(20) },
+    ]);
     const { data: d } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
-    // D1 tem uma chamada atendida de 45 s; a de D4 (6 s) e a importada de D6 não contam.
-    expect(d.call_time).toMatchObject({ avg_s: 45, median_s: 45, total_s: 45 });
-    const { data: vazio } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom", p_from: "2020-01-01", p_to: "2020-01-02" });
-    expect(vazio.call_time).toMatchObject({ avg_s: null, total_s: 0 });
+    expect(d.call_time).toMatchObject({ n: 2, avg_s: 120, median_s: 120, total_s: 240 });
+    // Horas em chamada: tudo, feitas e recebidas, atendidas ou não (aqui sem total_s, conta a conversa).
+    expect(d.call_hours.in_s).toBe(300);
+    expect(d.call_hours.total_s).toBe(d.call_hours.out_s + 300);
+    expect(d.call_hours.out_s).toBeGreaterThanOrEqual(45 + 6 + 90 + 150);
+    await admin.from("lead_events").delete().eq("lead_id", l.id).in("meta->>duration_s", ["90", "150", "300"]);
   });
 
   it("rankings de qualificadas por cliente, gestor e tipo; só a equipa OPERA os vê", async () => {
