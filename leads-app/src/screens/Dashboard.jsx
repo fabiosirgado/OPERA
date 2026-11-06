@@ -35,23 +35,26 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
   const [d, setD] = useState(null);
   const [managers, setManagers] = useState([]);
   const [rank, setRank] = useState(null);
+  const [activity, setActivity] = useState(null);
   const [run] = useAction();
 
   useEffect(() => {
     if (period === "custom" && !rangeOk) return;
     const custom = period === "custom" ? { p_from: range.from, p_to: range.to } : {};
     run(async () => {
-      const [dash, load, rk] = await Promise.all([
+      const [dash, load, rk, act] = await Promise.all([
         sb.rpc("leads_dashboard", { p_client: client || null, p_period: period, ...custom }),
-        opera ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
+        isAdmin ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
         opera ? sb.rpc("leads_qualified_ranking", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
+        isAdmin ? sb.rpc("leads_managers_activity", { p_period: period, ...custom }) : Promise.resolve({ data: null }),
       ]);
       if (dash.error) throw dash.error;
       setD(dash.data);
       setManagers(load.data || []);
       setRank(rk.data || null);
+      setActivity(act.data || null);
     });
-  }, [client, period, range.from, range.to, rangeOk, opera, ctx.version, run]);
+  }, [client, period, range.from, range.to, rangeOk, opera, isAdmin, ctx.version, run]);
 
   const setTarget = async (v) => {
     const m = Math.max(1, Math.min(240, Number(v) || 15));
@@ -91,7 +94,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
       {!d ? <div className="empty">A calcular…</div> : (
         <div className="dgrid">
           {/* Time to Lead: só a equipa OPERA vê (mede a rapidez da OPERA, não do cliente). */}
-          {opera && <div className="panel s6 hero">
+          {opera && <div className={`panel ${isAdmin ? "s6" : "s12"} hero`}>
             <span className="lbl">Time to Lead (mediana)</span>
             <span className="big">{d.ttl_median == null ? "—" : fmtDur(d.ttl_median)}</span>
             <TtlStatus m={d.ttl_median} target={d.ttl_target} />
@@ -105,8 +108,9 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             <Bars items={TTL_BUCKETS.map((l, i) => ({ l, v: d.ttl_buckets[i] }))} muteLast />
           </div>}
 
-          {opera && <div className="panel s6">
-            <h3>Taxa de ocupação por gestor de leads</h3>
+          {/* Ocupação dos gestores: só o admin vê (o servidor também o impõe). */}
+          {isAdmin && <div className="panel s6">
+            <h3>Clientes por gestor de leads</h3>
             <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>Máximo de {MAX_CLIENTS_PER_MANAGER} clientes por gestor</div>
             {managers.length === 0 && <div className="empty">Ainda não há gestores.</div>}
             {managers.map((m) => <Occupancy key={m.id} m={m} />)}
@@ -178,11 +182,56 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             </div>
           )}
 
+          {isAdmin && activity && <ManagersActivity a={activity} />}
+
           {opera && rank && <QualifiedRanking rank={rank} byClient={!client} periodAll={period === "0"} onClient={setClient} />}
         </div>
       )}
       <div className="foot">Os números são calculados a partir do histórico de cada lead: chamadas registadas, mudanças de etapa e tarefas concluídas.</div>
     </>
+  );
+}
+
+// Segundos em horas e minutos (ex.: 6h 32m).
+const hm = (s) => { const m = Math.round((s || 0) / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`; };
+const fmtDia = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit" });
+
+// Ocupação dos gestores a partir das chamadas, dia a dia (só o admin): tempo ao telefone, tempo ativo e ocupação
+// sobre um dia de 8 horas. Os intervalos de mais de 10 minutos sem chamadas são pausas e não contam.
+function ManagersActivity({ a }) {
+  const [who, setWho] = useState("");
+  const days = a.days.filter((x) => !who || x.user_id === who);
+  const occ = (o) => <span className={`status ${o >= 0.75 ? "st-good" : o >= 0.5 ? "st-warn" : "st-bad"}`}>{Math.round(o * 100)}%</span>;
+  return (
+    <div className="panel s12"><h3>Ocupação dos gestores</h3>
+      <div className="sub" style={{ margin: "4px 0", fontSize: 13 }}>
+        Tempo ativo = tempo ao telefone (a chamar e em conversa, chamadas feitas e recebidas) mais os intervalos entre chamadas de até {a.pause_min} minutos.
+        Intervalos maiores são pausas e não contam (o almoço fica de fora). Ocupação = tempo ativo sobre um dia de {a.workday_h} horas. As médias não contam o dia de hoje, que ainda está a decorrer. Só o admin vê.</div>
+      {a.per_user.length === 0 ? <div className="empty">Sem chamadas no período.</div> : (
+        <>
+          <div className="tbl"><table>
+            <thead><tr><th>Gestor</th><th className="n">Dias com chamadas</th><th className="n">Chamadas</th><th className="n">Conversas</th>
+              <th className="n">Ao telefone por dia</th><th className="n">Tempo ativo por dia</th><th className="n">Ocupação média</th><th className="n">Total ativo</th></tr></thead>
+            <tbody>{a.per_user.map((u) => (
+              <tr key={u.user_id}><td><button type="button" className="link" onClick={() => setWho(who === u.user_id ? "" : u.user_id)}>{u.name}</button></td>
+                <td className="n">{u.dias}</td><td className="n">{u.chamadas}</td><td className="n">{u.conversas}</td>
+                <td className="n">{hm(u.phone_day_s)}</td><td className="n"><b>{hm(u.active_day_s)}</b></td><td className="n">{occ(u.ocupacao)}</td><td className="n">{hm(u.active_s)}</td></tr>))}</tbody>
+          </table></div>
+          <h3 style={{ margin: "16px 0 4px" }}>Dia a dia{who ? ` · ${a.per_user.find((u) => u.user_id === who)?.name}` : ""}</h3>
+          <div className="sub" style={{ margin: "0 0 4px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.</div>
+          <div className="tbl"><table>
+            <thead><tr>{!who && <th>Gestor</th>}<th>Dia</th><th className="n">Primeira</th><th className="n">Última</th><th className="n">Chamadas</th>
+              <th className="n">Atendidas</th><th className="n">Conversas</th><th className="n">Ao telefone</th><th className="n">Tempo ativo</th>
+              <th className="n">Pausas</th><th className="n">Ocupação</th></tr></thead>
+            <tbody>{days.map((x) => (
+              <tr key={`${x.user_id}-${x.dia}`}>{!who && <td>{x.name}</td>}<td>{fmtDia(x.dia)}{x.em_curso ? <span className="sub" style={{ margin: 0, fontSize: 12 }}> · em curso</span> : ""}</td>
+                <td className="n">{x.primeira}</td><td className="n">{x.ultima}</td><td className="n">{x.chamadas}</td>
+                <td className="n">{x.atendidas}</td><td className="n">{x.conversas}</td><td className="n">{hm(x.phone_s)}</td>
+                <td className="n"><b>{hm(x.active_s)}</b></td><td className="n">{x.pausas} · {hm(x.pausas_s)}</td><td className="n">{occ(x.ocupacao)}</td></tr>))}</tbody>
+          </table></div>
+        </>
+      )}
+    </div>
   );
 }
 

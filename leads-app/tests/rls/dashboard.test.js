@@ -189,6 +189,20 @@ suite("Dashboard", () => {
     expect(g.clients.length).toBeLessThanOrEqual(8);
   });
 
+  it("ocupação dos gestores: dia a dia, só o admin vê", async () => {
+    expect((await gestor.rpc("leads_managers_activity", { p_period: "7" })).error).toBeTruthy();
+    expect((await aAdmin.rpc("leads_managers_activity", { p_period: "7" })).error).toBeTruthy();
+    const { data: a, error } = await admin.rpc("leads_managers_activity", { p_period: "custom", p_from: workday, p_to: workday });
+    expect(error).toBeNull();
+    expect(a).toMatchObject({ pause_min: 10, workday_h: 8 });
+    // O gestor ligou a D2 às 11:00 (sem duração) e a D1 às 11:10 (45 s): o intervalo de 10 min conta como ativo.
+    const dia = a.days.find((x) => x.user_id === me);
+    expect(dia.chamadas).toBeGreaterThanOrEqual(2);
+    expect(dia.active_s).toBeGreaterThanOrEqual(dia.phone_s + 600);
+    expect(dia.ocupacao).toBeCloseTo(dia.active_s / 28800, 2);
+    expect(a.per_user.find((u) => u.user_id === me).dias).toBe(1);
+  });
+
   it("conversas: só as chamadas atendidas com 1 minuto ou mais contam no tempo", async () => {
     const { data: antes } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
     // D1 tem uma chamada atendida de 45 s: é atendida, mas não é conversa.
