@@ -135,6 +135,12 @@ suite("Dashboard", () => {
       expect(geral.per_client.map((c) => c.id)).not.toContain(clientD);
       const { data: so } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
       expect(so.leads_in).toBe(5);
+      // As horas em chamada contam o cliente interno também no geral (as chamadas dele ocupam os gestores).
+      expect(so.call_hours.total_s).toBeGreaterThan(0);
+      const { data: semInterno } = await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: false }).then(() =>
+        gestor.rpc("leads_dashboard", { p_period: "7" }));
+      await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: true });
+      expect(geral.call_hours.total_s).toBe(semInterno.call_hours.total_s);
       // Os números do Pipeline geral também deixam o cliente interno de fora.
       const [depois, soD] = [await kpis(null), await kpis(clientD)];
       expect(soD.entraram_hoje).toBeGreaterThan(0);

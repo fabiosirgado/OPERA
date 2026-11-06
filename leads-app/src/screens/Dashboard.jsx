@@ -129,7 +129,7 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
             <small>Mediana {mmss(d.call_time?.median_s)} · só conversas de 1 min ou mais</small></div>
           {/* Ocupação: todo o tempo em chamada (a chamar e em conversa), feitas e recebidas, atendidas ou não. */}
           <div className="stat s4"><span>Horas em chamada</span><b>{hours(d.call_hours?.total_s ?? 0)}</b>
-            <small>Todo o tempo ao telefone, a chamar e em conversa · {hours(d.call_hours?.out_s ?? 0)} em chamadas feitas, {hours(d.call_hours?.in_s ?? 0)} em recebidas</small></div>
+            <small>Todo o tempo ao telefone, a chamar e em conversa{opera && !client ? ", incluindo as leads da OPERA" : ""} ·{hours(d.call_hours?.out_s ?? 0)} em chamadas feitas, {hours(d.call_hours?.in_s ?? 0)} em recebidas</small></div>
           <div className="stat s3"><span>Leads qualificadas</span><b>{d.qual}</b><small>Decididas no período, incluindo leads de antes · Tempo até qualificar: {d.time_to_qualify == null ? "—" : fmtDur(d.time_to_qualify)}</small></div>
           <div className="stat s3"><span>Leads desqualificadas</span><b>{d.desq}</b><small>Decididas no período, incluindo leads de antes</small></div>
           <div className="stat s3"><span>Taxa de qualificação</span><b>{pct(d.qual, d.qual + d.desq)}</b><small>Qualificadas sobre decididas</small></div>
