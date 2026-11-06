@@ -205,7 +205,7 @@ function PauseBar({ x, max }) {
     <div className="pb" role="img" aria-label={`${ps.length} pausas: ${ps.map((p) => `${p.de}–${p.ate}, ${hm(p.s)}`).join("; ")}`}>
       {ps.map((p) => (
         <span key={p.de} className="pb-seg" style={{ flexBasis: `${(p.s / max) * 100}%` }} title={`Pausa das ${p.de} às ${p.ate} · ${hm(p.s)}`}>
-          {Math.round(p.s / 60)}</span>))}
+          {p.s >= 3600 ? hm(p.s) : Math.round(p.s / 60)}</span>))}
     </div>
   );
 }
