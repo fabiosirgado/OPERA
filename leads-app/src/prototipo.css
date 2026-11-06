@@ -306,3 +306,16 @@ body.out main{padding:0}
 .recdot{width:12px;height:12px;border-radius:50%;background:#DC2626;animation:recblink 1s infinite}
 @keyframes recblink{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.recdot{animation:none}}
+/* Pausas do dia (ocupação dos gestores) */
+.pb-grid{display:grid;grid-template-columns:minmax(90px,130px) minmax(0,1fr) 150px;gap:10px 16px;align-items:center}
+.pb-label{display:flex;flex-direction:column;line-height:1.25;font-size:13px;white-space:nowrap}
+.pb-label b{text-transform:capitalize}
+.pb-label small{font-size:11.5px;color:var(--mute)}
+.pb{display:flex;gap:2px;height:24px}
+.pb-seg{flex:0 0 auto;min-width:22px;background:#FCD9A0;color:#7C4A03;border-radius:5px;font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;cursor:default}
+.pb-seg:hover{background:#F8B95A}
+.pb-none{font-size:12.5px;color:var(--mute)}
+.pb-stat{font-size:13px;color:var(--mute);white-space:nowrap;text-align:right}
+.pb-stat b{color:var(--text)}
+@media (max-width:720px){.pb-grid{grid-template-columns:minmax(0,1fr);gap:4px 0}.pb-stat{text-align:left;margin-bottom:10px}}

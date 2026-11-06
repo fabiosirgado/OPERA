@@ -135,6 +135,12 @@ suite("Dashboard", () => {
       expect(geral.per_client.map((c) => c.id)).not.toContain(clientD);
       const { data: so } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
       expect(so.leads_in).toBe(5);
+      // As horas em chamada contam o cliente interno também no geral (as chamadas dele ocupam os gestores).
+      expect(so.call_hours.total_s).toBeGreaterThan(0);
+      const { data: semInterno } = await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: false }).then(() =>
+        gestor.rpc("leads_dashboard", { p_period: "7" }));
+      await admin.rpc("leads_set_client_internal", { p_client_id: clientD, p_internal: true });
+      expect(geral.call_hours.total_s).toBe(semInterno.call_hours.total_s);
       // Os números do Pipeline geral também deixam o cliente interno de fora.
       const [depois, soD] = [await kpis(null), await kpis(clientD)];
       expect(soD.entraram_hoje).toBeGreaterThan(0);
@@ -181,6 +187,36 @@ suite("Dashboard", () => {
     const { data: load } = await gestor.rpc("leads_managers_load");
     const g = load.find((m) => m.id === me);
     expect(g.clients.length).toBeLessThanOrEqual(8);
+  });
+
+  it("ocupação dos gestores: dia a dia, só o admin vê", async () => {
+    expect((await gestor.rpc("leads_managers_activity", { p_period: "7" })).error).toBeTruthy();
+    expect((await aAdmin.rpc("leads_managers_activity", { p_period: "7" })).error).toBeTruthy();
+    const { data: a, error } = await admin.rpc("leads_managers_activity", { p_period: "custom", p_from: workday, p_to: workday });
+    expect(error).toBeNull();
+    expect(a).toMatchObject({ pause_min: 10, workday_h: 8 });
+    // O gestor ligou a D2 às 11:00 (sem duração) e a D1 às 11:10 (45 s): o intervalo de 10 min conta como ativo.
+    const dia = a.days.find((x) => x.user_id === me);
+    expect(dia.chamadas).toBeGreaterThanOrEqual(2);
+    expect(dia.active_s).toBeGreaterThanOrEqual(dia.phone_s + 600);
+    expect(dia.ocupacao).toBeCloseTo(dia.active_s / 28800, 2);
+    expect(a.per_user.find((u) => u.user_id === me).dias).toBe(1);
+
+    // Almoço: a pausa mais longa (30 min ou mais) que apanha parte das 12:00 às 15:00; as outras ficam como pausas.
+    // 11:50 → 12:20 (29 min, pausa), 12:21 → 13:30 (69 min, almoço), 13:31 → 14:00 (29 min, pausa).
+    const { data: l } = await admin.from("leads").select("id").eq("client_id", clientD).eq("name", "D1").single();
+    const call = (hhmm) => ({ lead_id: l.id, author_id: me, type: "call", title: "Chamada almoço", meta: { answered: false, total_s: 60 }, created_at: at(hhmm) });
+    await gestor.from("lead_events").insert([call("11:50"), call("12:20"), call("13:30"), call("14:00")]);
+    try {
+      const { data: b } = await admin.rpc("leads_managers_activity", { p_period: "custom", p_from: workday, p_to: workday });
+      const d2 = b.days.find((x) => x.user_id === me);
+      expect(d2.almoco_s).toBe(69 * 60);
+      expect(d2.pausas_lista.map((p) => Math.round(p.s / 60))).toContain(29);
+      expect(d2.pausas_lista[0]).toHaveProperty("de");
+      expect(d2.pausas_s).toBeGreaterThanOrEqual(29 * 60);
+    } finally {
+      await admin.from("lead_events").delete().eq("lead_id", l.id).eq("title", "Chamada almoço");
+    }
   });
 
   it("conversas: só as chamadas atendidas com 1 minuto ou mais contam no tempo", async () => {
