@@ -7,6 +7,9 @@ const PERIODS = [["1", "Hoje"], ["7", "7 dias"], ["30", "30 dias"], ["0", "Tudo"
 const TTL_BUCKETS = ["Até 15 min", "15 a 30 min", "30 a 60 min", "1 a 4 h", "Mais de 4 h", "Por contactar"];
 const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : "—");
 const dec = (n) => n.toFixed(1).replace(".", ",");
+// Segundos em minutos e segundos (ex.: 3:25); totais longos em horas.
+const mmss = (s) => { if (s == null) return "—"; const t = Math.round(s); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
+const hours = (s) => (s >= 3600 ? `${dec(s / 3600)} h` : `${Math.round(s / 60)} min`);
 const todayISO = () => localInput(Date.now()).slice(0, 10);
 const monthStartISO = () => `${todayISO().slice(0, 8)}01`;
 
@@ -113,12 +116,14 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           <div className="stat s6"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia{d.calls_new != null ? ` · ${d.calls_new} ${d.calls_new === 1 ? "chamada" : "chamadas"} a estas leads` : ""}</small></div>
           <div className={`stat s6 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
           {/* Chamadas feitas = atendidas (conversa de 10 segundos ou mais) + tentativas (não atendidas ou mais curtas). */}
-          <div className="stat s4"><span>Chamadas feitas</span><b>{d.calls}</b>
+          <div className="stat s3"><span>Chamadas feitas</span><b>{d.calls}</b>
             <small>A {d.leads_called ?? 0} leads · {d.leads_called ? dec(d.calls / d.leads_called) : "0"} por lead</small></div>
-          <div className="stat s4"><span>Chamadas atendidas</span><b>{d.answered}</b>
+          <div className="stat s3"><span>Chamadas atendidas</span><b>{d.answered}</b>
             <small>{pct(d.answered, d.calls)} das chamadas feitas · conversa de 10 s ou mais</small></div>
-          <div className="stat s4"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>
+          <div className="stat s3"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>
             <small>{pct(d.attempts ?? d.calls - d.answered, d.calls)} das chamadas feitas · não atendidas ou com menos de 10 s</small></div>
+          <div className="stat s3"><span>Tempo médio de chamada</span><b>{mmss(d.call_time?.avg_s)}</b>
+            <small>Das chamadas atendidas · mediana {mmss(d.call_time?.median_s)} · {hours(d.call_time?.total_s ?? 0)} em chamada no período</small></div>
           <div className="stat s3"><span>Leads qualificadas</span><b>{d.qual}</b><small>Decididas no período, incluindo leads de antes · Tempo até qualificar: {d.time_to_qualify == null ? "—" : fmtDur(d.time_to_qualify)}</small></div>
           <div className="stat s3"><span>Leads desqualificadas</span><b>{d.desq}</b><small>Decididas no período, incluindo leads de antes</small></div>
           <div className="stat s3"><span>Taxa de qualificação</span><b>{pct(d.qual, d.qual + d.desq)}</b><small>Qualificadas sobre decididas</small></div>
