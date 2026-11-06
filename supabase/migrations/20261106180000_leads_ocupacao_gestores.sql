@@ -1,4 +1,5 @@
 -- OPERA Leads: ocupação dos gestores a partir das chamadas, dia a dia (pedido do Fábio, 2026-11-06). Só o admin vê.
+-- Conta só os utilizadores com o papel de gestor (o admin fica de fora).
 --
 -- Para cada gestor e cada dia (hora de Lisboa):
 -- * ao telefone: soma do tempo total de cada chamada na CloudTalk (a chamar e em conversa), feitas e recebidas;
@@ -36,7 +37,7 @@ begin
              (e.meta ->> 'answered') = 'true' and coalesce((e.meta ->> 'duration_s')::numeric, 0) >= 10 as atendida,
              (e.meta ->> 'answered') = 'true' and coalesce((e.meta ->> 'duration_s')::numeric, 0) >= 60 as conversa
         from public.lead_events e join public.profiles p on p.id = e.author_id
-       where e.type = 'call' and not (e.meta ? 'imported') and p.leads_role in ('admin', 'gestor')
+       where e.type = 'call' and not (e.meta ? 'imported') and p.leads_role = 'gestor'
          and e.created_at >= v_d1::timestamp at time zone 'Europe/Lisbon'
          and e.created_at < (v_d2 + 1)::timestamp at time zone 'Europe/Lisbon'
     ),
@@ -64,8 +65,8 @@ begin
              coalesce(sum(gap) filter (where gap > extract(epoch from c_pause) and not almoco), 0) as pausas_s,
              max(prev) filter (where almoco) as almoco_de, max(ini) filter (where almoco) as almoco_ate,
              coalesce(sum(gap) filter (where almoco), 0) as almoco_s,
-             string_agg(to_char(prev at time zone 'Europe/Lisbon', 'HH24:MI') || '–' || to_char(ini at time zone 'Europe/Lisbon', 'HH24:MI')
-                        || ' (' || round(gap / 60) || ' min)', ', ' order by ini)
+             jsonb_agg(jsonb_build_object('de', to_char(prev at time zone 'Europe/Lisbon', 'HH24:MI'),
+                                          'ate', to_char(ini at time zone 'Europe/Lisbon', 'HH24:MI'), 's', round(gap)) order by ini)
                filter (where gap > extract(epoch from c_pause) and not almoco) as pausas_lista
         from g group by author_id, dia
     )
@@ -76,7 +77,7 @@ begin
                  'primeira', to_char(d.primeira at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'ultima', to_char(d.ultima at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'chamadas', d.chamadas, 'atendidas', d.atendidas, 'conversas', d.conversas,
-                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s), 'pausas_lista', d.pausas_lista,
+                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s), 'pausas_lista', coalesce(d.pausas_lista, '[]'::jsonb),
                  'almoco_de', to_char(d.almoco_de at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'almoco_ate', to_char(d.almoco_ate at time zone 'Europe/Lisbon', 'HH24:MI'), 'almoco_s', round(d.almoco_s),
                  'ocupacao', round(d.active_s / c_workday, 3)) order by p.full_name, d.dia desc), '[]'::jsonb)

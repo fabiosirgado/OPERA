@@ -211,7 +211,8 @@ suite("Dashboard", () => {
       const { data: b } = await admin.rpc("leads_managers_activity", { p_period: "custom", p_from: workday, p_to: workday });
       const d2 = b.days.find((x) => x.user_id === me);
       expect(d2.almoco_s).toBe(69 * 60);
-      expect(d2.pausas_lista).toContain("(29 min)");
+      expect(d2.pausas_lista.map((p) => Math.round(p.s / 60))).toContain(29);
+      expect(d2.pausas_lista[0]).toHaveProperty("de");
       expect(d2.pausas_s).toBeGreaterThanOrEqual(29 * 60);
     } finally {
       await admin.from("lead_events").delete().eq("lead_id", l.id).eq("title", "Chamada almoço");
