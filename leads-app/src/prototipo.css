@@ -306,3 +306,18 @@ body.out main{padding:0}
 .recdot{width:12px;height:12px;border-radius:50%;background:#DC2626;animation:recblink 1s infinite}
 @keyframes recblink{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.recdot{animation:none}}
+/* Linha do dia (ocupação dos gestores) */
+.dl{position:relative;height:26px;background:var(--col);border-radius:6px;min-width:0}
+.dl-grid{display:grid;grid-template-columns:minmax(110px,230px) 1fr;gap:8px 12px;align-items:center}
+.dl-label{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-tick{position:absolute;top:0;bottom:0;width:1px;background:#fff;opacity:.9}
+.dl-work{position:absolute;top:3px;bottom:3px;background:var(--blue);border-radius:4px}
+.dl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:default;outline-offset:1px}
+.dl-seg em{font-style:normal;font-size:11px;font-weight:700;line-height:1;white-space:nowrap}
+.dl-pause{background:#F59E0B;color:#422006}
+.dl-lunch{background:repeating-linear-gradient(135deg,#CBD5E1 0 4px,#E2E8F0 4px 8px);color:#334155}
+.dl-seg:hover,.dl-seg:focus{box-shadow:0 0 0 2px var(--text);z-index:1}
+.dl-axis{position:relative;height:16px;font-weight:500}
+.dl-axis span{position:absolute;transform:translateX(-50%);font-size:11px;color:var(--mute)}
+.dl-axis span:first-child{transform:none}.dl-axis span:last-child{transform:translateX(-100%)}
+.dl-key{display:inline-block;width:12px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { sb } from "../supabase.js";
 import { MAX_CLIENTS_PER_MANAGER, fmtDur, localInput } from "../lib/format.js";
 import { useAction } from "../ui/feedback.jsx";
@@ -196,6 +196,35 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
 const hm = (s) => { const m = Math.round((s || 0) / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`; };
 const fmtDia = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit" });
 
+// Linha do dia: das 8:00 às 20:00, o tempo a trabalhar (da primeira à última chamada) com as pausas e o almoço por cima.
+const DL_FROM = 8 * 60, DL_TO = 20 * 60;
+const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
+const dlPos = (hhmm) => `${((Math.min(Math.max(toMin(hhmm), DL_FROM), DL_TO) - DL_FROM) / (DL_TO - DL_FROM)) * 100}%`;
+const dlSpan = (a, b) => ({ left: dlPos(a), width: `calc(${dlPos(b)} - ${dlPos(a)})` });
+
+function DayAxis() {
+  return (
+    <div className="dl-axis">{[8, 10, 12, 14, 16, 18, 20].map((h) => (
+      <span key={h} style={{ left: dlPos(`${h}:00`) }}>{h}h</span>))}</div>
+  );
+}
+
+function DayLine({ x }) {
+  const segs = [
+    ...(x.pausas_lista || []).map((p) => ({ ...p, kind: "pausa", label: `Pausa ${p.de}–${p.ate} · ${hm(p.s)}` })),
+    ...(x.almoco_de ? [{ de: x.almoco_de, ate: x.almoco_ate, s: x.almoco_s, kind: "almoco", label: `Almoço ${x.almoco_de}–${x.almoco_ate} · ${hm(x.almoco_s)}` }] : []),
+  ];
+  return (
+    <div className="dl" role="img" aria-label={`A trabalhar das ${x.primeira} às ${x.ultima}. ${segs.map((s) => s.label).join(". ")}`}>
+      {[10, 12, 14, 16, 18].map((h) => <i key={h} className="dl-tick" style={{ left: dlPos(`${h}:00`) }} />)}
+      <span className="dl-work" style={dlSpan(x.primeira, x.ultima)} title={`A trabalhar das ${x.primeira} às ${x.ultima}`} />
+      {segs.map((s) => (
+        <span key={s.de} className={`dl-seg ${s.kind === "almoco" ? "dl-lunch" : "dl-pause"}`} style={dlSpan(s.de, s.ate)} title={s.label} tabIndex={0}>
+          {s.s >= 25 * 60 ? <em>{hm(s.s)}</em> : null}</span>))}
+    </div>
+  );
+}
+
 // Ocupação dos gestores a partir das chamadas, dia a dia (só o admin): tempo ao telefone, tempo ativo e ocupação
 // sobre um dia de 8 horas. Os intervalos de mais de 10 minutos sem chamadas são pausas e não contam.
 function ManagersActivity({ a }) {
@@ -218,27 +247,33 @@ function ManagersActivity({ a }) {
                 <td className="n">{hm(u.phone_day_s)}</td><td className="n"><b>{hm(u.active_day_s)}</b></td><td className="n">{occ(u.ocupacao)}</td><td className="n">{hm(u.active_s)}</td></tr>))}</tbody>
           </table></div>
           <h3 style={{ margin: "16px 0 4px" }}>Dia a dia{who ? ` · ${a.per_user.find((u) => u.user_id === who)?.name}` : ""}</h3>
-          <div className="sub" style={{ margin: "0 0 4px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
-            Almoço: a pausa mais longa, de 30 min ou mais, que apanha parte das 12:00 às 15:00 (a vermelho quando passa de 1 hora).
-            Pausas: as outras paragens de mais de {a.pause_min} min, cada uma com a hora e a duração.</div>
-          <div className="tbl"><table>
-            <thead><tr>{!who && <th>Gestor</th>}<th>Dia</th><th className="n">Primeira</th><th className="n">Última</th><th className="n">Chamadas</th>
-              <th className="n">Atendidas</th><th className="n">Conversas</th><th className="n">Ao telefone</th><th className="n">Tempo ativo</th>
-              <th className="n">Almoço</th><th className="n">Pausas</th><th className="n">Ocupação</th></tr></thead>
+          <div className="sub" style={{ margin: "0 0 8px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
+            Na linha do dia, as pausas grandes mostram a duração; passa o rato por cima de qualquer pausa para ver as horas exatas.</div>
+          <div className="row" style={{ gap: 14, fontSize: 12, margin: "0 0 6px" }} aria-hidden="true">
+            <span><i className="dl-key" style={{ background: "var(--blue)" }} /> A trabalhar</span>
+            <span><i className="dl-key" style={{ background: "#F59E0B" }} /> Pausa (mais de {a.pause_min} min)</span>
+            <span><i className="dl-key dl-lunch" /> Almoço</span>
+          </div>
+          <div className="dl-grid">
+            <span /><DayAxis />
+            {days.map((x) => (
+              <Fragment key={`${x.user_id}-${x.dia}`}>
+                <span className="dl-label">{!who && <b>{x.name.split(" ")[0]} · </b>}{fmtDia(x.dia)}{x.em_curso ? " · em curso" : ""}</span>
+                <DayLine x={x} />
+              </Fragment>))}
+          </div>
+          <div className="tbl" style={{ marginTop: 12 }}><table>
+            <thead><tr>{!who && <th>Gestor</th>}<th>Dia</th><th className="n">Primeira</th><th className="n">Última</th><th className="n">Tempo ativo</th><th className="n">Ocupação</th>
+              <th className="n">Ao telefone</th><th className="n">Chamadas</th><th className="n">Conversas</th><th className="n">Almoço</th><th className="n">Pausas</th></tr></thead>
             <tbody>{days.map((x) => (
-              <tr key={`${x.user_id}-${x.dia}`}>{!who && <td>{x.name}</td>}<td>{fmtDia(x.dia)}{x.em_curso ? <span className="sub" style={{ margin: 0, fontSize: 12 }}> · em curso</span> : ""}</td>
-                <td className="n">{x.primeira}</td><td className="n">{x.ultima}</td><td className="n">{x.chamadas}</td>
-                <td className="n">{x.atendidas}</td><td className="n">{x.conversas}</td><td className="n">{hm(x.phone_s)}</td>
-                <td className="n"><b>{hm(x.active_s)}</b></td>
-                <td className="n" style={{ whiteSpace: "nowrap" }}>{x.almoco_de ? <>
-                  <b style={x.almoco_s > 3600 ? { color: "var(--redText)" } : undefined}>{hm(x.almoco_s)}</b>
-                  <div style={{ fontSize: 12, color: "var(--mute)" }}>{x.almoco_de}–{x.almoco_ate}</div></> : "—"}</td>
-                <td className="n">{x.pausas ? <>
-                  <b>{x.pausas} · {hm(x.pausas_s)}</b>
-                  {(x.pausas_lista || []).map((p) => (
-                    <div key={p.de} style={{ fontSize: 12, whiteSpace: "nowrap", color: "var(--mute)" }}>{p.de}–{p.ate} · <span style={{ color: "var(--text)" }}>{hm(p.s)}</span></div>))}
-                </> : "0"}</td>
-                <td className="n">{occ(x.ocupacao)}</td></tr>))}</tbody>
+              <tr key={`${x.user_id}-${x.dia}`}>{!who && <td>{x.name}</td>}
+                <td style={{ whiteSpace: "nowrap" }}>{fmtDia(x.dia)}{x.em_curso ? <div className="sub" style={{ margin: 0, fontSize: 12 }}>em curso</div> : ""}</td>
+                <td className="n">{x.primeira}</td><td className="n">{x.ultima}</td>
+                <td className="n"><b>{hm(x.active_s)}</b></td><td className="n">{occ(x.ocupacao)}</td>
+                <td className="n">{hm(x.phone_s)}</td><td className="n">{x.chamadas}</td><td className="n">{x.conversas}</td>
+                <td className="n" style={{ whiteSpace: "nowrap" }}>{x.almoco_de
+                  ? <span style={x.almoco_s > 3600 ? { color: "var(--redText)", fontWeight: 600 } : undefined}>{hm(x.almoco_s)}</span> : "—"}</td>
+                <td className="n" style={{ whiteSpace: "nowrap" }}>{x.pausas ? `${x.pausas} · ${hm(x.pausas_s)}` : "0"}</td></tr>))}</tbody>
           </table></div>
         </>
       )}
