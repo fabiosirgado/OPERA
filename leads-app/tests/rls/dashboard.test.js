@@ -196,6 +196,10 @@ suite("Dashboard", () => {
     ]);
     const { data: d } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
     expect(d.call_time).toMatchObject({ n: 2, avg_s: 120, median_s: 120, total_s: 240 });
+    // Horas em chamada: tudo, feitas e recebidas, atendidas ou não (aqui sem total_s, conta a conversa).
+    expect(d.call_hours.in_s).toBe(300);
+    expect(d.call_hours.total_s).toBe(d.call_hours.out_s + 300);
+    expect(d.call_hours.out_s).toBeGreaterThanOrEqual(45 + 6 + 90 + 150);
     await admin.from("lead_events").delete().eq("lead_id", l.id).in("meta->>duration_s", ["90", "150", "300"]);
   });
 
