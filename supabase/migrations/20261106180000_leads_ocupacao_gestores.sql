@@ -67,9 +67,7 @@ begin
              coalesce(sum(gap) filter (where almoco), 0) as almoco_s,
              jsonb_agg(jsonb_build_object('de', to_char(prev at time zone 'Europe/Lisbon', 'HH24:MI'),
                                           'ate', to_char(ini at time zone 'Europe/Lisbon', 'HH24:MI'), 's', round(gap)) order by ini)
-               filter (where gap > extract(epoch from c_pause) and not almoco) as pausas_lista,
-             -- Cada chamada como [minuto do dia em que começou, segundos], para a linha do dia.
-             jsonb_agg(jsonb_build_array(round(extract(epoch from (ini at time zone 'Europe/Lisbon')::time) / 60, 1), round(s)) order by ini) as chamadas_lista
+               filter (where gap > extract(epoch from c_pause) and not almoco) as pausas_lista
         from g group by author_id, dia
     )
     select jsonb_build_object(
@@ -79,7 +77,7 @@ begin
                  'primeira', to_char(d.primeira at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'ultima', to_char(d.ultima at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'chamadas', d.chamadas, 'atendidas', d.atendidas, 'conversas', d.conversas,
-                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s), 'pausas_lista', coalesce(d.pausas_lista, '[]'::jsonb), 'chamadas_lista', d.chamadas_lista,
+                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s), 'pausas_lista', coalesce(d.pausas_lista, '[]'::jsonb),
                  'almoco_de', to_char(d.almoco_de at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'almoco_ate', to_char(d.almoco_ate at time zone 'Europe/Lisbon', 'HH24:MI'), 'almoco_s', round(d.almoco_s),
                  'ocupacao', round(d.active_s / c_workday, 3)) order by p.full_name, d.dia desc), '[]'::jsonb)

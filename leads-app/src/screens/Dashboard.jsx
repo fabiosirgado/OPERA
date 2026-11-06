@@ -196,8 +196,8 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
 const hm = (s) => { const m = Math.round((s || 0) / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`; };
 const fmtDia = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit" });
 
-// Linha do dia, das 8:00 às 20:00: o horário de referência (9:30 às 19:00) ao fundo, o tempo entre a primeira e a
-// última chamada a azul claro, cada chamada a azul forte (com a sua duração), e as pausas e o almoço por cima.
+// Linha do dia, das 8:00 às 20:00: a trabalhar (da primeira à última chamada), com as pausas e o almoço por cima.
+// Por baixo, a duração de cada pausa, pela ordem do dia.
 const DL_FROM = 8 * 60, DL_TO = 20 * 60, DL_SPAN = DL_TO - DL_FROM;
 const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
 const dlPct = (min) => ((Math.min(Math.max(min, DL_FROM), DL_TO) - DL_FROM) / DL_SPAN) * 100;
@@ -212,31 +212,22 @@ function DayAxis() {
 }
 
 function DayLine({ x }) {
-  const [tip, setTip] = useState(null);
   const segs = [
-    ...(x.pausas_lista || []).map((p) => ({ a: toMin(p.de), b: toMin(p.ate), s: p.s, kind: "pause", title: "Pausa" })),
-    ...(x.almoco_de ? [{ a: toMin(x.almoco_de), b: toMin(x.almoco_ate), s: x.almoco_s, kind: "lunch", title: "Almoço" }] : []),
-  ];
-  const show = (e, text) => {
-    const r = e.currentTarget.parentElement.getBoundingClientRect(), t = e.currentTarget.getBoundingClientRect();
-    setTip({ text, left: ((t.left + t.width / 2 - r.left) / r.width) * 100 });
-  };
-  const now = x.em_curso ? (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })() : null;
+    ...(x.pausas_lista || []).map((p) => ({ a: toMin(p.de), b: toMin(p.ate), s: p.s, kind: "pause" })),
+    ...(x.almoco_de ? [{ a: toMin(x.almoco_de), b: toMin(x.almoco_ate), s: x.almoco_s, kind: "lunch" }] : []),
+  ].sort((p, q) => p.a - q.a);
+  const label = (s) => `${s.kind === "lunch" ? "Almoço" : "Pausa"} ${clock(s.a)}–${clock(s.b)} · ${hm(s.s)}`;
   return (
-    <div className="dl" role="img" onMouseLeave={() => setTip(null)}
-      aria-label={`${fmtDia(x.dia)}: a trabalhar das ${x.primeira} às ${x.ultima}, ${x.chamadas} chamadas. ${segs.map((s) => `${s.title} ${clock(s.a)}–${clock(s.b)}, ${hm(s.s)}`).join(". ")}`}>
-      <span className="dl-shift" style={dlBox(9 * 60 + 30, 19 * 60)} />
-      {Array.from({ length: 11 }, (_, i) => 9 + i).map((h) => <i key={h} className="dl-tick" style={{ left: `${dlPct(h * 60)}%` }} />)}
-      <span className="dl-work" style={dlBox(toMin(x.primeira), toMin(x.ultima))} />
-      {(x.chamadas_lista || []).map(([m, s], i) => (
-        <span key={i} className="dl-call" style={{ left: `${dlPct(m)}%`, width: `max(2px, ${(s / 60 / DL_SPAN) * 100}%)` }} />))}
-      {segs.map((s) => (
-        <span key={`${s.kind}${s.a}`} className={`dl-seg dl-${s.kind}`} style={dlBox(s.a, s.b)} tabIndex={0}
-          onMouseEnter={(e) => show(e, `${s.title} · ${clock(s.a)}–${clock(s.b)} · ${hm(s.s)}`)} onFocus={(e) => show(e, `${s.title} · ${clock(s.a)}–${clock(s.b)} · ${hm(s.s)}`)}
-          onBlur={() => setTip(null)}>
-          {s.b - s.a >= (s.kind === "lunch" ? 40 : 20) ? <em>{s.kind === "lunch" ? `Almoço ${hm(s.s)}` : hm(s.s)}</em> : null}</span>))}
-      {now != null && now > DL_FROM && now < DL_TO && <i className="dl-now" style={{ left: `${dlPct(now)}%` }} title={`Agora, ${clock(now)}`} />}
-      {tip && <span className="dl-tip" style={{ left: `${tip.left}%` }}>{tip.text}</span>}
+    <div>
+      <div className="dl" role="img" aria-label={`A trabalhar das ${x.primeira} às ${x.ultima}. ${segs.map(label).join(". ")}`}>
+        <span className="dl-work" style={dlBox(toMin(x.primeira), toMin(x.ultima))} />
+        {segs.map((s) => <span key={`${s.kind}${s.a}`} className={`dl-seg dl-${s.kind}`} style={dlBox(s.a, s.b)} title={label(s)} />)}
+      </div>
+      {segs.length > 0 && (
+        <div className="dl-chips">{segs.map((s) => (
+          <span key={`${s.kind}${s.a}`} className={`dl-chip dl-chip-${s.kind}`} title={label(s)}>
+            {s.kind === "lunch" ? `Almoço ${hm(s.s)}` : hm(s.s)}</span>))}</div>
+      )}
     </div>
   );
 }
@@ -263,23 +254,16 @@ function ManagersActivity({ a }) {
                 <td className="n">{hm(u.phone_day_s)}</td><td className="n"><b>{hm(u.active_day_s)}</b></td><td className="n">{occ(u.ocupacao)}</td><td className="n">{hm(u.active_s)}</td></tr>))}</tbody>
           </table></div>
           <h3 style={{ margin: "16px 0 4px" }}>Dia a dia{who ? ` · ${a.per_user.find((u) => u.user_id === who)?.name}` : ""}</h3>
-          <div className="sub" style={{ margin: "0 0 8px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
-            Passa o rato por cima de uma pausa ou do almoço para ver as horas exatas.</div>
-          <div className="dl-legend" aria-hidden="true">
-            <span><i className="dl-key dl-call" /> Em chamada</span>
-            <span><i className="dl-key dl-work" /> Entre chamadas</span>
-            <span><i className="dl-key dl-pause" /> Pausa (mais de {a.pause_min} min)</span>
-            <span><i className="dl-key dl-lunch" /> Almoço</span>
-            <span><i className="dl-key dl-shift" /> Horário 9:30–19:00</span>
-          </div>
+          <div className="sub" style={{ margin: "0 0 10px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
+            Azul: a trabalhar. Laranja: cada pausa de mais de {a.pause_min} min, com a duração por baixo. Cinzento: almoço.</div>
           <div className="dl-grid">
             <span /><DayAxis /><span />
             {days.map((x) => (
               <Fragment key={`${x.user_id}-${x.dia}`}>
                 <span className="dl-label">{!who && <small>{x.name.split(" ")[0]}</small>}<b>{fmtDia(x.dia)}</b>
-                  <small>{x.primeira}–{x.ultima}{x.em_curso ? " · em curso" : ""}</small></span>
+                  {x.em_curso && <small>em curso</small>}</span>
                 <DayLine x={x} />
-                <span className="dl-stat"><b>{hm(x.active_s)}</b>{occ(x.ocupacao)}</span>
+                <span className="dl-stat"><b>{x.pausas}</b> {x.pausas === 1 ? "pausa" : "pausas"} · <b>{hm(x.pausas_s)}</b></span>
               </Fragment>))}
           </div>
           <div className="tbl" style={{ marginTop: 12 }}><table>
