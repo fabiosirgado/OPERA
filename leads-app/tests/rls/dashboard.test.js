@@ -183,6 +183,14 @@ suite("Dashboard", () => {
     expect(g.clients.length).toBeLessThanOrEqual(8);
   });
 
+  it("tempo médio de chamada: só as atendidas com conversa de 10 s ou mais", async () => {
+    const { data: d } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "7" });
+    // D1 tem uma chamada atendida de 45 s; a de D4 (6 s) e a importada de D6 não contam.
+    expect(d.call_time).toMatchObject({ avg_s: 45, median_s: 45, total_s: 45 });
+    const { data: vazio } = await gestor.rpc("leads_dashboard", { p_client: clientD, p_period: "custom", p_from: "2020-01-01", p_to: "2020-01-02" });
+    expect(vazio.call_time).toMatchObject({ avg_s: null, total_s: 0 });
+  });
+
   it("rankings de qualificadas por cliente, gestor e tipo; só a equipa OPERA os vê", async () => {
     const { data: r, error } = await gestor.rpc("leads_qualified_ranking", { p_client: clientD, p_period: "0" });
     expect(error).toBeNull();
