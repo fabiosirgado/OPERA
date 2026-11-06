@@ -4,7 +4,8 @@
 -- * ao telefone: soma do tempo total de cada chamada na CloudTalk (a chamar e em conversa), feitas e recebidas;
 -- * tempo ativo: o tempo ao telefone mais os intervalos entre chamadas seguidas de até 10 minutos
 --   (abrir a lead, ler a ficha, qualificar). Um intervalo de mais de 10 minutos é uma pausa e não conta
---   (o almoço de 1 hora fica assim de fora);
+--   (o almoço de 1 hora fica assim de fora). O almoço é a pausa mais longa, de 30 min ou mais, que apanha parte
+--   das 12:00 às 15:00; aparece à parte das outras pausas;
 -- * ocupação: tempo ativo sobre um dia de trabalho de 8 horas (sem o almoço).
 -- Cada chamada começa quando foi registada (created_at) e dura total_s (ou a conversa, se não houver total).
 -- Fica de fora o histórico importado.
@@ -39,18 +40,33 @@ begin
          and e.created_at >= v_d1::timestamp at time zone 'Europe/Lisbon'
          and e.created_at < (v_d2 + 1)::timestamp at time zone 'Europe/Lisbon'
     ),
-    g as (  -- intervalo desde o fim da chamada anterior do mesmo gestor, no mesmo dia
-      select c.*, greatest(extract(epoch from (ini - max(fim) over (partition by author_id, dia order by ini
-                                                     rows between unbounded preceding and 1 preceding))), 0) as gap
+    g0 as (  -- fim da chamada anterior do mesmo gestor, no mesmo dia
+      select c.*, max(fim) over (partition by author_id, dia order by ini rows between unbounded preceding and 1 preceding) as prev
         from c
+    ),
+    g1 as (
+      select g0.*, greatest(coalesce(extract(epoch from (ini - prev)), 0), 0) as gap from g0
+    ),
+    g as (
+      -- Almoço: a pausa mais longa (30 min ou mais) que apanha parte das 12:00 às 15:00. As outras são pausas.
+      select g1.*, gap > extract(epoch from c_pause) and gap >= 1800
+                   and (prev at time zone 'Europe/Lisbon')::time < '15:00' and (ini at time zone 'Europe/Lisbon')::time > '12:00'
+                   and row_number() over (partition by author_id, dia, (gap >= 1800 and (prev at time zone 'Europe/Lisbon')::time < '15:00' and (ini at time zone 'Europe/Lisbon')::time > '12:00')
+                                          order by gap desc) = 1 as almoco
+        from g1
     ),
     d as (
       select author_id, dia, count(*) as chamadas, count(*) filter (where atendida) as atendidas,
              count(*) filter (where conversa) as conversas,
              min(ini) as primeira, max(fim) as ultima, sum(s) as phone_s,
              sum(s) + coalesce(sum(gap) filter (where gap <= extract(epoch from c_pause)), 0) as active_s,
-             count(*) filter (where gap > extract(epoch from c_pause)) as pausas,
-             coalesce(sum(gap) filter (where gap > extract(epoch from c_pause)), 0) as pausas_s
+             count(*) filter (where gap > extract(epoch from c_pause) and not almoco) as pausas,
+             coalesce(sum(gap) filter (where gap > extract(epoch from c_pause) and not almoco), 0) as pausas_s,
+             max(prev) filter (where almoco) as almoco_de, max(ini) filter (where almoco) as almoco_ate,
+             coalesce(sum(gap) filter (where almoco), 0) as almoco_s,
+             string_agg(to_char(prev at time zone 'Europe/Lisbon', 'HH24:MI') || '–' || to_char(ini at time zone 'Europe/Lisbon', 'HH24:MI')
+                        || ' (' || round(gap / 60) || ' min)', ', ' order by ini)
+               filter (where gap > extract(epoch from c_pause) and not almoco) as pausas_lista
         from g group by author_id, dia
     )
     select jsonb_build_object(
@@ -60,7 +76,9 @@ begin
                  'primeira', to_char(d.primeira at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'ultima', to_char(d.ultima at time zone 'Europe/Lisbon', 'HH24:MI'),
                  'chamadas', d.chamadas, 'atendidas', d.atendidas, 'conversas', d.conversas,
-                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s),
+                 'phone_s', round(d.phone_s), 'active_s', round(d.active_s), 'pausas', d.pausas, 'pausas_s', round(d.pausas_s), 'pausas_lista', d.pausas_lista,
+                 'almoco_de', to_char(d.almoco_de at time zone 'Europe/Lisbon', 'HH24:MI'),
+                 'almoco_ate', to_char(d.almoco_ate at time zone 'Europe/Lisbon', 'HH24:MI'), 'almoco_s', round(d.almoco_s),
                  'ocupacao', round(d.active_s / c_workday, 3)) order by p.full_name, d.dia desc), '[]'::jsonb)
                  from d join public.profiles p on p.id = d.author_id),
       'per_user', (select coalesce(jsonb_agg(jsonb_build_object(

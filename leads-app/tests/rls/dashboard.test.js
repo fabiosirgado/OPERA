@@ -201,6 +201,21 @@ suite("Dashboard", () => {
     expect(dia.active_s).toBeGreaterThanOrEqual(dia.phone_s + 600);
     expect(dia.ocupacao).toBeCloseTo(dia.active_s / 28800, 2);
     expect(a.per_user.find((u) => u.user_id === me).dias).toBe(1);
+
+    // Almoço: a pausa mais longa (30 min ou mais) que apanha parte das 12:00 às 15:00; as outras ficam como pausas.
+    // 11:50 → 12:20 (29 min, pausa), 12:21 → 13:30 (69 min, almoço), 13:31 → 14:00 (29 min, pausa).
+    const { data: l } = await admin.from("leads").select("id").eq("client_id", clientD).eq("name", "D1").single();
+    const call = (hhmm) => ({ lead_id: l.id, author_id: me, type: "call", title: "Chamada almoço", meta: { answered: false, total_s: 60 }, created_at: at(hhmm) });
+    await gestor.from("lead_events").insert([call("11:50"), call("12:20"), call("13:30"), call("14:00")]);
+    try {
+      const { data: b } = await admin.rpc("leads_managers_activity", { p_period: "custom", p_from: workday, p_to: workday });
+      const d2 = b.days.find((x) => x.user_id === me);
+      expect(d2.almoco_s).toBe(69 * 60);
+      expect(d2.pausas_lista).toContain("(29 min)");
+      expect(d2.pausas_s).toBeGreaterThanOrEqual(29 * 60);
+    } finally {
+      await admin.from("lead_events").delete().eq("lead_id", l.id).eq("title", "Chamada almoço");
+    }
   });
 
   it("conversas: só as chamadas atendidas com 1 minuto ou mais contam no tempo", async () => {

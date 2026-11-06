@@ -218,16 +218,21 @@ function ManagersActivity({ a }) {
                 <td className="n">{hm(u.phone_day_s)}</td><td className="n"><b>{hm(u.active_day_s)}</b></td><td className="n">{occ(u.ocupacao)}</td><td className="n">{hm(u.active_s)}</td></tr>))}</tbody>
           </table></div>
           <h3 style={{ margin: "16px 0 4px" }}>Dia a dia{who ? ` · ${a.per_user.find((u) => u.user_id === who)?.name}` : ""}</h3>
-          <div className="sub" style={{ margin: "0 0 4px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.</div>
+          <div className="sub" style={{ margin: "0 0 4px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
+            Almoço: a pausa mais longa, de 30 min ou mais, que apanha parte das 12:00 às 15:00 (a vermelho quando passa de 1 hora).
+            Pausas: as outras paragens de mais de {a.pause_min} min; passa o rato por cima para ver as horas de cada uma.</div>
           <div className="tbl"><table>
             <thead><tr>{!who && <th>Gestor</th>}<th>Dia</th><th className="n">Primeira</th><th className="n">Última</th><th className="n">Chamadas</th>
               <th className="n">Atendidas</th><th className="n">Conversas</th><th className="n">Ao telefone</th><th className="n">Tempo ativo</th>
-              <th className="n">Pausas</th><th className="n">Ocupação</th></tr></thead>
+              <th className="n">Almoço</th><th className="n">Pausas</th><th className="n">Ocupação</th></tr></thead>
             <tbody>{days.map((x) => (
               <tr key={`${x.user_id}-${x.dia}`}>{!who && <td>{x.name}</td>}<td>{fmtDia(x.dia)}{x.em_curso ? <span className="sub" style={{ margin: 0, fontSize: 12 }}> · em curso</span> : ""}</td>
                 <td className="n">{x.primeira}</td><td className="n">{x.ultima}</td><td className="n">{x.chamadas}</td>
                 <td className="n">{x.atendidas}</td><td className="n">{x.conversas}</td><td className="n">{hm(x.phone_s)}</td>
-                <td className="n"><b>{hm(x.active_s)}</b></td><td className="n">{x.pausas} · {hm(x.pausas_s)}</td><td className="n">{occ(x.ocupacao)}</td></tr>))}</tbody>
+                <td className="n"><b>{hm(x.active_s)}</b></td>
+                <td className="n">{x.almoco_de ? <>{x.almoco_de}–{x.almoco_ate} · <span style={x.almoco_s > 3600 ? { color: "var(--redText)", fontWeight: 600 } : undefined}>{hm(x.almoco_s)}</span></> : "—"}</td>
+                <td className="n" title={x.pausas_lista || ""}>{x.pausas ? <>{x.pausas} · {hm(x.pausas_s)}</> : "0"}</td>
+                <td className="n">{occ(x.ocupacao)}</td></tr>))}</tbody>
           </table></div>
         </>
       )}
