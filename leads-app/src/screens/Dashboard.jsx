@@ -196,38 +196,16 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
 const hm = (s) => { const m = Math.round((s || 0) / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`; };
 const fmtDia = (d) => new Date(`${d}T12:00:00`).toLocaleDateString("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit" });
 
-// Linha do dia, das 8:00 às 20:00: a trabalhar (da primeira à última chamada), com as pausas e o almoço por cima.
-// Por baixo, a duração de cada pausa, pela ordem do dia.
-const DL_FROM = 8 * 60, DL_TO = 20 * 60, DL_SPAN = DL_TO - DL_FROM;
-const toMin = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); return h * 60 + m; };
-const dlPct = (min) => ((Math.min(Math.max(min, DL_FROM), DL_TO) - DL_FROM) / DL_SPAN) * 100;
-const dlBox = (a, b) => ({ left: `${dlPct(a)}%`, width: `${Math.max(dlPct(b) - dlPct(a), 0)}%` });
-const clock = (min) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(Math.floor(min % 60)).padStart(2, "0")}`;
-
-function DayAxis() {
+// Pausas do dia numa só barra: cada bloco é uma pausa, com a largura e os minutos que durou.
+// A escala é a mesma para todos os dias (o dia com mais tempo em pausa enche a barra).
+function PauseBar({ x, max }) {
+  const ps = x.pausas_lista || [];
+  if (!ps.length) return <div className="pb-none">Sem pausas</div>;
   return (
-    <div className="dl-axis">{Array.from({ length: 13 }, (_, i) => 8 + i).map((h) => (
-      <span key={h} style={{ left: `${dlPct(h * 60)}%` }}>{h % 2 === 0 ? `${h}h` : ""}</span>))}</div>
-  );
-}
-
-function DayLine({ x }) {
-  const segs = [
-    ...(x.pausas_lista || []).map((p) => ({ a: toMin(p.de), b: toMin(p.ate), s: p.s, kind: "pause" })),
-    ...(x.almoco_de ? [{ a: toMin(x.almoco_de), b: toMin(x.almoco_ate), s: x.almoco_s, kind: "lunch" }] : []),
-  ].sort((p, q) => p.a - q.a);
-  const label = (s) => `${s.kind === "lunch" ? "Almoço" : "Pausa"} ${clock(s.a)}–${clock(s.b)} · ${hm(s.s)}`;
-  return (
-    <div>
-      <div className="dl" role="img" aria-label={`A trabalhar das ${x.primeira} às ${x.ultima}. ${segs.map(label).join(". ")}`}>
-        <span className="dl-work" style={dlBox(toMin(x.primeira), toMin(x.ultima))} />
-        {segs.map((s) => <span key={`${s.kind}${s.a}`} className={`dl-seg dl-${s.kind}`} style={dlBox(s.a, s.b)} title={label(s)} />)}
-      </div>
-      {segs.length > 0 && (
-        <div className="dl-chips">{segs.map((s) => (
-          <span key={`${s.kind}${s.a}`} className={`dl-chip dl-chip-${s.kind}`} title={label(s)}>
-            {s.kind === "lunch" ? `Almoço ${hm(s.s)}` : hm(s.s)}</span>))}</div>
-      )}
+    <div className="pb" role="img" aria-label={`${ps.length} pausas: ${ps.map((p) => `${p.de}–${p.ate}, ${hm(p.s)}`).join("; ")}`}>
+      {ps.map((p) => (
+        <span key={p.de} className="pb-seg" style={{ flexBasis: `${(p.s / max) * 100}%` }} title={`Pausa das ${p.de} às ${p.ate} · ${hm(p.s)}`}>
+          {Math.round(p.s / 60)}</span>))}
     </div>
   );
 }
@@ -237,6 +215,7 @@ function DayLine({ x }) {
 function ManagersActivity({ a }) {
   const [who, setWho] = useState("");
   const days = a.days.filter((x) => !who || x.user_id === who);
+  const pmax = Math.max(1, ...days.map((x) => x.pausas_s || 0));
   const occ = (o) => <span className={`status ${o >= 0.75 ? "st-good" : o >= 0.5 ? "st-warn" : "st-bad"}`}>{Math.round(o * 100)}%</span>;
   return (
     <div className="panel s12"><h3>Ocupação dos gestores</h3>
@@ -255,15 +234,14 @@ function ManagersActivity({ a }) {
           </table></div>
           <h3 style={{ margin: "16px 0 4px" }}>Dia a dia{who ? ` · ${a.per_user.find((u) => u.user_id === who)?.name}` : ""}</h3>
           <div className="sub" style={{ margin: "0 0 10px", fontSize: 13 }}>Carrega no nome de um gestor para ver só os dias dele.
-            Azul: a trabalhar. Laranja: cada pausa de mais de {a.pause_min} min, com a duração por baixo. Cinzento: almoço.</div>
-          <div className="dl-grid">
-            <span /><DayAxis /><span />
+            Cada bloco é uma pausa de mais de {a.pause_min} min, com os minutos que durou (passa o rato para ver a hora). O almoço está na tabela.</div>
+          <div className="pb-grid">
             {days.map((x) => (
               <Fragment key={`${x.user_id}-${x.dia}`}>
-                <span className="dl-label">{!who && <small>{x.name.split(" ")[0]}</small>}<b>{fmtDia(x.dia)}</b>
+                <span className="pb-label">{!who && <small>{x.name.split(" ")[0]}</small>}<b>{fmtDia(x.dia)}</b>
                   {x.em_curso && <small>em curso</small>}</span>
-                <DayLine x={x} />
-                <span className="dl-stat"><b>{x.pausas}</b> {x.pausas === 1 ? "pausa" : "pausas"} · <b>{hm(x.pausas_s)}</b></span>
+                <PauseBar x={x} max={pmax} />
+                <span className="pb-stat"><b>{hm(x.pausas_s)}</b> em {x.pausas} {x.pausas === 1 ? "pausa" : "pausas"}</span>
               </Fragment>))}
           </div>
           <div className="tbl" style={{ marginTop: 12 }}><table>
