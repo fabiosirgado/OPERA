@@ -154,6 +154,16 @@ export default function Shell({ access }) {
   // Links dos emails e das notificações: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login).
   const openFromLink = (search) => {
     const params = new URLSearchParams(search);
+    // Regresso do Millennium (Enable Banking): guarda o código para o separador Banco do Dashboard Admin concluir a ligação.
+    const st = params.get("state") || "";
+    if (opera && st.startsWith("opera-banco-")) {
+      try {
+        sessionStorage.setItem("opera-banco-retorno", JSON.stringify(params.get("code") ? { code: params.get("code"), state: st } : { erro: true }));
+        localStorage.setItem("opera-admin-separador", "banco");
+      } catch { /* sem armazenamento */ }
+      go("admin");
+      return;
+    }
     const id = params.get("lead");
     const chat = params.get("conversa");
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setModal({ kind: "lead", id });

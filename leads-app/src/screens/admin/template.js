@@ -31,6 +31,7 @@ export const TEMPLATE = `
     <button class="op-tab" role="tab" data-tab="ana" aria-selected="false">Ana · comercial</button>
     <button class="op-tab" role="tab" data-tab="financeiro" aria-selected="false">Financeiro</button>
     <button class="op-tab" role="tab" data-tab="gestao" aria-selected="false">Pagamentos e contratos</button>
+    <button class="op-tab" role="tab" data-tab="banco" aria-selected="false">Banco</button>
     <button class="op-tab" role="tab" data-tab="operacao" aria-selected="false">Operação</button>
     <button class="op-tab" role="tab" data-tab="definicoes" aria-selected="false">Definições</button>
     <button class="op-tab" role="tab" data-tab="acessos" aria-selected="false">Acessos</button>
@@ -241,6 +242,9 @@ export const TEMPLATE = `
   <!-- GESTÃO: pagamentos, contratos, custos, saldo -->
   <section class="op-page opg" id="gestao" hidden></section>
 
+  <!-- BANCO: Millennium via Enable Banking -->
+  <section class="op-page opg" id="banco" hidden></section>
+
   <!-- OPERAÇÃO -->
   <section class="op-page" id="operacao" hidden>
     <div class="op-tiles">
@@ -280,6 +284,7 @@ export const TEMPLATE = `
         <dt>Comissões</dt><dd>Calculadas automaticamente para os contratos com vendedor Ana. Rappel por período de 26 a 25 sobre o valor recebido ao preço integral: 10% até 15.000 €, 11% até 24.000 €, 12,5% acima, aplicado a todo o valor; 5% nas renovações recuperadas; 0% nas renovações normais. Entram no P&amp;L e no CAC como custo de aquisição, sem TSU, na data em que o dinheiro entra (ou está previsto entrar). Não registes estas comissões à mão nos custos. Bónus trimestral: 250 € com 80% ou mais de renovação da carteira dela, 500 € se além disso a satisfação média for 8 ou mais (não entra automaticamente no P&amp;L).</dd>
         <dt>Time to Lead</dt><dd>Minutos entre a entrada da lead no sistema e a primeira chamada. Leads de BD não contam.</dd>
         <dt>Ocupação</dt><dd>SA: soma da carga dos clientes a dividir por 8 slots por Gestor de Leads. BO: clientes BO ou bundle ativos a dividir por 15 por pessoa de back office.</dd>
+        <dt>Banco</dt><dd>A conta Millennium da Grabbingstars é lida (só leitura, PSD2) através do Enable Banking, uma vez por dia e quando carregas em Atualizar agora. O saldo do dia entra sozinho no Saldo bancário. As entradas aparecem para ligar às prestações por receber (ficam pagas na data do banco) e as saídas para registar como custo pontual ou ignorar.</dd>
         <dt>Acessos</dt><dd>Só quem está na lista de Acessos vê o Dashboard Admin. Total: vê tudo e mexe no financeiro. Comercial: vê só o separador do seu controlo comercial.</dd>
       </dl>
     </div>
