@@ -19,6 +19,7 @@ const ImportExport = lazy(() => import("./screens/ImportExport.jsx"));
 const Dashboard = lazy(() => import("./screens/Dashboard.jsx"));
 const Entradas = lazy(() => import("./screens/Entradas.jsx"));
 const Conversas = lazy(() => import("./screens/Conversas.jsx"));
+const AdminDashboard = lazy(() => import("./screens/admin/AdminDashboard.jsx"));
 
 const VIEW_KEY = "opera-leads-vista";
 const CLIENT_KEY = "opera-leads-cliente";
@@ -29,11 +30,19 @@ const write = (k, v) => { try { if (v) localStorage.setItem(k, v); else localSto
 export default function Shell({ access }) {
   const { profile, client: myClient, opera } = access;
   const role = profile.leads_role;
+  // Dashboard Admin: só para quem está na lista de acessos (o servidor confirma o nível em cada pedido).
+  const [adminNivel, setAdminNivel] = useState(undefined);
+  useEffect(() => {
+    if (!opera) { setAdminNivel(null); return; }
+    sb.rpc("opera_admin_meu_nivel").then(({ data }) => setAdminNivel(data?.nivel || null), () => setAdminNivel(null));
+  }, [opera]);
   const items = opera
-    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
+    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ...(adminNivel ? [["admin", "Dashboard Admin"]] : []), ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
     : [["pipeline", "As vossas leads"], ["conversa", "Conversa com a OPERA"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
-  const [view, setView] = useState(() => (items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
+  const [view, setView] = useState(() => ((opera && read(VIEW_KEY) === "admin") || items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
+  // Sem acesso ao Dashboard Admin (ou retirado): volta ao primeiro ecrã.
+  useEffect(() => { if (adminNivel === null && view === "admin") go(items[0][0]); });
 
   const [stages, setStages] = useState([]);
   const [labels, setLabels] = useState([]);
@@ -220,6 +229,7 @@ export default function Shell({ access }) {
         {view === "clientes" && <Clientes profile={profile} />}
         {view === "equipa" && <Equipa profile={profile} client={myClient} />}
         {view === "privacidade" && <Privacidade />}
+        {view === "admin" && adminNivel && <AdminDashboard nivel={adminNivel} onOpenLead={ctx.onOpenLead} />}
         </Suspense>
       </main>
 
