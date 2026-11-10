@@ -96,10 +96,10 @@ export default function Shell({ access }) {
     if (table === "lead_events" && payload?.eventType === "INSERT" && !payload.new?.pinned
         && !(modalRef.current?.kind === "lead" && modalRef.current.id === payload.new?.lead_id)) return;
     bump();
-    if (!opera || table !== "leads" || payload?.eventType !== "INSERT") return;
+    if (!opera || table !== "leads" || !["INSERT", "UPDATE"].includes(payload?.eventType)) return;
     const l = payload.new;
-    const stageById = Object.fromEntries(refs.current.stages.map((x) => [x.id, x]));
-    if (!isAutoNewLead(l, stageById)) return;
+    // Lead nova, ou lead que já existia e acabou de fazer um novo pedido (new_at acabado de acender).
+    if (!isAutoNewLead(l) || (payload.eventType === "UPDATE" && Date.now() - Date.parse(l.new_at) > 120000)) return;
     const client = refs.current.clients.find((c) => c.id === l.client_id)?.name ?? "";
     setAlerts((a) => (a.some((x) => x.id === l.id) ? a : [...a, { id: l.id, name: l.name, client, source: l.source }]));
   }, [bump, opera]);
@@ -116,7 +116,7 @@ export default function Shell({ access }) {
   // Número no menu "Pipeline geral": leads novas em que ainda ninguém pegou.
   useEffect(() => {
     if (!opera || !stages.length) return;
-    countNewLeads(stages.filter((x) => x.position < 50).map((x) => x.id)).then(setNewCount).catch(() => {});
+    countNewLeads().then(setNewCount).catch(() => {});
   }, [opera, stages, version]);
 
   // Número no menu "Hoje": tarefas até ao fim do dia.

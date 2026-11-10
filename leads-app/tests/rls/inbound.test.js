@@ -106,6 +106,39 @@ suite("Entradas automáticas", () => {
     expect(count).toBe(0);
   });
 
+  it("lead que já existia e faz um pedido novo volta a ser Nova e vai para Nova Lead Meta", async () => {
+    const first = await gestor.from("leads").select("id").eq("client_id", clientE).single();
+    const id = first.data.id;
+    const isNew = async () => ((await gestor.rpc("leads_pipeline", { p_client: clientE, p_limit: 200 })).data ?? [])
+      .find((l) => l.id === id)?.is_new;
+    // Como a Larissa: estava numa etapa de base de dados e já tinha sido contactada.
+    expect((await gestor.rpc("leads_register_call", { p_lead_id: id, p_meta: { via: "telefone" } })).error).toBeNull();
+    expect((await admin.from("leads").update({ stage_id: stages.bd }).eq("id", id)).error).toBeNull();
+    expect(await isNew()).toBe(false);
+
+    const r = await send(meta("m3", "Marta E.", "912000001", { created_time: new Date().toISOString() }));
+    expect(r.body).toMatchObject({ status: "duplicado", lead_id: id, nova: true, moved: true });
+    const { data: lead } = await gestor.from("leads").select("stage_id,new_at").eq("id", id).single();
+    expect(lead.stage_id).toBe(stages.meta);
+    expect(lead.new_at).not.toBeNull();
+    expect(await isNew()).toBe(true);
+
+    // Deixa de ser Nova na primeira chamada.
+    expect((await gestor.rpc("leads_register_call", { p_lead_id: id, p_meta: { via: "telefone" } })).error).toBeNull();
+    expect(await isNew()).toBe(false);
+  });
+
+  it("lead que já está com o cliente fica na etapa dela, mas marcada como Nova", async () => {
+    const first = await gestor.from("leads").select("id").eq("client_id", clientE).single();
+    const id = first.data.id;
+    expect((await admin.from("leads").update({ stage_id: stages.qualificada, qualification: { Objetivo: "Comprador" } }).eq("id", id)).error).toBeNull();
+    const r = await send(meta("m4", "Marta E.", "912000001", { created_time: new Date().toISOString() }));
+    expect(r.body).toMatchObject({ status: "duplicado", lead_id: id, nova: true, moved: false });
+    const { data: lead } = await gestor.from("leads").select("stage_id,new_at").eq("id", id).single();
+    expect(lead.stage_id).toBe(stages.qualificada);
+    expect(lead.new_at).not.toBeNull();
+  });
+
   it("o formulário sozinho identifica o cliente (o gatilho do Make não envia a página)", async () => {
     const form = `frm${RUN}`;
     expect((await gestor.from("lead_meta_forms").insert({ client_id: clientE, form_id: form })).error).toBeNull();

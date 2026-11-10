@@ -183,13 +183,11 @@ export const exportConversation = (clientId) => must(sb.rpc("leads_messages_expo
 // O tempo real filtra pelas regras de acesso com a sessão do momento em que se liga. Logo a seguir à verificação em
 // dois passos, a ligação ainda pode ter a sessão anterior (sem os dois passos) e a equipa OPERA não receberia nada:
 // por isso entrega-se primeiro a sessão atual e volta-se a ligar quando a sessão muda.
-// Lead nova: entrou por uma entrada automática (Meta, portais) e ainda ninguém lhe pegou. Igual ao is_new do pipeline.
-export const isAutoNewLead = (l, stageById) => !!l && l.created_by == null && !l.imported && !l.attempts
-  && !l.last_contact_at && (stageById[l.stage_id]?.position ?? 999) < 50;
-export const countNewLeads = (entryStageIds) => entryStageIds.length
-  ? sb.from("leads").select("id", { count: "exact", head: true }).is("created_by", null).eq("imported", false)
-    .eq("attempts", 0).is("last_contact_at", null).eq("anonymized", false).in("stage_id", entryStageIds).then((r) => r.count ?? 0)
-  : Promise.resolve(0);
+// Lead nova: entrou por uma entrada automática (Meta, portais), ou já existia e fez um novo pedido, e ainda ninguém
+// lhe pegou. É o campo new_at (a base de dados apaga-o no primeiro contacto). Igual ao is_new do pipeline.
+export const isAutoNewLead = (l) => !!l && !!l.new_at && !l.anonymized;
+export const countNewLeads = () => sb.from("leads").select("id", { count: "exact", head: true })
+  .not("new_at", "is", null).eq("anonymized", false).then((r) => r.count ?? 0);
 
 export function subscribeChanges(onChange) {
   let ch = null;
