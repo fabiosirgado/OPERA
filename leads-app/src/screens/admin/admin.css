@@ -58,7 +58,9 @@
 .op-card .note { font-size: var(--fs-caption); color: var(--color-fg-muted); margin: var(--gap-xs) 0 var(--gap-md); }
 .op-chart { position: relative; min-height: 220px; }
 .op-click { font: inherit; text-align: left; color: inherit; cursor: pointer; width: 100%; }
-.op-click .sub { color: #2B63E8; font-weight: 500; }
+.op-click .op-ver { color: #2B63E8; font-weight: 500; }
+.op-lista { margin-bottom: 16px; }
+.op-lista-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .op-click[aria-expanded="true"] { border-color: rgba(59,130,255,.55); box-shadow: 0 0 0 3px rgba(59,130,255,.18), 0 14px 30px rgba(20,40,100,.10); }
 .op-x { font: inherit; font-size: 13px; color: #5E6E96; background: #F3F6FF; border: 1px solid rgba(30,60,140,.12); border-radius: 10px; padding: 6px 12px; cursor: pointer; }
 .op-x:hover { color: #0B1A44; }
