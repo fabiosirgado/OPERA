@@ -109,6 +109,9 @@ main{flex:999 1 560px;min-width:0;padding:24px 28px;display:flex;flex-direction:
 .ovl{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;z-index:50}
 .ovl.open{display:flex}
 .modal{width:100%;max-width:640px;background:#fff;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+/* O cartão aberto tem scroll próprio: cabe sempre no ecrã e desce/sobe com a roda do rato por dentro. */
+.ovl.open .modal{max-height:calc(100vh - 64px);max-height:calc(100dvh - 64px);overflow-y:auto;overscroll-behavior:contain;flex-shrink:0}
+.ovl.open .modal .mh{position:sticky;top:-24px;z-index:3;background:inherit;margin:-24px -24px 0;padding:20px 24px 12px;border-radius:16px 16px 0 0}
 .modal.wide{max-width:1120px;background:var(--bg)}
 .mh{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .mh h2{margin:0;font-size:22px}
