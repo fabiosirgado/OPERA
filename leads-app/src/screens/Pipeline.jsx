@@ -13,42 +13,53 @@ const readPrefs = () => { try { return JSON.parse(localStorage.getItem(PREF_KEY)
 const savePrefs = (p) => { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* sem armazenamento */ } };
 
 // ctx: { opera, myClient, stages, labels, clients, version, onOpenLead, onNewLead, onNewStage, filterClient, setFilterClient }
-// O quadro ocupa só a altura do ecrã: a barra de scroll lateral fica sempre visível (antes ficava no fundo da coluna
-// mais comprida, fora do ecrã, e quem usa rato não conseguia ir para o lado). Também dá para arrastar o fundo.
+// Quadro com a altura toda (a página desce normalmente). A barra de scroll lateral fica sempre visível no fundo do
+// ecrã (antes ficava no fundo da coluna mais comprida, fora do ecrã, e quem usa rato não conseguia ir para o lado).
+// Também dá para arrastar o fundo do quadro para o lado.
 function useBoardScroll() {
-  const ref = useRef(null);
+  const wrap = useRef(null);
+  const bar = useRef(null);
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
+    const el = wrap.current, sb = bar.current;
+    if (!el || !sb) return undefined;
+    const inner = sb.firstChild;
     const fit = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      el.style.maxHeight = `${Math.max(360, window.innerHeight - top - 48)}px`;
+      inner.style.width = `${el.scrollWidth}px`;
+      sb.hidden = el.scrollWidth <= el.clientWidth + 1;
+      sb.scrollLeft = el.scrollLeft;
     };
     fit();
-    window.addEventListener("resize", fit);
+    const sync = (from, to) => () => { if (Math.abs(to.scrollLeft - from.scrollLeft) > 1) to.scrollLeft = from.scrollLeft; };
+    const onEl = sync(el, sb), onSb = sync(sb, el);
+    el.addEventListener("scroll", onEl);
+    sb.addEventListener("scroll", onSb);
+    const ro = new ResizeObserver(fit);
+    ro.observe(el); ro.observe(el.firstChild);
     let drag = null;
     const down = (e) => {
       if (e.button !== 0 || e.target.closest(".cardL, button, a, input, select, textarea")) return;
-      drag = { x: e.clientX, y: e.clientY, l: el.scrollLeft, t: el.scrollTop };
+      drag = { x: e.clientX, y: e.clientY, l: el.scrollLeft, t: window.scrollY };
       el.classList.add("panning");
     };
     const move = (e) => {
       if (!drag) return;
       el.scrollLeft = drag.l - (e.clientX - drag.x);
-      el.scrollTop = drag.t - (e.clientY - drag.y);
+      window.scrollTo(window.scrollX, drag.t - (e.clientY - drag.y));
     };
     const up = () => { drag = null; el.classList.remove("panning"); };
     el.addEventListener("mousedown", down);
     window.addEventListener("mousemove", move);
     window.addEventListener("mouseup", up);
     return () => {
-      window.removeEventListener("resize", fit);
+      ro.disconnect();
+      el.removeEventListener("scroll", onEl);
+      sb.removeEventListener("scroll", onSb);
       el.removeEventListener("mousedown", down);
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", up);
     };
   });
-  return ref;
+  return [wrap, bar];
 }
 
 export default function Pipeline({ ctx }) {
@@ -60,7 +71,7 @@ export default function Pipeline({ ctx }) {
   const [counts, setCounts] = useState({});
   const [kpis, setKpis] = useState(null);
   const [list, setList] = useState({ rows: [], total: 0 });
-  const boardRef = useBoardScroll();
+  const [boardRef, barRef] = useBoardScroll();
   const [run] = useAction();
   const toast = useToast();
   const setPref = (k, v) => setPrefs((p) => { const n = { ...p, [k]: v }; savePrefs(n); return n; });
@@ -253,6 +264,7 @@ export default function Pipeline({ ctx }) {
             <small>criar, mudar a ordem, o nome ou apagar, depois de Qualificada</small></button>
         </div></div>
       )}
+      {prefs.layout !== "list" && <div className="boardBar" ref={barRef} hidden><div></div></div>}
       <div className="foot">{total} leads com estes filtros.</div>
     </>
   );
