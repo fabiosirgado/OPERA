@@ -2,9 +2,15 @@
 const t = (source, field, fmt, extra = "") => `<span class="b" data-source="${source}" data-field="${field}" data-row="0" data-fmt="${fmt}"${extra}>—</span>`;
 const tile = (lbl, source, field, fmt, sub, extra = "") =>
   `<div class="op-tile"><div class="lbl">${lbl}</div><div class="val" data-source="${source}" data-field="${field}" data-row="0" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div></div>`;
+// Cartão clicável: mostra a lista de clientes "lista" (ver dashboard.js).
+const VER = '<div class="sub op-ver">Ver clientes ›</div>';
+const ctile = (lista, lbl, source, field, fmt, sub, extra = "") =>
+  `<button type="button" class="op-tile op-click" data-lista="${lista}" aria-expanded="false"><div class="lbl">${lbl}</div><div class="val" data-source="${source}" data-field="${field}" data-row="0" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div>${VER}</button>`;
 const aw = (field, fmt, extra = "") => `<span data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</span>`;
-const atile = (lbl, field, fmt, sub, extra = "") =>
-  `<div class="op-tile"><div class="lbl">${lbl}</div><div class="val" data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div></div>`;
+const atile = (lbl, field, fmt, sub, extra = "", lista = null) =>
+  lista
+    ? `<button type="button" class="op-tile op-click" data-lista="${lista}" aria-expanded="false"><div class="lbl">${lbl}</div><div class="val" data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div>${VER}</button>`
+    : `<div class="op-tile"><div class="lbl">${lbl}</div><div class="val" data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div></div>`;
 const th = (cols) => `<thead><tr>${cols.map(([l, n]) => `<th${n ? ' class="n"' : ""}>${l}</th>`).join("")}</tr></thead><tbody></tbody>`;
 
 export const TEMPLATE = `
@@ -40,10 +46,10 @@ export const TEMPLATE = `
   <!-- RESUMO -->
   <section class="op-page" id="resumo">
     <div class="op-tiles">
-      ${tile("Clientes ativos hoje", "resumo", "clientes_ativos", "int", "Meta: 15 até 31/12/2026")}
-      ${tile("MRR hoje", "resumo", "receita_mensal", "eur", `Ritmo anual ${t("resumo", "receita_anual_ritmo", "eur")}`)}
+      ${ctile("ativos_hoje", "Clientes ativos hoje", "resumo", "clientes_ativos", "int", "Meta: 15 até 31/12/2026")}
+      ${ctile("ativos_hoje", "MRR hoje", "resumo", "receita_mensal", "eur", `Ritmo anual ${t("resumo", "receita_anual_ritmo", "eur")}`)}
       ${tile("Margem mensal", "resumo", "margem_pct", "pct", `${t("resumo", "margem_mes", "eur")}/mês sobre o MRR · meta 40%`, ' data-min="0.4"')}
-      ${tile("Pagamentos vencidos", "resumo", "em_atraso", "eur", `${t("resumo", "n_em_atraso", "int")} prestações por confirmar`, ' data-max="0"')}
+      ${ctile("em_atraso", "Pagamentos vencidos", "resumo", "em_atraso", "eur", `${t("resumo", "n_em_atraso", "int")} prestações por confirmar`, ' data-max="0"')}
       ${tile("Ocupação OPERA SA", "capacidade", "ocupacao_sa", "pct", `${t("capacidade", "slots_usados", "dec")} de ${t("capacidade", "slots_disponiveis", "int")} slots`, ' data-max="0.85"')}
       <div class="op-tile"><div class="lbl">Time to Lead · semana atual</div><div class="val" data-source="ttl_semanal" data-field="ttl_mediano_min" data-row="7" data-fmt="min" data-max="15">—</div><div class="sub"><span data-source="ttl_semanal" data-field="pct_ttl_15" data-row="7" data-fmt="pct">—</span> contactadas em 15 min</div></div>
     </div>
@@ -75,28 +81,20 @@ export const TEMPLATE = `
   <section class="op-page" id="comercial" hidden>
     <h3 class="op-sec">Funil <small>· período escolhido</small></h3>
     <div class="op-tiles">
-      <button type="button" class="op-tile op-click" data-lista="R1" aria-expanded="false"><div class="lbl">R1 marcadas</div><div class="val" data-source="periodo" data-field="r1" data-row="0" data-fmt="int">—</div><div class="sub">Ver clientes ›</div></button>
-      <button type="button" class="op-tile op-click" data-lista="R2" aria-expanded="false"><div class="lbl">R2</div><div class="val" data-source="periodo" data-field="r2" data-row="0" data-fmt="int">—</div><div class="sub">${t("periodo", "em_decisao", "int")} passaram a Em decisão · ver ›</div></button>
-      <button type="button" class="op-tile op-click" data-lista="Fecho" aria-expanded="false"><div class="lbl">Fechos</div><div class="val" data-source="periodo" data-field="fechos" data-row="0" data-fmt="int">—</div><div class="sub"><span id="obj-mes-fechos"></span>Ver clientes ›</div></button>
+      <button type="button" class="op-tile op-click" data-lista="R1" aria-expanded="false"><div class="lbl">R1 marcadas</div><div class="val" data-source="periodo" data-field="r1" data-row="0" data-fmt="int">—</div><div class="sub op-ver">Ver clientes ›</div></button>
+      <button type="button" class="op-tile op-click" data-lista="R2" aria-expanded="false"><div class="lbl">R2</div><div class="val" data-source="periodo" data-field="r2" data-row="0" data-fmt="int">—</div><div class="sub">${t("periodo", "em_decisao", "int")} passaram a Em decisão</div>${VER}</button>
+      <button type="button" class="op-tile op-click" data-lista="Fecho" aria-expanded="false"><div class="lbl">Fechos</div><div class="val" data-source="periodo" data-field="fechos" data-row="0" data-fmt="int">—</div><div class="sub" id="obj-mes-fechos"></div>${VER}</button>
       ${tile("Conversão R1 → fecho", "periodo", "conv_r1_fecho", "pct", "Meta da Ana: 10%", ' data-min="0.1"')}
       ${tile("Conversão R1 → R2", "periodo", "conv_r1_r2", "pct", `R2 → fecho: ${t("periodo", "conv_r2_fecho", "pct")}`)}
       <div class="op-tile"><div class="lbl">Em decisão agora</div><div class="val" data-source="pipeline" data-field="leads_agora" data-where="fase=Em%20decis%C3%A3o" data-fmt="int">—</div><div class="sub"><span data-source="pipeline" data-field="leads_agora" data-where="fase=R1" data-fmt="int">—</span> em R1 e <span data-source="pipeline" data-field="leads_agora" data-where="fase=R2" data-fmt="int">—</span> em R2</div></div>
     </div>
-    <div class="op-card" id="card-lista" hidden style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <h2 id="lista-titulo">Clientes</h2>
-        <button type="button" class="op-x" id="lista-fechar" aria-label="Fechar lista">Fechar ✕</button>
-      </div>
-      <p class="note" id="lista-nota">No período escolhido.</p>
-      <div class="op-table-wrap"><table class="op-table" id="tb-lista">${th([["Cliente"], ["Data"], ["Fase atual"], ["Serviço"], ["Valor", 1]])}</table></div>
-    </div>
     <h3 class="op-sec">Vendas <small>· contratos fechados no período</small></h3>
     <div class="op-tiles">
-      ${tile("Vendas novas", "periodo", "vendas_novas", "eur", `${t("periodo", "contratos_novos", "int")} contratos novos`)}
-      ${tile("Ticket médio", "periodo", "ticket_medio", "eur", "Valor do pack")}
-      ${tile("Vendas em PIF", "periodo", "pct_pif_vendas", "pct", "Meta da Ana: 50% ou mais", ' data-min="0.5"')}
-      ${tile("Bundle SA + BO", "periodo", "pct_bundle", "pct", "Dos contratos novos")}
-      ${tile("Renovações", "periodo", "renovacoes", "int", "Packs renovados com início no período")}
+      ${ctile("novos", "Vendas novas", "periodo", "vendas_novas", "eur", `${t("periodo", "contratos_novos", "int")} contratos novos`)}
+      ${ctile("novos", "Ticket médio", "periodo", "ticket_medio", "eur", "Valor do pack")}
+      ${ctile("novos_pif", "Vendas em PIF", "periodo", "pct_pif_vendas", "pct", "Meta da Ana: 50% ou mais", ' data-min="0.5"')}
+      ${ctile("novos_bundle", "Bundle SA + BO", "periodo", "pct_bundle", "pct", "Dos contratos novos")}
+      ${ctile("renovacoes", "Renovações", "periodo", "renovacoes", "int", "Packs renovados com início no período")}
     </div>
     <h3 class="op-sec">Pipeline <small>· clientes fechados no período que ainda não estão em entrega</small></h3>
     <div class="op-card" style="margin-bottom:16px">
@@ -111,11 +109,11 @@ export const TEMPLATE = `
     </div>
     <h3 class="op-sec">Economia do cliente</h3>
     <div class="op-tiles">
-      ${tile("CAC", "periodo", "cac", "eur", `${t("periodo", "clientes_novos_cac", "int")} clientes novos fechados no gestor de leads`)}
+      ${ctile("novos", "CAC", "periodo", "cac", "eur", `${t("periodo", "clientes_novos_cac", "int")} clientes novos fechados no gestor de leads`)}
       ${tile("LTV", "periodo", "ltv", "eur", `${t("periodo", "margem_cliente", "eur")}/mês de margem por cliente × ${t("periodo", "vida_media_meses", "dec")} meses`)}
       ${tile("LTV : CAC", "periodo", "ltv_cac", "ratio", "Saudável a partir de 3 : 1", ' data-min="3"')}
       ${tile("Recuperação do CAC", "periodo", "payback_meses", "dec", "Meses de margem para pagar o CAC", ' data-max="3"')}
-      ${tile("Churn mensal", "periodo", "churn_mensal", "pct1", `${t("periodo", "clientes_perdidos", "int")} clientes terminados · churn de MRR ${t("periodo", "churn_mrr", "pct")}`, ' data-max="0.067"')}
+      ${ctile("perdidos", "Churn mensal", "periodo", "churn_mensal", "pct1", `${t("periodo", "clientes_perdidos", "int")} clientes terminados · churn de MRR ${t("periodo", "churn_mrr", "pct")}`, ' data-max="0.067"')}
     </div>
     <p class="op-caveat" id="ue-aviso" hidden>O LTV usa a taxa de renovação de referência (80%): só há ${t("periodo", "decisoes_renovacao", "int")} decisões de renovação registadas. Passa a usar a real a partir de 5.</p>
     <div class="op-card" style="margin-bottom:16px">
@@ -137,11 +135,11 @@ export const TEMPLATE = `
   <section class="op-page" id="ana" hidden>
     <h3 class="op-sec">Período de comissão atual <small>· de ${aw("inicio", "date")} a ${aw("fim", "date")}, pago no salário deste mês · não depende do período escolhido em cima</small></h3>
     <div class="op-tiles">
-      ${atile("Fechos", "fechos", "int", `Objetivo ${aw("obj_fechos", "int")}`)}
-      ${atile("Vendas novas", "vendas", "eur", "Objetivo 15.000 € · ao preço integral")}
-      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`)}
+      ${atile("Fechos", "fechos", "int", `Objetivo ${aw("obj_fechos", "int")}`, "", "ana_fechos")}
+      ${atile("Vendas novas", "vendas", "eur", "Objetivo 15.000 € · ao preço integral", "", "ana_fechos")}
+      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`, "", "ana_r1")}
       ${atile("Conversão", "conversao", "pct", "Fechos ÷ reuniões · objetivo 10%", ' data-min="0.1"')}
-      ${atile("Pagamentos integrais", "pct_pif", "pct", "Objetivo 50% ou mais", ' data-min="0.5"')}
+      ${atile("Pagamentos integrais", "pct_pif", "pct", "Objetivo 50% ou mais", ' data-min="0.5"', "ana_fechos")}
       ${atile("Comissão a pagar", "comissao_garantida", "eur", `Já recebido · prevista ${aw("comissao_prevista", "eur")}`)}
       ${atile("Escalão", "escalao", "txt", `Faltam ${aw("falta_proximo", "eur")} para o seguinte`)}
       <div class="op-tile"><div class="lbl">Bónus trimestral</div><div class="val" data-source="ana_bonus" data-field="bonus" data-where="atual=true" data-fmt="eur">—</div><div class="sub">Renovação da carteira <span data-source="ana_bonus" data-field="taxa_renovacao" data-where="atual=true" data-fmt="pct">—</span> · satisfação <span data-source="ana_bonus" data-field="satisfacao" data-where="atual=true" data-fmt="dec">—</span></div></div>
@@ -182,23 +180,23 @@ export const TEMPLATE = `
   <section class="op-page" id="financeiro" hidden>
     <h3 class="op-sec">MRR <small>· receita recorrente mensal, valor do pack a dividir pelos meses</small></h3>
     <div class="op-tiles">
-      ${tile("MRR no fim do período", "periodo", "mrr_fim", "eur", `${t("periodo", "clientes_fim", "int")} clientes ativos`)}
-      ${tile("MRR no início", "periodo", "mrr_inicio", "eur", `${t("periodo", "clientes_inicio", "int")} clientes ativos`)}
-      ${tile("MRR novo", "periodo", "mrr_novo", "eur", "De contratos novos no período")}
-      ${tile("MRR perdido", "periodo", "mrr_perdido", "eur", "Serviços terminados no período", ' data-max="0"')}
+      ${ctile("ativos_fim", "MRR no fim do período", "periodo", "mrr_fim", "eur", `${t("periodo", "clientes_fim", "int")} clientes ativos`)}
+      ${ctile("ativos_inicio", "MRR no início", "periodo", "mrr_inicio", "eur", `${t("periodo", "clientes_inicio", "int")} clientes ativos`)}
+      ${ctile("mrr_novo", "MRR novo", "periodo", "mrr_novo", "eur", "De contratos novos no período")}
+      ${ctile("perdidos", "MRR perdido", "periodo", "mrr_perdido", "eur", "Serviços terminados no período", ' data-max="0"')}
     </div>
     <h3 class="op-sec">Faturação <small>· o que se fatura no período: o PIF no arranque, o mensal a cada mês</small></h3>
     <div class="op-tiles">
-      ${tile("Faturação", "periodo", "faturacao", "eur", "Total do período")}
-      ${tile("Faturação PIF", "periodo", "faturacao_pif", "eur", "Packs pagos de uma vez")}
-      ${tile("Faturação mensal", "periodo", "faturacao_mensal", "eur", "Prestações de packs fracionados")}
-      ${tile("Faturado e ainda por receber", "periodo", "por_receber", "eur", "Do que foi faturado no período")}
+      ${ctile("fat", "Faturação", "periodo", "faturacao", "eur", "Total do período")}
+      ${ctile("fat_pif", "Faturação PIF", "periodo", "faturacao_pif", "eur", "Packs pagos de uma vez")}
+      ${ctile("fat_mensal", "Faturação mensal", "periodo", "faturacao_mensal", "eur", "Prestações de packs fracionados")}
+      ${ctile("por_receber", "Faturado e ainda por receber", "periodo", "por_receber", "eur", "Do que foi faturado no período")}
     </div>
     <h3 class="op-sec">Caixa <small>· dinheiro que entrou no banco no período</small></h3>
     <div class="op-tiles">
-      ${tile("Recebido", "periodo", "caixa", "eur", "Pagamentos confirmados")}
-      ${tile("Recebido PIF", "periodo", "caixa_pif", "eur", "Packs pagos de uma vez")}
-      ${tile("Recebido mensal", "periodo", "caixa_mensal", "eur", "Prestações")}
+      ${ctile("caixa", "Recebido", "periodo", "caixa", "eur", "Pagamentos confirmados")}
+      ${ctile("caixa_pif", "Recebido PIF", "periodo", "caixa_pif", "eur", "Packs pagos de uma vez")}
+      ${ctile("caixa_mensal", "Recebido mensal", "periodo", "caixa_mensal", "eur", "Prestações")}
       ${tile("Saldo bancário hoje", "resumo", "saldo", "eur", `${t("resumo", "meses_de_caixa", "dec")} meses de custos`)}
     </div>
     <h3 class="op-sec">Regra de margens <small>· cada custo em % da receita do período</small></h3>
@@ -277,6 +275,7 @@ export const TEMPLATE = `
         <dt>Cliente ativo</dt><dd>Cliente com a lead em Entrega de serviço (ou contrato manual), com contrato cujo período inclui o dia em causa e que ainda não passou a Serviço terminado.</dd>
         <dt>Serviço terminado e churn</dt><dd>Quando uma lead do cliente OPERA passa a Serviço terminado, o contrato fecha nesse dia e conta como não renovação. Churn mensal = clientes terminados no período a dividir pelos clientes ativos no início, ajustado a 30 dias. Com 80% de renovação a cada 3 meses, o churn mensal de referência é cerca de 6,7%.</dd>
         <dt>R1, R2 e fechos</dt><dd>Leads do cliente OPERA que entraram na fase R1 ou R2 no período. Fecho é a primeira entrada em Closed, Em Onboarding ou Entrega de serviço. Na tabela por pessoa, as R1 e R2 contam para quem as marcou e os fechos para o vendedor do contrato.</dd>
+        <dt>Ver clientes</dt><dd>Os cartões com "Ver clientes" abrem, logo por baixo, a lista dos contratos, clientes ou prestações que dão aquele número, com o total. Clicar no nome abre a lead.</dd>
         <dt>Vendedor</dt><dd>Por defeito, quem passou a lead para Em Onboarding (ou uma fase a seguir) pela primeira vez; até lá, quem a passou para Closed. Quem agenda a R1 não é necessariamente quem fecha: muda-se em Gestão, Contratos, Editar. Depois de mudado à mão, já não é trocado automaticamente.</dd>
         <dt>CAC</dt><dd>Custos de aquisição do período (mensais proporcionais aos dias, pontuais e comissões da Ana) a dividir pelos contratos novos com data de fecho (= data de início) no período.</dd>
         <dt>LTV</dt><dd>Margem mensal média de um cliente recorrente vezes a vida média. A margem é o valor mensal menos o custo de um lugar: Gestor de Leads a dividir por 8 no SA, back office a dividir por 15 no BO, os dois no bundle. Vida média = 3 meses a dividir por (1 menos taxa de renovação).</dd>

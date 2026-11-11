@@ -329,42 +329,90 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
   }
   inI.addEventListener("blur", showPeriod); inF.addEventListener("blur", showPeriod);
 
-  // Lista de clientes ao clicar em R1, R2 ou Fechos (clicar no nome abre a ficha da lead)
-  let listaAberta = null;
-  const NOMES = { R1: "Clientes que entraram em R1", R2: "Clientes que entraram em R2", Fecho: "Clientes fechados" };
-  const cardLista = root.querySelector("#card-lista");
+  // Lista de clientes ao clicar num cartão (clicar no nome abre a ficha da lead). A lista abre logo abaixo da fila do cartão.
+  const PER = "no período escolhido", HOJE = "hoje", ANA = "no período de comissão atual";
+  const LISTAS = {
+    R1: ["Clientes que entraram em R1", PER, "clientes", "Fase atual"],
+    R2: ["Clientes que entraram em R2", PER, "clientes", "Fase atual"],
+    Fecho: ["Clientes fechados", PER, "clientes", "Fase atual"],
+    novos: ["Contratos novos", PER, "contratos", "Pagamento"],
+    novos_pif: ["Contratos novos pagos de uma vez (PIF)", PER, "contratos", "Pagamento"],
+    novos_bundle: ["Contratos novos em bundle SA + BO", PER, "contratos", "Pagamento"],
+    mrr_novo: ["MRR dos contratos novos", PER, "contratos", "Detalhe", "Por mês"],
+    renovacoes: ["Renovações", PER, "contratos", "Detalhe"],
+    ativos_inicio: ["Clientes ativos no início do período", PER, "contratos", "Detalhe", "Por mês"],
+    ativos_fim: ["Clientes ativos no fim do período", PER, "contratos", "Detalhe", "Por mês"],
+    perdidos: ["Clientes que terminaram", PER, "contratos", "Detalhe", "Por mês"],
+    fat: ["Faturação", PER, "prestações", "Prestação"],
+    fat_pif: ["Faturação PIF", PER, "prestações", "Prestação"],
+    fat_mensal: ["Faturação mensal", PER, "prestações", "Prestação"],
+    por_receber: ["Faturado e ainda por receber", PER, "prestações", "Prestação"],
+    caixa: ["Recebido", PER, "prestações", "Prestação"],
+    caixa_pif: ["Recebido PIF", PER, "prestações", "Prestação"],
+    caixa_mensal: ["Recebido mensal", PER, "prestações", "Prestação"],
+    ativos_hoje: ["Clientes ativos hoje", HOJE, "contratos", "Detalhe", "Por mês"],
+    em_atraso: ["Pagamentos vencidos por confirmar", HOJE, "prestações", "Prestação"],
+    ana_fechos: ["Fechos da Ana", ANA, "contratos", "Pagamento", "Valor integral"],
+    ana_r1: ["R1 marcadas pela Ana", ANA, "clientes", "Detalhe"],
+  };
+  const FUNIL = ["R1", "R2", "Fecho"];
+  const UM = { clientes: "cliente", contratos: "contrato", "prestações": "prestação" };
+  let aberto = null; // botão do cartão aberto
+  const cardLista = document.createElement("div");
+  cardLista.className = "op-card op-lista"; cardLista.hidden = true;
+  cardLista.innerHTML = `<div class="op-lista-top"><h2></h2><button type="button" class="op-x" aria-label="Fechar lista">Fechar ✕</button></div>
+    <p class="note"></p><div class="op-table-wrap"><table class="op-table"><thead><tr><th>Cliente</th><th>Data</th><th>Serviço</th><th></th><th class="n"></th></tr></thead><tbody></tbody></table></div>`;
+  function linhasDe(k) {
+    if (FUNIL.includes(k)) {
+      const d = dataOf("funil_lista");
+      return { ...d, data: d.data.filter((r) => r.etapa === k).map((r) => ({ lead_id: r.lead_id, cliente: r.cliente, dia: r.dia, servico: r.servico, valor: r.valor_total, detalhe: r.fase_atual })) };
+    }
+    const d = dataOf(k.startsWith("ana_") ? "ana_lista" : "cartoes_lista");
+    return { ...d, data: d.data.filter((r) => r.lista === k) };
+  }
   function desenhaLista() {
-    root.querySelectorAll(".op-click").forEach((b) => b.setAttribute("aria-expanded", String(b.dataset.lista === listaAberta)));
-    cardLista.hidden = !listaAberta;
-    if (!listaAberta) return;
-    root.querySelector("#lista-titulo").textContent = NOMES[listaAberta];
-    const d = dataOf("funil_lista");
-    const tb = root.querySelector("#tb-lista tbody"); tb.innerHTML = "";
-    const nota = root.querySelector("#lista-nota");
+    root.querySelectorAll(".op-click").forEach((b) => b.setAttribute("aria-expanded", String(b === aberto)));
+    cardLista.hidden = !aberto;
+    if (!aberto) return;
+    const k = aberto.dataset.lista;
+    const [titulo, quando, unidade, det, val = "Valor"] = LISTAS[k];
+    cardLista.querySelector("h2").textContent = titulo;
+    const ths = cardLista.querySelectorAll("th");
+    ths[3].textContent = det; ths[4].textContent = val;
+    const tb = cardLista.querySelector("tbody"); tb.innerHTML = "";
+    const nota = cardLista.querySelector(".note");
+    const d = linhasDe(k);
     if (d.status !== "ok") { nota.textContent = d.status === "loading" ? "A carregar…" : "Não foi possível carregar a lista."; return; }
-    const rows = d.data.filter((r) => r.etapa === listaAberta);
-    nota.textContent = rows.length ? `${rows.length} no período escolhido, do mais recente para o mais antigo. Clica no nome para abrir a lead.` : "Ninguém no período escolhido.";
+    const rows = d.data;
+    const total = rows.reduce((s, r) => s + (Number(r.valor) || 0), 0);
+    nota.textContent = rows.length
+      ? `${rows.length} ${rows.length === 1 ? UM[unidade] : unidade} ${quando}${total ? `, ${eur.format(total)} no total` : ""}. Clica no nome para abrir a lead.`
+      : `Sem ${unidade} ${quando}.`;
     rows.forEach((r) => {
       const tr = document.createElement("tr");
       const tdN = document.createElement("td");
-      const a = document.createElement("a"); a.textContent = r.cliente; a.style.fontWeight = "600";
-      a.addEventListener("click", () => onOpenLead && onOpenLead(r.lead_id));
-      tdN.appendChild(a); tr.appendChild(tdN);
-      [["dia", "date"], ["fase_atual", "txt"], ["servico", "txt"], ["valor_total", "eur"]].forEach(([k, kind]) => {
+      if (r.lead_id && onOpenLead) {
+        const a = document.createElement("a"); a.textContent = r.cliente; a.style.fontWeight = "600"; a.href = "#";
+        a.addEventListener("click", (e) => { e.preventDefault(); onOpenLead(r.lead_id); });
+        tdN.appendChild(a);
+      } else tdN.textContent = r.cliente;
+      tr.appendChild(tdN);
+      [["dia", "date"], ["servico", "txt"], ["detalhe", "txt"], ["valor", "eur"]].forEach(([c, kind]) => {
         const td = document.createElement("td");
         if (kind === "eur") td.className = "n";
-        td.textContent = fmt(kind, r[k]);
+        td.textContent = fmt(kind, r[c]);
         tr.appendChild(td);
       });
       tb.appendChild(tr);
     });
   }
   root.querySelectorAll(".op-click").forEach((b) => b.addEventListener("click", () => {
-    listaAberta = listaAberta === b.dataset.lista ? null : b.dataset.lista;
+    aberto = aberto === b ? null : b;
+    if (aberto) b.closest(".op-tiles").after(cardLista);
     desenhaLista();
-    if (listaAberta) cardLista.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (aberto) cardLista.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }));
-  root.querySelector("#lista-fechar").addEventListener("click", () => { listaAberta = null; desenhaLista(); });
+  cardLista.querySelector(".op-x").addEventListener("click", () => { aberto = null; desenhaLista(); });
 
   const visible = (id) => !root.querySelector("#" + id).closest(".op-page").hidden;
 
@@ -494,7 +542,8 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
       const ym = params.fim.slice(0, 7);
       objMes = ym === "2026-11" ? 4 : ym === "2026-12" ? 5 : ym >= "2027-01" ? 6 : null;
     }
-    om.textContent = objMes ? `Objetivo do mês: ${objMes} · ` : "";
+    om.textContent = objMes ? `Objetivo do mês: ${objMes}` : "";
+    om.hidden = !objMes;
 
     const ue = one("periodo");
     if (!comercial) showPeriod();
