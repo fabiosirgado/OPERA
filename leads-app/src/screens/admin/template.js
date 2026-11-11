@@ -37,6 +37,7 @@ export const TEMPLATE = `
     <button class="op-tab" role="tab" data-tab="ana" aria-selected="false">Ana · comercial</button>
     <button class="op-tab" role="tab" data-tab="financeiro" aria-selected="false">Financeiro</button>
     <button class="op-tab" role="tab" data-tab="gestao" aria-selected="false">Pagamentos e contratos</button>
+    <button class="op-tab" role="tab" data-tab="documentos" aria-selected="false">Contratos e faturas</button>
     <button class="op-tab" role="tab" data-tab="banco" aria-selected="false">Banco</button>
     <button class="op-tab" role="tab" data-tab="operacao" aria-selected="false">Operação</button>
     <button class="op-tab" role="tab" data-tab="definicoes" aria-selected="false">Definições</button>
@@ -241,6 +242,7 @@ export const TEMPLATE = `
   <section class="op-page opg" id="gestao" hidden></section>
 
   <!-- BANCO: Millennium via Enable Banking -->
+  <section class="op-page opg" id="documentos" hidden></section>
   <section class="op-page opg" id="banco" hidden></section>
 
   <!-- OPERAÇÃO -->
