@@ -60,13 +60,17 @@ main{flex:999 1 560px;min-width:0;padding:24px 28px;display:flex;flex-direction:
 .stat.warn{background:var(--orangeSoft);border-color:var(--orangeLine)}
 .stat.warn span,.stat.warn b{color:var(--orangeText)}
 @media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.search input{width:150px}main{padding:18px 16px}}
-.boardWrap{overflow:auto;padding-bottom:8px;max-height:calc(100vh - 160px);cursor:grab}
+.boardWrap{overflow-x:auto;padding-bottom:8px;cursor:grab;scrollbar-width:none}
+.boardWrap::-webkit-scrollbar{display:none}
+.boardBar{position:sticky;bottom:0;z-index:5;overflow-x:auto;overflow-y:hidden;height:16px;margin-top:-10px;background:var(--bg)}
+.boardBar[hidden]{display:none}
+.boardBar div{height:1px}
 .boardWrap.panning{cursor:grabbing;user-select:none}
 .board{display:flex;gap:14px;align-items:flex-start;min-width:max-content}
 .colm{width:272px;background:var(--col);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:120px}
 .colm.client{background:#F6EDE4}
 .colm.drop{outline:2px dashed var(--blue);outline-offset:-2px}
-.colm header{display:flex;flex-direction:column;gap:2px;padding:14px 16px 6px;margin:-12px -12px 0;position:sticky;top:0;z-index:2;background:inherit;border-radius:12px 12px 0 0}
+.colm header{display:flex;flex-direction:column;gap:2px;padding:2px 4px}
 .colm header .h{display:flex;align-items:center;gap:8px}
 .colm h2{margin:0;font-size:14px;font-weight:600;flex:1}
 .count{font-size:12px;color:var(--mute);background:#fff;padding:2px 8px;border-radius:999px}
