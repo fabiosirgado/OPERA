@@ -93,6 +93,22 @@ export default function Shell({ access }) {
   const refs = useRef({ stages: [], clients: [] });
   refs.current = { stages, clients };
   const chatTimer = useRef();
+  // Negócio da OPERA fechado (lead do próprio cliente OPERA passa para Closed pela primeira vez): confetis, som de
+  // dinheiro e aviso no canto, para toda a equipa OPERA que tenha o Leads aberto.
+  const festaFecho = useCallback(async (e) => {
+    if (!e || e.type !== "stage" || !e.to_stage_id) return;
+    const st = refs.current.stages.find((s) => s.id === e.to_stage_id);
+    // A etapa Closed só existe no cliente OPERA (etapa própria dele).
+    if (!st || !st.client_id || st.name?.trim().toLowerCase() !== "closed") return;
+    const [{ data: lead }, { count }, { data: who }] = await Promise.all([
+      sb.from("leads").select("id, name, client_id").eq("id", e.lead_id).maybeSingle(),
+      sb.from("lead_events").select("id", { count: "exact", head: true }).eq("lead_id", e.lead_id).eq("type", "stage").eq("to_stage_id", e.to_stage_id),
+      e.author_id ? sb.from("profiles").select("full_name").eq("id", e.author_id).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
+    if (!lead || lead.client_id !== st.client_id || (count ?? 0) > 1) return;
+    const by = who?.full_name ? who.full_name.trim().split(/\s+/)[0] : "";
+    setAlerts((a) => (a.some((x) => x.id === `fecho-${lead.id}`) ? a : [...a, { id: `fecho-${lead.id}`, kind: "fecho", lead: lead.id, name: lead.name, by }]));
+  }, []);
   const onChange = useCallback((table, payload) => {
     // Mensagens das conversas: só a conversa e os números por ler voltam a pedir os dados.
     if (table === "client_messages" || table === "client_message_reads" || table === "*") {
@@ -102,6 +118,7 @@ export default function Shell({ access }) {
     }
     // Nota ou registo novo no histórico: só interessa à ficha dessa lead, se estiver aberta, e às notas afixadas
     // (que aparecem no quadro). Mudanças de etapa e chamadas também mexem na lead, e isso já chega por "leads".
+    if (opera && table === "lead_events" && payload?.eventType === "INSERT") festaFecho(payload.new);
     if (table === "lead_events" && payload?.eventType === "INSERT" && !payload.new?.pinned
         && !(modalRef.current?.kind === "lead" && modalRef.current.id === payload.new?.lead_id)) return;
     bump();
@@ -111,7 +128,7 @@ export default function Shell({ access }) {
     if (!isAutoNewLead(l) || (payload.eventType === "UPDATE" && Date.now() - Date.parse(l.new_at) > 120000)) return;
     const client = refs.current.clients.find((c) => c.id === l.client_id)?.name ?? "";
     setAlerts((a) => (a.some((x) => x.id === l.id) ? a : [...a, { id: l.id, name: l.name, client, source: l.source }]));
-  }, [bump, opera]);
+  }, [bump, opera, festaFecho]);
   useEffect(() => subscribeChanges(onChange), [onChange]);
   const closeAlert = (id) => setAlerts((a) => (id === "*" ? [] : a.filter((x) => x.id !== id)));
 
@@ -244,7 +261,7 @@ export default function Shell({ access }) {
       </main>
 
       <NewLeadAlerts alerts={alerts} onClose={closeAlert}
-        onOpen={(id) => { closeAlert(id); setModal({ kind: "lead", id }); }} />
+        onOpen={(id) => { setAlerts((a) => a.filter((x) => x.id !== id && x.lead !== id)); setModal({ kind: "lead", id }); }} />
       {modal?.kind === "lead" && <LeadModal key={modal.id} id={modal.id} ctx={ctx} onClose={closeModal} />}
       {modal?.kind === "newLead" && <NewLeadModal ctx={ctx} onClose={closeModal} />}
       {modal?.kind === "newStage" && <StageModal ctx={refCtx} onClose={closeModal} />}

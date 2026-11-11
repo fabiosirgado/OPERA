@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { confetti, somDinheiro } from "./celebrate.js";
 
 // Avisos de lead nova, no canto do ecrã, até serem abertos ou fechados. Com som curto e, se o browser
 // deixar, também um aviso do sistema (para quando o separador está em segundo plano).
@@ -19,18 +20,21 @@ function beep() {
   } catch { /* sem som */ }
 }
 
-// alerts: [{ id, name, client, source }]
+// alerts: [{ id, name, client, source }] (lead nova) ou [{ id: "fecho-<lead>", kind: "fecho", lead, name, by }] (negócio da OPERA fechado)
 export default function NewLeadAlerts({ alerts, onOpen, onClose }) {
   const [perm, setPerm] = useState(() => (canNotify() ? Notification.permission : "denied"));
   const last = alerts[alerts.length - 1];
 
   useEffect(() => {
     if (!last) return;
-    beep();
+    const fecho = last.kind === "fecho";
+    if (fecho) { somDinheiro(); confetti(); } else beep();
     if (perm === "granted" && document.visibilityState !== "visible") {
       try {
-        const n = new Notification(`Nova lead · ${last.name}`, { body: [last.client, last.source].filter(Boolean).join(" · "), tag: last.id });
-        n.onclick = () => { window.focus(); onOpen(last.id); n.close(); };
+        const n = fecho
+          ? new Notification(`Negócio fechado · ${last.name}`, { body: last.by ? `Fechado por ${last.by}` : "A OPERA fechou um negócio", tag: last.id })
+          : new Notification(`Nova lead · ${last.name}`, { body: [last.client, last.source].filter(Boolean).join(" · "), tag: last.id });
+        n.onclick = () => { window.focus(); onOpen(last.lead ?? last.id); n.close(); };
       } catch { /* o browser não deixou */ }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,15 +42,15 @@ export default function NewLeadAlerts({ alerts, onOpen, onClose }) {
 
   if (!alerts.length) return null;
   return (
-    <div className="alerts" role="region" aria-label="Leads novas" aria-live="polite">
+    <div className="alerts" role="region" aria-label="Avisos" aria-live="polite">
       {alerts.slice(-4).map((a) => (
-        <div key={a.id} className="alert">
-          <span className="nova">Nova</span>
+        <div key={a.id} className={`alert ${a.kind === "fecho" ? "fecho" : ""}`}>
+          {a.kind === "fecho" ? <span className="nova fecho">💰 Fechado</span> : <span className="nova">Nova</span>}
           <div className="alert-txt">
-            <b>{a.name}</b>
-            <small>{[a.client, a.source].filter(Boolean).join(" · ")}</small>
+            <b>{a.kind === "fecho" ? `Novo negócio fechado: ${a.name}` : a.name}</b>
+            <small>{a.kind === "fecho" ? (a.by ? `Fechado por ${a.by} · parabéns!` : "Parabéns, equipa!") : [a.client, a.source].filter(Boolean).join(" · ")}</small>
           </div>
-          <button type="button" className="btn xs primary" onClick={() => onOpen(a.id)}>Abrir</button>
+          <button type="button" className="btn xs primary" onClick={() => onOpen(a.lead ?? a.id)}>Abrir</button>
           <button type="button" className="x" aria-label={`Fechar o aviso de ${a.name}`} onClick={() => onClose(a.id)}>×</button>
         </div>
       ))}
