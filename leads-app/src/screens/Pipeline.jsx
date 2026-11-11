@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { pipeline, pipelineBoard, pipelineCounts, pipelineKpis, updateLead } from "../lib/leadsApi.js";
 import { PAGE, TASK_TYPES, ago, fmtRel } from "../lib/format.js";
 import { useAction, useToast } from "../ui/feedback.jsx";
@@ -13,6 +13,44 @@ const readPrefs = () => { try { return JSON.parse(localStorage.getItem(PREF_KEY)
 const savePrefs = (p) => { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { /* sem armazenamento */ } };
 
 // ctx: { opera, myClient, stages, labels, clients, version, onOpenLead, onNewLead, onNewStage, filterClient, setFilterClient }
+// O quadro ocupa só a altura do ecrã: a barra de scroll lateral fica sempre visível (antes ficava no fundo da coluna
+// mais comprida, fora do ecrã, e quem usa rato não conseguia ir para o lado). Também dá para arrastar o fundo.
+function useBoardScroll() {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const fit = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      el.style.maxHeight = `${Math.max(360, window.innerHeight - top - 48)}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    let drag = null;
+    const down = (e) => {
+      if (e.button !== 0 || e.target.closest(".cardL, button, a, input, select, textarea")) return;
+      drag = { x: e.clientX, y: e.clientY, l: el.scrollLeft, t: el.scrollTop };
+      el.classList.add("panning");
+    };
+    const move = (e) => {
+      if (!drag) return;
+      el.scrollLeft = drag.l - (e.clientX - drag.x);
+      el.scrollTop = drag.t - (e.clientY - drag.y);
+    };
+    const up = () => { drag = null; el.classList.remove("panning"); };
+    el.addEventListener("mousedown", down);
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return () => {
+      window.removeEventListener("resize", fit);
+      el.removeEventListener("mousedown", down);
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", up);
+    };
+  });
+  return ref;
+}
+
 export default function Pipeline({ ctx }) {
   const { opera, myClient, stages, labels, clients, version } = ctx;
   const [prefs, setPrefs] = useState(() => ({ layout: "board", sort: "next", label: "", lsort: "created", ldir: -1, mine: false, ...readPrefs() }));
@@ -22,6 +60,7 @@ export default function Pipeline({ ctx }) {
   const [counts, setCounts] = useState({});
   const [kpis, setKpis] = useState(null);
   const [list, setList] = useState({ rows: [], total: 0 });
+  const boardRef = useBoardScroll();
   const [run] = useAction();
   const toast = useToast();
   const setPref = (k, v) => setPrefs((p) => { const n = { ...p, [k]: v }; savePrefs(n); return n; });
@@ -188,7 +227,7 @@ export default function Pipeline({ ctx }) {
           </div>
         </>
       ) : (
-        <div className="boardWrap"><div className="board">
+        <div className="boardWrap" ref={boardRef}><div className="board">
           {columns.map((s) => {
             const items = cols[s.id] || [];
             const n = counts[s.id] || 0;
