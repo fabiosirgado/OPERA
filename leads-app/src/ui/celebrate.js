@@ -3,7 +3,7 @@
 
 const CORES = ["#2B63E8", "#15803D", "#F59E0B", "#E11D48", "#7C3AED", "#06B6D4", "#FACC15"];
 
-export function confetti(ms = 3000) {
+export function confetti(ms = 4000) {
   if (typeof document === "undefined") return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
   const c = document.createElement("canvas");
