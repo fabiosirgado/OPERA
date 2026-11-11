@@ -31,6 +31,9 @@ export const enableCrmClient = ({ id, color, inbox_alias, manager_id }) =>
 
 export const assignManager = (clientId, managerId) =>
   must(sb.rpc("leads_assign_manager", { p_client_id: clientId, p_manager_id: managerId }));
+// Vários gestores no mesmo cliente; o primeiro é o principal.
+export const setManagers = (clientId, managerIds) =>
+  must(sb.rpc("leads_set_managers", { p_client_id: clientId, p_manager_ids: managerIds }));
 export const deactivateClient = (id) => must(sb.rpc("leads_deactivate_client", { p_client_id: id }));
 export const reactivateClient = (id) => must(sb.rpc("leads_reactivate_client", { p_client_id: id }));
 export const purgeClientNow = (id, name) => must(sb.rpc("leads_purge_client_now", { p_client_id: id, p_confirm_name: name }));

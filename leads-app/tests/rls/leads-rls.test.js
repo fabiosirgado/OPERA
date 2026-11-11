@@ -126,6 +126,22 @@ suite("RLS do OPERA Leads", { timeout: 60_000 }, () => {
       expect(results[6]).toBe(false);
       for (const id of extra) await admin.rpc("leads_deactivate_client", { p_client_id: id });
     });
+    it("um cliente pode ter mais do que um gestor; o primeiro é o principal", async () => {
+      const gestorId = (await gestor.auth.getUser()).data.user.id;
+      const adminId = (await admin.auth.getUser()).data.user.id;
+      const ov0 = (await admin.rpc("leads_clients_overview")).data.find((c) => c.id === clientA);
+      expect((await gestor.rpc("leads_set_managers", { p_client_id: clientA, p_manager_ids: [gestorId, adminId] })).error).toBeTruthy();
+      expect((await admin.rpc("leads_set_managers", { p_client_id: clientA, p_manager_ids: [adminId, gestorId] })).error).toBeNull();
+      const ov = (await admin.rpc("leads_clients_overview")).data.find((c) => c.id === clientA);
+      expect(ov.manager_ids).toEqual([adminId, gestorId]);
+      expect(ov.manager_id).toBe(adminId);
+      expect(ov.manager_name.split(", ")).toHaveLength(2);
+      const { data: load } = await admin.rpc("leads_managers_load");
+      expect(load.find((m) => m.id === gestorId).clients.map((c) => c.id)).toContain(clientA);
+      expect(load.find((m) => m.id === adminId).clients.map((c) => c.id)).toContain(clientA);
+      // Repõe como estava.
+      expect((await admin.rpc("leads_set_managers", { p_client_id: clientA, p_manager_ids: ov0.manager_ids })).error).toBeNull();
+    });
   });
 
   describe("cliente", () => {

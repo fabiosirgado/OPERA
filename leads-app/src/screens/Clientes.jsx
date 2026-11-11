@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   assignManager, clientsOverview, createClient, crmClientsNotEnabled, deactivateClient, enableCrmClient,
-  inviteUser, operaTeam, purgeClientNow, reactivateClient, usersOfClient,
+  inviteUser, operaTeam, purgeClientNow, reactivateClient, setManagers, usersOfClient,
 } from "../lib/api.js";
 import { CLIENT_COLORS, MAX_CLIENTS_PER_MANAGER, RETENTION_MONTHS, fmtDate } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
@@ -27,8 +27,8 @@ export default function Clientes({ profile }) {
   }, [run]);
   useEffect(() => { load(); }, [load]);
 
-  const managers = team.filter((u) => u.leads_status === "ativo");
-  const loadOf = (id) => (clients || []).filter((c) => c.manager_id === id && c.leads_status === "ativo").length;
+  const managers = team.filter((u) => u.leads_status === "ativo" || (u.leads_status === "convidado" && ["admin", "gestor"].includes(u.leads_role)));
+  const loadOf = (id) => (clients || []).filter((c) => (c.manager_ids || []).includes(id) && c.leads_status === "ativo").length;
   const close = () => setModal(null);
   const closeAndReload = () => { setModal(null); load(); };
 
@@ -44,7 +44,7 @@ export default function Clientes({ profile }) {
 
       <div className="tbl" style={{ margin: 0, background: "#fff" }}>
         <table>
-          <thead><tr><th>Cliente</th><th>Gestor</th><th className="n">Utilizadores</th><th className="n">Leads</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Gestores</th><th className="n">Utilizadores</th><th className="n">Leads</th><th>Estado</th></tr></thead>
           <tbody>
             {!clients && <tr><td colSpan={5} className="empty">A carregar…</td></tr>}
             {clients?.length === 0 && <tr><td colSpan={5} className="empty">Ainda não há clientes no OPERA Leads.</td></tr>}
@@ -122,7 +122,7 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
   return (
     <Modal title={c.name} onClose={onClose} wide>
       <div className="row"><span className="sub" style={{ margin: 0 }}>
-        Gestor: <b>{c.manager_name || "Sem gestor"}</b> · {c.leads_count} leads
+        {(c.manager_ids || []).length > 1 ? "Gestores" : "Gestor"}: <b>{c.manager_name || "Sem gestor"}</b> · {c.leads_count} leads
         {c.inbox_alias && <> · emails dos portais para <b>{c.inbox_alias}@{INBOX_DOMAIN}</b></>}
       </span></div>
       {inactive && <div className="banner orange">Cliente desativado a {fmtDate(c.leads_deactivated_at)}. Ninguém deste cliente consegue entrar. Os dados são apagados automaticamente a <b>{fmtDate(c.leads_purge_at)}</b>.</div>}
@@ -239,8 +239,9 @@ function NewClientModal({ managers, loadOf, onClose, onDone }) {
 
 function ManagersModal({ clients, managers, loadOf, onClose, onChanged }) {
   const [run, busy] = useAction();
-  const change = async (clientId, managerId) => {
-    if (await run(() => assignManager(clientId, managerId || null), "Gestor atribuído")) onChanged();
+  const name = (id) => { const m = managers.find((x) => x.id === id); return m ? m.full_name || m.email : "Gestor"; };
+  const save = async (c, ids, msg) => {
+    if (await run(() => setManagers(c.id, ids), msg)) onChanged();
   };
   return (
     <Modal title="Atribuir clientes a gestores" onClose={onClose}>
@@ -249,23 +250,39 @@ function ManagersModal({ clients, managers, loadOf, onClose, onChanged }) {
           <span key={m.id} className={`state ${n >= MAX_CLIENTS_PER_MANAGER ? "del" : n >= 6 ? "inv" : "ok"}`}>
             {m.full_name || m.email}: {n}/{MAX_CLIENTS_PER_MANAGER}</span>); })}
       </div>
+      <div className="sub" style={{ margin: 0, fontSize: 13 }}>Um cliente pode ter mais do que um gestor. O primeiro é o principal: recebe as respostas dos emails de leads qualificadas.</div>
       <div className="tbl" style={{ margin: 0 }}>
         <table>
-          <thead><tr><th>Cliente</th><th>Gestor</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Gestores</th></tr></thead>
           <tbody>
-            {clients.map((c) => (
-              <tr key={c.id}>
-                <td><span className="tags"><span className="dot" style={{ background: c.color }}></span>{c.name}</span></td>
-                <td>
-                  <select aria-label={`Gestor de ${c.name}`} value={c.manager_id || ""} disabled={busy}
-                    onChange={(e) => change(c.id, e.target.value)} style={{ minHeight: 40, borderRadius: 8, border: "1px solid var(--line2)", padding: "0 8px" }}>
-                    <option value="">Sem gestor</option>
-                    {managers.map((m) => { const n = loadOf(m.id); const full = n >= MAX_CLIENTS_PER_MANAGER && m.id !== c.manager_id; return (
-                      <option key={m.id} value={m.id} disabled={full}>{m.full_name || m.email} ({n}/{MAX_CLIENTS_PER_MANAGER}){full ? " · cheio" : ""}</option>); })}
-                  </select>
-                </td>
-              </tr>
-            ))}
+            {clients.map((c) => {
+              const ids = c.manager_ids || [];
+              const free = managers.filter((m) => !ids.includes(m.id));
+              return (
+                <tr key={c.id}>
+                  <td><span className="tags"><span className="dot" style={{ background: c.color }}></span>{c.name}</span></td>
+                  <td>
+                    <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                      {ids.length === 0 && <span className="sub" style={{ margin: 0 }}>Sem gestor</span>}
+                      {ids.map((id, i) => (
+                        <span key={id} className="pill" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          {name(id)}{i === 0 && ids.length > 1 && <small style={{ color: "var(--mute)" }}>principal</small>}
+                          <button type="button" className="link" disabled={busy} aria-label={`Tirar ${name(id)} de ${c.name}`}
+                            onClick={() => save(c, ids.filter((x) => x !== id), "Gestor retirado")}>×</button>
+                        </span>))}
+                      {free.length > 0 && (
+                        <select aria-label={`Juntar gestor a ${c.name}`} value="" disabled={busy}
+                          onChange={(e) => e.target.value && save(c, [...ids, e.target.value], "Gestor atribuído")}
+                          style={{ minHeight: 36, borderRadius: 8, border: "1px solid var(--line2)", padding: "0 8px" }}>
+                          <option value="">{ids.length ? "+ Juntar gestor" : "Escolher gestor"}</option>
+                          {free.map((m) => { const n = loadOf(m.id); const full = n >= MAX_CLIENTS_PER_MANAGER; return (
+                            <option key={m.id} value={m.id} disabled={full}>{m.full_name || m.email} ({n}/{MAX_CLIENTS_PER_MANAGER}){full ? " · cheio" : ""}</option>); })}
+                        </select>)}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
