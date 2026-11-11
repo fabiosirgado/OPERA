@@ -3,6 +3,7 @@ import { sb } from "../../supabase.js";
 import { mountDashboard } from "./dashboard.js";
 import { mountAcessos, mountGestao } from "./gestao.js";
 import { mountBanco } from "./banco.js";
+import { mountDocumentos } from "./documentos.js";
 import "./admin.css";
 
 // Dashboard Admin: KPIs comerciais, financeiros e de operação da própria OPERA.
@@ -18,7 +19,7 @@ export default function AdminDashboard({ nivel, onOpenLead }) {
       if (error) throw error;
       return data || {};
     };
-    const pages = nivel === "total" ? { gestao: mountGestao, banco: mountBanco, acessos: mountAcessos } : {};
+    const pages = nivel === "total" ? { gestao: mountGestao, documentos: mountDocumentos, banco: mountBanco, acessos: mountAcessos } : {};
     const dash = mountDashboard(box.current, { load, nivel, pages, onOpenLead: (id) => openRef.current?.(id) });
     return () => dash.destroy();
   }, [nivel]);

@@ -636,7 +636,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
   let inicial = "resumo";
   try { inicial = localStorage.getItem(TAB_KEY) || "resumo"; } catch { /* sem armazenamento */ }
   if (comercial || !tabs.some((t) => t.dataset.tab === inicial)) inicial = comercial ? "ana" : "resumo";
-  if (!pages[inicial] && ["gestao", "banco", "acessos"].includes(inicial)) inicial = comercial ? "ana" : "resumo";
+  if (!pages[inicial] && ["gestao", "documentos", "banco", "acessos"].includes(inicial)) inicial = comercial ? "ana" : "resumo";
   show(inicial);
   reload();
 
