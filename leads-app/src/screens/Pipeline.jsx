@@ -16,7 +16,7 @@ const savePrefs = (p) => { try { localStorage.setItem(PREF_KEY, JSON.stringify(p
 // Quadro com a altura toda (a página desce normalmente). A barra de scroll lateral fica sempre visível no fundo do
 // ecrã (antes ficava no fundo da coluna mais comprida, fora do ecrã, e quem usa rato não conseguia ir para o lado).
 // Também dá para arrastar o fundo do quadro para o lado.
-function useBoardScroll() {
+function useBoardScroll(layout) {
   const wrap = useRef(null);
   const bar = useRef(null);
   useLayoutEffect(() => {
@@ -26,13 +26,22 @@ function useBoardScroll() {
     const fit = () => {
       inner.style.width = `${el.scrollWidth}px`;
       sb.hidden = el.scrollWidth <= el.clientWidth + 1;
-      sb.scrollLeft = el.scrollLeft;
     };
     fit();
-    const sync = (from, to) => () => { if (Math.abs(to.scrollLeft - from.scrollLeft) > 1) to.scrollLeft = from.scrollLeft; };
-    const onEl = sync(el, sb), onSb = sync(sb, el);
-    el.addEventListener("scroll", onEl);
-    sb.addEventListener("scroll", onSb);
+    // Só copia o scroll do elemento que a pessoa está a mexer (rato por cima). Copiar nos dois sentidos fazia o
+    // quadro abanar com o touchpad do Mac: cada um corrigia o outro durante a inércia do scroll.
+    let lead = el;
+    const take = (x) => () => { lead = x; };
+    const onEl = () => { if (lead === el) sb.scrollLeft = el.scrollLeft; };
+    const onSb = () => { if (lead === sb) el.scrollLeft = sb.scrollLeft; };
+    const enterEl = take(el), enterSb = take(sb);
+    el.addEventListener("pointerenter", enterEl);
+    sb.addEventListener("pointerenter", enterSb);
+    sb.addEventListener("pointerdown", enterSb);
+    el.addEventListener("wheel", enterEl, { passive: true });
+    sb.addEventListener("wheel", enterSb, { passive: true });
+    el.addEventListener("scroll", onEl, { passive: true });
+    sb.addEventListener("scroll", onSb, { passive: true });
     const ro = new ResizeObserver(fit);
     ro.observe(el); ro.observe(el.firstChild);
     let drag = null;
@@ -54,11 +63,16 @@ function useBoardScroll() {
       ro.disconnect();
       el.removeEventListener("scroll", onEl);
       sb.removeEventListener("scroll", onSb);
+      el.removeEventListener("pointerenter", enterEl);
+      sb.removeEventListener("pointerenter", enterSb);
+      sb.removeEventListener("pointerdown", enterSb);
+      el.removeEventListener("wheel", enterEl);
+      sb.removeEventListener("wheel", enterSb);
       el.removeEventListener("mousedown", down);
       window.removeEventListener("mousemove", move);
       window.removeEventListener("mouseup", up);
     };
-  });
+  }, [layout]);
   return [wrap, bar];
 }
 
@@ -71,7 +85,7 @@ export default function Pipeline({ ctx }) {
   const [counts, setCounts] = useState({});
   const [kpis, setKpis] = useState(null);
   const [list, setList] = useState({ rows: [], total: 0 });
-  const [boardRef, barRef] = useBoardScroll();
+  const [boardRef, barRef] = useBoardScroll(prefs.layout);
   const [run] = useAction();
   const toast = useToast();
   const setPref = (k, v) => setPrefs((p) => { const n = { ...p, [k]: v }; savePrefs(n); return n; });
