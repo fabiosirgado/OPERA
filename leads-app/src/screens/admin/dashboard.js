@@ -332,6 +332,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
   // Lista de clientes ao clicar num cartão (clicar no nome abre a ficha da lead). A lista abre logo abaixo da fila do cartão.
   const PER = "no período escolhido", HOJE = "hoje", ANA = "no período de comissão atual";
   const LISTAS = {
+    reunioes: ["Reuniões agendadas", PER, "reuniões", "Detalhe"],
     R1: ["Clientes que entraram em R1", PER, "clientes", "Fase atual"],
     R2: ["Clientes que entraram em R2", PER, "clientes", "Fase atual"],
     Fecho: ["Clientes fechados", PER, "clientes", "Fase atual"],
@@ -356,7 +357,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
     ana_r1: ["R1 marcadas pela Ana", ANA, "clientes", "Detalhe"],
   };
   const FUNIL = ["R1", "R2", "Fecho"];
-  const UM = { clientes: "cliente", contratos: "contrato", "prestações": "prestação" };
+  const UM = { clientes: "cliente", contratos: "contrato", "prestações": "prestação", "reuniões": "reunião" };
   let aberto = null; // botão do cartão aberto
   const cardLista = document.createElement("div");
   cardLista.className = "op-card op-lista"; cardLista.hidden = true;
