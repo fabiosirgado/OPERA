@@ -110,8 +110,8 @@ export function mountDocumentos(box) {
   ["fichas", "contratos", "validar", "pedidos", "proximos", "enviadas"].forEach((k) => { L[k] = el("div", {}, el("div", { className: "vazio", textContent: "A carregar…" })); });
   box.append(msg,
     card("Fichas de fecho por preencher", "Clientes fechados sem dados de identificação. Sem ficha não há contrato nem pedido de fatura. Tu ou a Ana preenchem uma vez; as renovações herdam a ficha.", L.fichas),
-    card("Contratos", "Gera o contrato a partir da ficha e dos pagamentos (o modelo escolhe sozinho as cláusulas de pagamento integral ou em prestações), vê o PDF e envia ao cliente. Para já só existe modelo para o OPERA SA. \"Enviar teste\" manda só para ti.", L.contratos),
-    card("Faturas por validar", "Faturas que a contabilidade já mandou. Abre o PDF, confirma e envia ao cliente.", L.validar),
+    card("Contratos", "Gera o contrato a partir da ficha e dos pagamentos (o modelo escolhe sozinho as cláusulas de pagamento integral ou em prestações) e confirma o PDF. O contrato segue para o cliente no mesmo email que a 1.ª fatura, quando a validares. Para já só existe modelo para o OPERA SA. \"Enviar teste\" manda só para ti.", L.contratos),
+    card("Faturas por validar", "Faturas que a contabilidade já mandou. Abre o PDF, confirma e envia ao cliente, a partir de financeiro@opera-os.com e sempre com o IBAN no texto. A 1.ª fatura de cada cliente leva também o contrato.", L.validar),
     card("Pedidos de fatura em curso", "Pedidos enviados à contabilidade (geral@m-g.com.pt) à espera da resposta com o PDF, e os que falharam.", L.pedidos),
     card("Próximos pedidos de fatura", "Todos os dias às 8h10 o sistema pede à contabilidade as faturas dos pagamentos que vencem nesse dia (só de clientes com ficha e a partir de 11/11/2026). Aqui vês os próximos 31 dias e os vencidos sem pedido. Podes pedir já, ou marcar como tratada fora se a fatura já foi passada por outra via.", L.proximos),
     card("Faturas enviadas", "As últimas 20 faturas enviadas aos clientes.", L.enviadas));
@@ -170,7 +170,7 @@ export function mountDocumentos(box) {
         c.contrato_enviado_em ? `enviado a ${quando(c.contrato_enviado_em)} para ${c.contrato_enviado_para}` : null,
         c.contrato_assinado_em ? `assinado a ${dataPT(c.contrato_assinado_em.slice(0, 10))}` : null,
       ].filter(Boolean).join(" · ");
-      const tag = el("span", { className: "tag" + (c.contrato_assinado_em ? "" : c.contrato_enviado_em ? "" : " warn"), textContent: c.contrato_assinado_em ? "assinado" : c.contrato_enviado_em ? "à espera de assinatura" : c.contrato_pdf ? "por enviar" : "por gerar" });
+      const tag = el("span", { className: "tag" + (c.contrato_assinado_em ? "" : c.contrato_enviado_em ? "" : " warn"), textContent: c.contrato_assinado_em ? "assinado" : c.contrato_enviado_em ? "à espera de assinatura" : c.contrato_pdf ? "segue com a 1.ª fatura" : "por gerar" });
       const gerar = botao(c.contrato_pdf ? "Gerar de novo" : "Gerar contrato", c.contrato_pdf ? "" : "pri");
       gerar.disabled = c.servico !== "SA" || c.estado === "incompleto";
       gerar.title = c.servico !== "SA" ? "Ainda não há modelo para este serviço" : c.estado === "incompleto" ? "Completa primeiro o contrato em Pagamentos e contratos" : "";
@@ -184,7 +184,7 @@ export function mountDocumentos(box) {
         acoes.push(verPdf(c.contrato_pdf));
         const teste = botao("Enviar teste");
         teste.addEventListener("click", () => acao(teste, () => chamar({ action: "enviar_contrato", contrato_id: c.id, teste_para: EU }), `Teste enviado para ${EU}.`));
-        const env = botao(c.contrato_enviado_em ? "Enviar outra vez" : "Enviar ao cliente", c.contrato_enviado_em ? "" : "pri");
+        const env = botao(c.contrato_enviado_em ? "Enviar outra vez" : "Enviar só o contrato");
         confirmar2(env, env.textContent, () => acao(env, () => chamar({ action: "enviar_contrato", contrato_id: c.id }), `Contrato enviado para ${f.email}.`));
         acoes.push(teste, env);
       }
@@ -221,14 +221,20 @@ export function mountDocumentos(box) {
       el("div", { className: "actions" }, ...acoes));
   }
 
-  function renderFaturas(fats) {
+  function renderFaturas(fats, contratos) {
+    const porId = new Map(contratos.map((c) => [c.id, c]));
     const validar = fats.filter((f) => f.estado === "recebida");
     if (!validar.length) vazio(L.validar, "Nenhuma fatura à espera de validação.");
     else L.validar.replaceChildren(...validar.map((fa) => {
       const teste = botao("Enviar teste");
       teste.addEventListener("click", () => acao(teste, () => chamar({ action: "enviar_fatura", fatura_id: fa.id, teste_para: EU }), `Teste enviado para ${EU}.`));
-      const env = botao("Validar e enviar", "pri");
-      confirmar2(env, "Validar e enviar", () => acao(env, () => chamar({ action: "enviar_fatura", fatura_id: fa.id }), `Fatura ${fa.ref} enviada para ${fa.dados?.email}.`));
+      const ct = porId.get(fa.contrato_id);
+      const comContrato = fa.numero === 1 && ct && !ct.contrato_enviado_em;
+      const label = comContrato ? "Validar e enviar com contrato" : "Validar e enviar";
+      const env = botao(label, "pri");
+      if (comContrato && !ct.contrato_pdf) { env.disabled = true; env.title = "Gera primeiro o contrato, em Contratos"; }
+      confirmar2(env, label, () => acao(env, () => chamar({ action: "enviar_fatura", fatura_id: fa.id }),
+        (r) => r?.com_contrato ? `Contrato e fatura ${fa.ref} enviados para ${fa.dados?.email}.` : `Fatura ${fa.ref} enviada para ${fa.dados?.email}.`));
       return linhaFatura(fa, verPdf(fa.pdf_path), teste, env);
     }));
 
@@ -286,7 +292,7 @@ export function mountDocumentos(box) {
     const faturas = fats.map((f) => ({ ...f, valor: Number(f.valor) }));
     renderFichas(contratos.filter((c) => !c.ficha));
     renderContratos(contratos.filter((c) => c.ficha));
-    renderFaturas(faturas);
+    renderFaturas(faturas, contratos);
     renderProximos(contratos, faturas);
   }
   carregar().catch((e) => status(e?.message || "Não foi possível carregar.", "err"));
