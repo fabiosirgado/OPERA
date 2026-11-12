@@ -72,6 +72,8 @@ function parseMeta(b: Body): Parsed {
     external_id: str(b.lead_id || b.leadgen_id || b.id) ? `meta:${str(b.lead_id || b.leadgen_id || b.id)}` : "",
     source_created_at: str(b.created_time || b.created_at),
     page_id: str(b.page_id), form_id: str(b.form_id), client: str(b.client),
+    // De onde vem a lead: campanha (o imóvel) e anúncio do Meta, se o Make os mandar.
+    interest: str(b.interest).slice(0, 160), reference: str(b.reference).slice(0, 160),
   };
 }
 
