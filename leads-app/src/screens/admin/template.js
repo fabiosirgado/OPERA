@@ -11,6 +11,9 @@ const atile = (lbl, field, fmt, sub, extra = "", lista = null) =>
   lista
     ? `<button type="button" class="op-tile op-click" data-lista="${lista}" aria-expanded="false"><div class="lbl">${lbl}</div><div class="val" data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div>${VER}</button>`
     : `<div class="op-tile"><div class="lbl">${lbl}</div><div class="val" data-source="ana_controlo" data-field="${field}" data-where="atual=true" data-fmt="${fmt}"${extra}>—</div><div class="sub">${sub}</div></div>`;
+// Meta de conversão reunião → fecho: 10% até dezembro de 2026, 20% a partir de janeiro de 2027.
+const META_CONV = new Date() >= new Date(2027, 0, 1) ? 0.2 : 0.1;
+const META_CONV_TXT = META_CONV === 0.2 ? "20%" : "10% (20% a partir de janeiro)";
 const th = (cols) => `<thead><tr>${cols.map(([l, n]) => `<th${n ? ' class="n"' : ""}>${l}</th>`).join("")}</tr></thead><tbody></tbody>`;
 
 export const TEMPLATE = `
@@ -86,7 +89,7 @@ export const TEMPLATE = `
       <button type="button" class="op-tile op-click" data-lista="R1" aria-expanded="false"><div class="lbl">R1 marcadas</div><div class="val" data-source="periodo" data-field="r1" data-row="0" data-fmt="int">—</div><div class="sub op-ver">Ver clientes ›</div></button>
       <button type="button" class="op-tile op-click" data-lista="R2" aria-expanded="false"><div class="lbl">R2</div><div class="val" data-source="periodo" data-field="r2" data-row="0" data-fmt="int">—</div><div class="sub">${t("periodo", "em_decisao", "int")} passaram a Em decisão</div>${VER}</button>
       <button type="button" class="op-tile op-click" data-lista="Fecho" aria-expanded="false"><div class="lbl">Fechos</div><div class="val" data-source="periodo" data-field="fechos" data-row="0" data-fmt="int">—</div><div class="sub" id="obj-mes-fechos"></div>${VER}</button>
-      ${tile("Conversão R1 → fecho", "periodo", "conv_r1_fecho", "pct", `Sobre ${t("periodo", "r1_total", "int")} leads com R1 ou R2 · meta 20%`, ' data-min="0.2"')}
+      ${tile("Conversão R1 → fecho", "periodo", "conv_r1_fecho", "pct", `Sobre ${t("periodo", "r1_total", "int")} leads com R1 ou R2 · meta ${META_CONV_TXT}`, ` data-min="${META_CONV}"`)}
       ${tile("Conversão R1 → R2", "periodo", "conv_r1_r2", "pct", `R2 → fecho: ${t("periodo", "conv_r2_fecho", "pct")}`)}
       ${ctile("ciclo", "Ciclo de venda médio", "periodo", "ciclo_medio_dias", "dec", `dias da 1.ª reunião ao fecho · mediana ${t("periodo", "ciclo_mediano_dias", "dec")} · ${t("periodo", "ciclo_n", "int")} fechos (${t("periodo", "ciclo_excluidos", "int")} sem reunião registada)`)}
       <div class="op-tile"><div class="lbl">Em decisão agora</div><div class="val" data-source="pipeline" data-field="leads_agora" data-where="fase=Em%20decis%C3%A3o" data-fmt="int">—</div><div class="sub"><span data-source="pipeline" data-field="leads_agora" data-where="fase=R1" data-fmt="int">—</span> em R1 e <span data-source="pipeline" data-field="leads_agora" data-where="fase=R2" data-fmt="int">—</span> em R2</div></div>
@@ -140,8 +143,8 @@ export const TEMPLATE = `
     <div class="op-tiles">
       ${atile("Fechos", "fechos", "int", `Objetivo ${aw("obj_fechos", "int")}`, "", "ana_fechos")}
       ${atile("Vendas novas", "vendas", "eur", "Objetivo 15.000 € · ao preço integral", "", "ana_fechos")}
-      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 a 20 por semana)`, "", "ana_r1")}
-      ${atile("Conversão", "conversao", "pct", "Fechos ÷ reuniões · objetivo 20%", ' data-min="0.2"')}
+      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`, "", "ana_r1")}
+      ${atile("Conversão", "conversao", "pct", `Fechos ÷ reuniões · objetivo ${META_CONV_TXT}`, ` data-min="${META_CONV}"`)}
       ${atile("Pagamentos integrais", "pct_pif", "pct", "Objetivo 50% ou mais", ' data-min="0.5"', "ana_fechos")}
       ${atile("Comissão a pagar", "comissao_garantida", "eur", `Já recebido · prevista ${aw("comissao_prevista", "eur")}`)}
       ${atile("Escalão", "escalao", "txt", `Faltam ${aw("falta_proximo", "eur")} para o seguinte`)}
