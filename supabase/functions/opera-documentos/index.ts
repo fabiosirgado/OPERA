@@ -1,12 +1,14 @@
 // OPERA · Documentos: envia o contrato ao cliente, pede as faturas à contabilidade e reencaminha-as ao cliente.
 //
-// Envio por Resend (domínio opera-os.com), em nome de Fábio Sirgado, com cópia oculta para a caixa dele,
-// para as respostas e o histórico ficarem no Gmail. As faturas da contabilidade chegam por um mailhook do
+// Envio por Resend (domínio opera-os.com), a partir de financeiro@opera-os.com (alias da caixa do Fábio), com cópia
+// oculta para a caixa dele, para as respostas e o histórico ficarem no Gmail. A 1.ª fatura de cada contrato segue
+// no mesmo email que o contrato; todos os emails ao cliente levam o IBAN no texto. As faturas da contabilidade chegam por um mailhook do
 // Make (filtro no Gmail que reencaminha os emails da contabilidade), que chama a ação "fatura_recebida".
 //
 // Segredos (Supabase → Edge Functions → Secrets):
 //   RESEND_API_KEY            a mesma do OPERA Leads
-//   OPERA_DOCS_FROM           opcional, "Fábio Sirgado <fabio.sirgado@opera-os.com>"
+//   OPERA_DOCS_FROM           opcional, "OPERA Financeiro <financeiro@opera-os.com>"
+//   OPERA_DOCS_REPLY_TO       opcional, "financeiro@opera-os.com"
 //   OPERA_CONTABILIDADE_EMAIL opcional, "geral@m-g.com.pt"
 //
 // Ações (POST com JSON):
@@ -29,7 +31,8 @@ const SECRET_KEY = (() => {
 const db = createClient(Deno.env.get("SUPABASE_URL")!, SECRET_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM = Deno.env.get("OPERA_DOCS_FROM") ?? "Fábio Sirgado <fabio.sirgado@opera-os.com>";
+const FROM = Deno.env.get("OPERA_DOCS_FROM") ?? "OPERA Financeiro <financeiro@opera-os.com>";
+const REPLY_TO = Deno.env.get("OPERA_DOCS_REPLY_TO") ?? "financeiro@opera-os.com";
 const FABIO = "fabio.sirgado@opera-os.com";
 const CONTABILIDADE = Deno.env.get("OPERA_CONTABILIDADE_EMAIL") ?? "geral@m-g.com.pt";
 const DOMINIO_CONTABILIDADE = CONTABILIDADE.split("@")[1]?.toLowerCase() ?? "";
@@ -79,7 +82,8 @@ const b64 = (bytes: Uint8Array) => { let s = ""; for (let i = 0; i < bytes.lengt
 const emailOk = (e: unknown) => typeof e === "string" && /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(e.trim());
 
 const MOLDE = (corpo: string) => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#1a1a2e;max-width:620px">${corpo}
-<p style="margin-top:24px">Com os melhores cumprimentos,<br><b>Fábio Sirgado</b><br>OPERA · Grabbingstars, Lda.<br>915 444 075 · opera-os.com</p></div>`;
+<p style="margin-top:24px">Com os melhores cumprimentos,<br><b>Equipa Financeira OPERA</b><br>Grabbingstars, Lda. · NIPC 516486900<br>financeiro@opera-os.com · opera-os.com</p></div>`;
+const BLOCO_IBAN = `<p style="background:#F4F6FB;border-radius:8px;padding:10px 14px"><b>Dados para pagamento</b><br>Transferência bancária para Grabbingstars, Lda.<br>IBAN: <b>${IBAN}</b></p>`;
 
 async function enviar(m: { to: string[]; subject: string; html: string; attachments?: { filename: string; content: string }[]; teste_para?: string }) {
   if (!RESEND_KEY) throw new HttpError(500, "Falta o segredo RESEND_API_KEY no Supabase.");
@@ -89,7 +93,7 @@ async function enviar(m: { to: string[]; subject: string; html: string; attachme
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: FROM, to, reply_to: FABIO,
+      from: FROM, to, reply_to: REPLY_TO,
       ...(teste || to.includes(FABIO) ? {} : { bcc: [FABIO] }),
       subject: teste ? `[TESTE para ${m.to.join(", ")}] ${m.subject}` : m.subject,
       html: m.html, attachments: m.attachments ?? [],
@@ -138,7 +142,8 @@ async function enviarContrato(contratoId: string, teste_para?: string) {
   const html = MOLDE(`<p>Olá ${esc(primeiro)},</p>
 <p>Segue em anexo o contrato de prestação de serviços da OPERA (${esc(SERVICO[c.servico] ?? "OPERA")}), com início a ${esc(dataPT(c.data_inicio))}.</p>
 <p><b>Como assinar:</b> pode assinar digitalmente com a Chave Móvel Digital, gratuitamente, em <a href="https://www.autenticacao.gov.pt/web/guest/cc-aplicacao">autenticacao.gov.pt</a> (opção "Assinar documento"). Depois basta responder a este email com o PDF assinado e nós devolvemos a versão final assinada pelas duas partes.</p>
-<p>Qualquer dúvida, estou disponível.</p>`);
+${BLOCO_IBAN}
+<p>Qualquer dúvida, estamos disponíveis.</p>`);
   const r = await enviar({
     to: [f.email.trim()], subject: `Contrato OPERA · ${f.nome}`, html, teste_para,
     attachments: [{ filename: `Contrato OPERA ${c.servico ?? ""} ${f.nome}.pdf`.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " "), content: await pdfBase64(c.contrato_pdf) }],
@@ -257,7 +262,7 @@ async function faturaRecebida(b: Record<string, unknown>) {
   return { ok: true, ref };
 }
 
-// ---------- Fatura ao cliente
+// ---------- Fatura ao cliente (a 1.ª fatura de um contrato ainda não enviado leva o contrato no mesmo email)
 async function enviarFatura(faturaId: string, teste_para?: string) {
   const { data: fat } = await db.from("opera_faturas").select("*").eq("id", faturaId).maybeSingle();
   if (!fat) throw new HttpError(404, "Fatura não encontrada.");
@@ -265,20 +270,38 @@ async function enviarFatura(faturaId: string, teste_para?: string) {
   if (fat.estado === "enviada" && !teste_para) throw new HttpError(400, "Esta fatura já foi enviada.");
   const email = String(fat.dados?.email ?? "").trim();
   if (!emailOk(email)) throw new HttpError(400, "Falta o email do cliente na ficha.");
-  const { data: c } = await db.from("opera_contratos").select("servico,ficha").eq("id", fat.contrato_id).maybeSingle();
+  const { data: c } = await db.from("opera_contratos").select("id,servico,ficha,data_inicio,contrato_pdf,contrato_enviado_em").eq("id", fat.contrato_id).maybeSingle();
+  const comContrato = !!c && !c.contrato_enviado_em && fat.numero === 1;
+  if (comContrato && !c.contrato_pdf) throw new HttpError(400, "Gera o contrato antes de enviar a primeira fatura: seguem os dois no mesmo email.");
   const pessoa = (c?.ficha?.tipo === "empresa" ? c?.ficha?.rep_nome : fat.dados?.nome) || fat.dados?.nome || "";
   const primeiro = String(pessoa).trim().split(/\s+/)[0];
   const valorIva = Math.round(Number(fat.valor) * (1 + IVA) * 100) / 100;
   const qual = fat.total_pagamentos > 1 ? `pagamento ${fat.numero} de ${fat.total_pagamentos}` : "pagamento integral";
-  const html = MOLDE(`<p>Olá ${esc(primeiro)},</p>
-<p>Segue em anexo a fatura relativa ao ${esc(qual)} do ${esc(SERVICO[c?.servico] ?? "serviço OPERA")}, no valor de <b>${esc(eur(valorIva))}</b> (IVA incluído), com vencimento a ${esc(dataPT(fat.data_prevista))}.</p>
-<p>O pagamento pode ser feito por transferência bancária para o IBAN <b>${IBAN}</b> (Grabbingstars, Lda.).</p>`);
+  const servico = SERVICO[c?.servico] ?? "serviço OPERA";
+  const corpo = comContrato
+    ? `<p>Olá ${esc(primeiro)},</p>
+<p>Bem-vindo(a) à OPERA. Seguem em anexo:</p>
+<ul><li>o <b>contrato</b> de prestação de serviços (${esc(servico)}), com início a ${esc(dataPT(c.data_inicio))};</li>
+<li>a <b>fatura</b> relativa ao ${esc(qual)}, no valor de <b>${esc(eur(valorIva))}</b> (IVA incluído), com vencimento a ${esc(dataPT(fat.data_prevista))}.</li></ul>
+<p><b>Como assinar o contrato:</b> pode assinar digitalmente com a Chave Móvel Digital, gratuitamente, em <a href="https://www.autenticacao.gov.pt/web/guest/cc-aplicacao">autenticacao.gov.pt</a> (opção "Assinar documento"). Depois basta responder a este email com o PDF assinado.</p>
+${BLOCO_IBAN}
+<p>Qualquer dúvida, estamos disponíveis.</p>`
+    : `<p>Olá ${esc(primeiro)},</p>
+<p>Segue em anexo a fatura relativa ao ${esc(qual)} do ${esc(servico)}, no valor de <b>${esc(eur(valorIva))}</b> (IVA incluído), com vencimento a ${esc(dataPT(fat.data_prevista))}.</p>
+${BLOCO_IBAN}
+<p>Qualquer dúvida, estamos disponíveis.</p>`;
+  const anexos = [{ filename: fat.pdf_nome && /\.pdf$/i.test(fat.pdf_nome) ? fat.pdf_nome : `Fatura ${fat.ref}.pdf`, content: await pdfBase64(fat.pdf_path) }];
+  if (comContrato) anexos.unshift({ filename: `Contrato OPERA ${c.servico ?? ""} ${fat.dados?.nome ?? fat.cliente}.pdf`.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " "), content: await pdfBase64(c.contrato_pdf) });
   const r = await enviar({
-    to: [email], subject: `Fatura OPERA · ${fat.dados?.nome ?? fat.cliente} · ${qual}`, html, teste_para,
-    attachments: [{ filename: fat.pdf_nome && /\.pdf$/i.test(fat.pdf_nome) ? fat.pdf_nome : `Fatura ${fat.ref}.pdf`, content: await pdfBase64(fat.pdf_path) }],
+    to: [email], html: MOLDE(corpo), teste_para, attachments: anexos,
+    subject: comContrato ? `Contrato e fatura OPERA · ${fat.dados?.nome ?? fat.cliente}` : `Fatura OPERA · ${fat.dados?.nome ?? fat.cliente} · ${qual}`,
   });
-  if (!r.teste) await db.from("opera_faturas").update({ estado: "enviada", enviada_em: new Date().toISOString(), enviada_para: email }).eq("id", fat.id);
-  return { ok: true, teste: r.teste };
+  if (!r.teste) {
+    const agora = new Date().toISOString();
+    await db.from("opera_faturas").update({ estado: "enviada", enviada_em: agora, enviada_para: email }).eq("id", fat.id);
+    if (comContrato) await db.from("opera_contratos").update({ contrato_enviado_em: agora, contrato_enviado_para: email }).eq("id", c.id);
+  }
+  return { ok: true, teste: r.teste, com_contrato: comContrato };
 }
 
 async function marcarFatura(faturaId: string, estado: string) {
