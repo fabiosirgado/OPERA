@@ -12,7 +12,7 @@
 //   OPERA_CONTABILIDADE_EMAIL opcional, "geral@m-g.com.pt"
 //
 // Ações (POST com JSON):
-//   pedir_faturas                       pagamentos com data prevista até hoje e sem fatura (cron diário ou nível total)
+//   pedir_faturas                       pagamentos que vencem até daqui a 2 dias e ainda sem fatura (cron diário ou nível total)
 //   pedir_fatura { pagamento_id }       pede já a fatura de um pagamento (nível total)
 //   reenviar_pedido { fatura_id }       volta a mandar o pedido (nível total)
 //   gerar_contrato { contrato_id }      gera o PDF a partir da ficha e dos pagamentos e guarda-o (nível total)
@@ -37,6 +37,7 @@ const FABIO = "fabio.sirgado@opera-os.com";
 const CONTABILIDADE = Deno.env.get("OPERA_CONTABILIDADE_EMAIL") ?? "geral@m-g.com.pt";
 const DOMINIO_CONTABILIDADE = CONTABILIDADE.split("@")[1]?.toLowerCase() ?? "";
 const FATURAS_DESDE = "2026-11-11"; // pagamentos anteriores ao arranque não geram pedido automático
+const DIAS_ANTES = 2; // o pedido à contabilidade sai 2 dias antes do vencimento
 const IVA = 0.23;
 const IBAN = "PT50 0033 0000 4568 8726 8920 5";
 const BUCKET = "opera-documentos";
@@ -212,7 +213,7 @@ const SELECT_PAG = "id,numero,valor,data_prevista,estado,contrato_id,c:opera_con
 
 async function pedirFaturas() {
   const { data: pags, error } = await db.from("opera_pagamentos").select(SELECT_PAG)
-    .in("estado", ["pendente", "pago"]).gte("data_prevista", FATURAS_DESDE).lte("data_prevista", hoje());
+    .in("estado", ["pendente", "pago"]).gte("data_prevista", FATURAS_DESDE).lte("data_prevista", addDias(hoje(), DIAS_ANTES));
   if (error) throw new Error(error.message);
   const { data: ja } = await db.from("opera_faturas").select("pagamento_id,estado").neq("estado", "cancelada");
   const tratados = new Set((ja ?? []).filter((f) => f.estado !== "a_pedir" && f.estado !== "erro").map((f) => f.pagamento_id));
