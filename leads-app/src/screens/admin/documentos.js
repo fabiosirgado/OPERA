@@ -10,6 +10,7 @@ const eur = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR",
 const dataPT = (s) => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : "");
 const quando = (s) => (s ? new Date(s).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }) : "");
 const hoje = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+const pedidoEm = (venc) => { const d = new Date(venc + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - 2); return d.toISOString().slice(0, 10); };
 const emDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, props); kids.forEach((k) => k != null && e.append(k)); return e; };
 const must = async (q) => { const { data, error } = await q; if (error) throw error; return data; };
@@ -113,7 +114,7 @@ export function mountDocumentos(box) {
     card("Contratos", "Gera o contrato a partir da ficha e dos pagamentos (o modelo escolhe sozinho as cláusulas de pagamento integral ou em prestações) e confirma o PDF. O contrato segue para o cliente no mesmo email que a 1.ª fatura, quando a validares. Para já só existe modelo para o OPERA SA. \"Enviar teste\" manda só para ti.", L.contratos),
     card("Faturas por validar", "Faturas que a contabilidade já mandou. Abre o PDF, confirma e envia ao cliente, a partir de financeiro@opera-os.com e sempre com o IBAN no texto. A 1.ª fatura de cada cliente leva também o contrato.", L.validar),
     card("Pedidos de fatura em curso", "Pedidos enviados à contabilidade (geral@m-g.com.pt) à espera da resposta com o PDF, e os que falharam.", L.pedidos),
-    card("Próximos pedidos de fatura", "Todos os dias às 8h10 o sistema pede à contabilidade as faturas dos pagamentos que vencem nesse dia (só de clientes com ficha e a partir de 11/11/2026). Aqui vês os próximos 31 dias e os vencidos sem pedido. Podes pedir já, ou marcar como tratada fora se a fatura já foi passada por outra via.", L.proximos),
+    card("Próximos pedidos de fatura", "Todos os dias às 8h10 o sistema pede à contabilidade as faturas dos pagamentos que vencem daí a 2 dias (só de clientes com ficha e a partir de 11/11/2026). Aqui vês os próximos 31 dias e os vencidos sem pedido. Podes pedir já, ou marcar como tratada fora se a fatura já foi passada por outra via.", L.proximos),
     card("Faturas enviadas", "As últimas 20 faturas enviadas aos clientes.", L.enviadas));
 
   const vazio = (node, t) => node.replaceChildren(el("div", { className: "vazio", textContent: t }));
@@ -274,7 +275,7 @@ export function mountDocumentos(box) {
       fora.addEventListener("click", () => acao(fora, () => chamar({ action: "tratada_fora", pagamento_id: p.id }), "Marcada como tratada fora."));
       return el("div", { className: "item" },
         el("div", { className: "grow" }, el("b", { textContent: p.c.ficha.nome }),
-          el("div", { className: "muted" + (atras ? " op-bad" : ""), textContent: `${p.total > 1 ? `pagamento ${p.numero} de ${p.total}` : "pagamento integral"} · ${atras ? "venceu" : p.data_prevista === hoje() ? "vence hoje" : "vence"} a ${dataPT(p.data_prevista)}${p.data_prevista > hoje() ? ` · pedido automático a ${dataPT(p.data_prevista)}` : ""}` })),
+          el("div", { className: "muted" + (atras ? " op-bad" : ""), textContent: `${p.total > 1 ? `pagamento ${p.numero} de ${p.total}` : "pagamento integral"} · ${atras ? "venceu" : p.data_prevista === hoje() ? "vence hoje" : "vence"} a ${dataPT(p.data_prevista)}${pedidoEm(p.data_prevista) > hoje() ? ` · pedido automático a ${dataPT(pedidoEm(p.data_prevista))}` : " · pedido automático no próximo envio das 8h10"}` })),
         el("b", { textContent: `${eur.format(p.valor)} + IVA` }),
         el("div", { className: "actions" }, ja, teste, fora));
     }));
