@@ -336,6 +336,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
     R1: ["Clientes que entraram em R1", PER, "clientes", "Fase atual"],
     R2: ["Clientes que entraram em R2", PER, "clientes", "Fase atual"],
     Fecho: ["Clientes fechados", PER, "clientes", "Fase atual"],
+    ciclo: ["Ciclo de venda dos fechos", PER, "clientes", "Ciclo"],
     novos: ["Contratos novos", PER, "contratos", "Pagamento"],
     novos_pif: ["Contratos novos pagos de uma vez (PIF)", PER, "contratos", "Pagamento"],
     novos_bundle: ["Contratos novos em bundle SA + BO", PER, "contratos", "Pagamento"],

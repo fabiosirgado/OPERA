@@ -86,8 +86,9 @@ export const TEMPLATE = `
       <button type="button" class="op-tile op-click" data-lista="R1" aria-expanded="false"><div class="lbl">R1 marcadas</div><div class="val" data-source="periodo" data-field="r1" data-row="0" data-fmt="int">—</div><div class="sub op-ver">Ver clientes ›</div></button>
       <button type="button" class="op-tile op-click" data-lista="R2" aria-expanded="false"><div class="lbl">R2</div><div class="val" data-source="periodo" data-field="r2" data-row="0" data-fmt="int">—</div><div class="sub">${t("periodo", "em_decisao", "int")} passaram a Em decisão</div>${VER}</button>
       <button type="button" class="op-tile op-click" data-lista="Fecho" aria-expanded="false"><div class="lbl">Fechos</div><div class="val" data-source="periodo" data-field="fechos" data-row="0" data-fmt="int">—</div><div class="sub" id="obj-mes-fechos"></div>${VER}</button>
-      ${tile("Conversão R1 → fecho", "periodo", "conv_r1_fecho", "pct", `Sobre ${t("periodo", "r1_total", "int")} leads com R1 ou R2 · meta 10%`, ' data-min="0.1"')}
+      ${tile("Conversão R1 → fecho", "periodo", "conv_r1_fecho", "pct", `Sobre ${t("periodo", "r1_total", "int")} leads com R1 ou R2 · meta 20%`, ' data-min="0.2"')}
       ${tile("Conversão R1 → R2", "periodo", "conv_r1_r2", "pct", `R2 → fecho: ${t("periodo", "conv_r2_fecho", "pct")}`)}
+      ${ctile("ciclo", "Ciclo de venda médio", "periodo", "ciclo_medio_dias", "dec", `dias da 1.ª reunião ao fecho · mediana ${t("periodo", "ciclo_mediano_dias", "dec")} · ${t("periodo", "ciclo_n", "int")} fechos (${t("periodo", "ciclo_excluidos", "int")} sem reunião registada)`)}
       <div class="op-tile"><div class="lbl">Em decisão agora</div><div class="val" data-source="pipeline" data-field="leads_agora" data-where="fase=Em%20decis%C3%A3o" data-fmt="int">—</div><div class="sub"><span data-source="pipeline" data-field="leads_agora" data-where="fase=R1" data-fmt="int">—</span> em R1 e <span data-source="pipeline" data-field="leads_agora" data-where="fase=R2" data-fmt="int">—</span> em R2</div></div>
     </div>
     <h3 class="op-sec">Vendas <small>· contratos fechados no período</small></h3>
@@ -139,8 +140,8 @@ export const TEMPLATE = `
     <div class="op-tiles">
       ${atile("Fechos", "fechos", "int", `Objetivo ${aw("obj_fechos", "int")}`, "", "ana_fechos")}
       ${atile("Vendas novas", "vendas", "eur", "Objetivo 15.000 € · ao preço integral", "", "ana_fechos")}
-      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`, "", "ana_r1")}
-      ${atile("Conversão", "conversao", "pct", "Fechos ÷ reuniões · objetivo 10%", ' data-min="0.1"')}
+      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 a 20 por semana)`, "", "ana_r1")}
+      ${atile("Conversão", "conversao", "pct", "Fechos ÷ reuniões · objetivo 20%", ' data-min="0.2"')}
       ${atile("Pagamentos integrais", "pct_pif", "pct", "Objetivo 50% ou mais", ' data-min="0.5"', "ana_fechos")}
       ${atile("Comissão a pagar", "comissao_garantida", "eur", `Já recebido · prevista ${aw("comissao_prevista", "eur")}`)}
       ${atile("Escalão", "escalao", "txt", `Faltam ${aw("falta_proximo", "eur")} para o seguinte`)}
@@ -278,6 +279,7 @@ export const TEMPLATE = `
         <dt>Cliente ativo</dt><dd>Cliente com a lead em Entrega de serviço (ou contrato manual), com contrato cujo período inclui o dia em causa e que ainda não passou a Serviço terminado.</dd>
         <dt>Serviço terminado e churn</dt><dd>Quando uma lead do cliente OPERA passa a Serviço terminado, o contrato fecha nesse dia e conta como não renovação. Churn mensal = clientes terminados no período a dividir pelos clientes ativos no início, ajustado a 30 dias. Com 80% de renovação a cada 3 meses, o churn mensal de referência é cerca de 6,7%.</dd>
         <dt>R1, R2 e fechos</dt><dd>Leads do cliente OPERA que entraram na fase R1 ou R2 no período. Fecho é a primeira entrada em Closed, Em Onboarding ou Entrega de serviço. Nas conversões a partir da R1 contam como R1 todas as leads que tiveram R1 ou R2 no período (quem está em R2 já fez a R1), cada uma só uma vez. Na tabela por pessoa, as R1 e R2 contam para quem as marcou e os fechos para o vendedor do contrato.</dd>
+        <dt>Ciclo de venda</dt><dd>Dias entre a primeira reunião e o fecho, só para leads do cliente OPERA com fecho no período. Fecho é a primeira entrada em Closed, Em Onboarding ou Entrega de serviço. Primeira reunião é a data mais antiga entre a entrada em R1, R2 ou Em decisão e a primeira tarefa do tipo Reunião não cancelada. Ficam de fora os fechos sem reunião registada antes do dia do fecho (por exemplo, leads criadas já fechadas). Mostra a média e a mediana; a mediana é mais fiável com poucos fechos.</dd>
         <dt>Reuniões agendadas</dt><dd>Tarefas do tipo Reunião marcadas no período em leads do cliente OPERA (as canceladas não contam). Por baixo: quantas têm data dentro do período e quantas estão por fazer a partir de agora. A lista mostra a data, a hora, quem marcou e se já foi feita.</dd>
         <dt>Ver clientes</dt><dd>Os cartões com "Ver clientes" abrem, logo por baixo, a lista dos contratos, clientes ou prestações que dão aquele número, com o total. Clicar no nome abre a lead.</dd>
         <dt>Vendedor</dt><dd>Por defeito, quem passou a lead para Em Onboarding (ou uma fase a seguir) pela primeira vez; até lá, quem a passou para Closed. Quem agenda a R1 não é necessariamente quem fecha: muda-se em Gestão, Contratos, Editar. Depois de mudado à mão, já não é trocado automaticamente.</dd>
