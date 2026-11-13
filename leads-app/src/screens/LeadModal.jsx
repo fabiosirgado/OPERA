@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  addNote, addTask, businessMinutes, updateTask, clientUsers, completeTask, deleteTask, eraseSubject, getLead, leadEvents, leadTasks,
+  addNote, addTask, businessMinutes, updateTask, clientUsers, completeTask, deleteTask, taskNotDone, eraseSubject, getLead, leadEvents, leadTasks,
   callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
@@ -324,6 +324,7 @@ export default function LeadModal({ id, ctx, onClose }) {
                 <span className={`when ${new Date(t.due_at) < Date.now() ? "late" : ""}`}>{fmtRel(t.due_at)}</span>
                 <TaskTag type={t.type} /><span className="nt">{t.note}</span>
                 <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => completeTask(t.id), "Tarefa concluída")}>Feita</button>
+                <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => taskNotDone(t.id), "Marcada como não feita")}>Não feita</button>
                 <button type="button" className="btn xs" disabled={busy} onClick={() => after(() => snoozeTask(t))}>Adiar 1 dia</button>
                 <button type="button" className="btn xs" onClick={() => setEditTask({ id: t.id, type: t.type, ...dueParts(t.due_at), note: t.note ?? "" })}>Editar</button>
                 {opera && <button type="button" className="link" disabled={busy} style={{ color: "var(--mute)" }}

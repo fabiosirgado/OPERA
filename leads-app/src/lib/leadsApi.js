@@ -115,6 +115,8 @@ export const updateTask = (taskId, { type, due, note }) =>
   must(sb.from("lead_tasks").update({ type, due_at: due, note: note || null }).eq("id", taskId).select("id"))
     .then((r) => { if (!r.length) throw new Error("Sem permissão para mudar esta tarefa."); });
 export const deleteTask = (taskId) => must(sb.from("lead_tasks").delete().eq("id", taskId));
+// Não feita: sai das tarefas em aberto e fica no histórico da lead ("Reunião não feita", com o dia e a hora).
+export const taskNotDone = (taskId) => must(sb.rpc("leads_task_not_done", { p_task_id: taskId }));
 
 export const addNote = async (leadId, body, pinned, title = "Nota") => {
   const { data: s } = await sb.auth.getUser();
