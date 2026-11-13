@@ -25,10 +25,12 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 type Payload = {
-  id: number; kind: "qualificada" | "nova_lead_do_cliente"; attempts: number; app_url: string | null; redirect_to: string | null;
+  id: number; kind: "qualificada" | "nova_lead_do_cliente" | "reuniao" | "etapa"; attempts: number; app_url: string | null; redirect_to: string | null;
   lead: { id: string; name: string; phone: string | null; email: string | null; source: string | null; interest: string | null;
           qualification: Record<string, string>; created_at: string; stage: string };
   client: string; manager: { name: string | null; email: string | null } | null; pinned: string[]; to: string[];
+  task?: { due_at: string; note: string | null; created_at: string; by: string | null } | null;
+  stage_event?: { at: string; to: string | null; from: string | null; by: string | null } | null;
 };
 
 type MsgPayload = {
@@ -75,6 +77,67 @@ export function render(p: Payload) {
   return { subject, html, text, link };
 }
 
+// Reunião agendada numa lead da OPERA: aviso aos admins.
+export function renderReuniao(p: Payload) {
+  if (p.kind === "etapa") return renderEtapa(p);
+  const l = p.lead, t = p.task;
+  const link = p.app_url ? `${p.app_url}${p.app_url.includes("?") ? "&" : "?"}lead=${l.id}` : null;
+  const quando = t ? new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", weekday: "long", day: "2-digit", month: "2-digit" }).format(new Date(t.due_at))
+    + (new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(t.due_at)) === "23:59:59" ? ""
+      : " às " + new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", hour: "2-digit", minute: "2-digit" }).format(new Date(t.due_at))) : "";
+  const by = t?.by ? t.by.trim().split(/\s+/)[0] : "";
+  const subject = `Reunião agendada: ${l.name}${quando ? ` · ${quando}` : ""}`;
+  const intro = `${by || "A equipa"} agendou uma reunião com ${l.name}.`;
+  const rows: [string, string][] = [
+    ["Quando", quando], ["Nota", t?.note ?? ""], ["Marcada por", t?.by ?? ""], ["Etapa", l.stage], ["Telefone", l.phone ?? ""],
+    ["Email", l.email ?? ""], ["Interesse", l.interest ?? ""], ["Origem", l.source ?? ""],
+  ].filter(([, v]) => v) as [string, string][];
+  const table = rows.map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#64748b;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#0f172a"><b>${esc(v)}</b></td></tr>`).join("");
+  const button = link
+    ? `<p style="margin:24px 0"><a href="${esc(link)}" style="background:#1d4ed8;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;display:inline-block">Abrir a lead</a></p>`
+    : "";
+  const html = `<!doctype html><html lang="pt"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
+<div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:12px;padding:28px">
+<p style="margin:0 0 4px;font-size:13px;color:#64748b"><b style="color:#0f172a">OPERA</b> Leads · Reuniões</p>
+<h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">${esc(subject)}</h2>
+<p style="margin:0 0 16px;color:#334155">${esc(intro)}</p>
+<table style="border-collapse:collapse;font-size:14px">${table}</table>${button}
+</div><p style="font-size:12px;color:#94a3b8;text-align:center">Recebe este email porque é admin do OPERA Leads.</p></div></body></html>`;
+  const text = [subject, "", intro, "", ...rows.map(([k, v]) => `${k}: ${v}`), ...(link ? ["", `Abrir a lead: ${link}`] : [])].join("\n");
+  return { subject, html, text, link };
+}
+
+// Lead da OPERA entrou em R1, R2 ou Closed: aviso aos admins.
+export function renderEtapa(p: Payload) {
+  const l = p.lead, e = p.stage_event;
+  const link = p.app_url ? `${p.app_url}${p.app_url.includes("?") ? "&" : "?"}lead=${l.id}` : null;
+  const to = e?.to ?? l.stage;
+  const by = e?.by ? e.by.trim().split(/\s+/)[0] : "";
+  const quando = e ? new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(e.at)) : "";
+  const fecho = to === "Closed";
+  const subject = fecho ? `Negócio fechado: ${l.name}` : `${l.name} passou a ${to}`;
+  const intro = fecho ? `${by || "A equipa"} fechou o negócio com ${l.name}. Parabéns!` : `${by || "Alguém da equipa"} passou ${l.name} para ${to}.`;
+  const rows: [string, string][] = [
+    ["Etapa", e?.from ? `${e.from} → ${to}` : to], ["Quando", quando], ["Por", e?.by ?? ""], ["Telefone", l.phone ?? ""],
+    ["Email", l.email ?? ""], ["Interesse", l.interest ?? ""], ["Origem", l.source ?? ""],
+  ].filter(([, v]) => v) as [string, string][];
+  const table = rows.map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#64748b;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#0f172a"><b>${esc(v)}</b></td></tr>`).join("");
+  const button = link
+    ? `<p style="margin:24px 0"><a href="${esc(link)}" style="background:#1d4ed8;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;display:inline-block">Abrir a lead</a></p>`
+    : "";
+  const html = `<!doctype html><html lang="pt"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
+<div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:12px;padding:28px">
+<p style="margin:0 0 4px;font-size:13px;color:#64748b"><b style="color:#0f172a">OPERA</b> Leads · Funil</p>
+<h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">${esc(subject)}</h2>
+<p style="margin:0 0 16px;color:#334155">${esc(intro)}</p>
+<table style="border-collapse:collapse;font-size:14px">${table}</table>${button}
+</div><p style="font-size:12px;color:#94a3b8;text-align:center">Recebe este email porque é admin do OPERA Leads.</p></div></body></html>`;
+  const text = [subject, "", intro, "", ...rows.map(([k, v]) => `${k}: ${v}`), ...(link ? ["", `Abrir a lead: ${link}`] : [])].join("\n");
+  return { subject, html, text, link };
+}
+
 const hora = (iso: string) =>
   new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
@@ -111,7 +174,7 @@ const replyTo = (p: Payload | MsgPayload) =>
 async function send(p: Payload | MsgPayload) {
   const to = p.redirect_to ? [p.redirect_to] : p.to;
   if (!to.length) return { ok: false, error: "Sem destinatários.", to };
-  const mail = p.kind === "mensagens" ? renderMessages(p) : render(p);
+  const mail = p.kind === "mensagens" ? renderMessages(p) : p.kind === "reuniao" || p.kind === "etapa" ? renderReuniao(p) : render(p);
   const rt = replyTo(p);
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -194,7 +257,7 @@ Deno.serve(async (req) => {
     const { data, error } = await db.rpc("leads_notification_preview", { p_id: body.id });
     if (error || !data) return json({ error: "Aviso não encontrado." }, 404);
     const p = data as Payload;
-    return json({ to: p.redirect_to ? [p.redirect_to] : p.to, real_to: p.to, reply_to: p.manager?.email ?? null, ...render(p) });
+    return json({ to: p.redirect_to ? [p.redirect_to] : p.to, real_to: p.to, reply_to: replyTo(p), ...(p.kind === "reuniao" || p.kind === "etapa" ? renderReuniao(p) : render(p)) });
   }
 
   if (body.action === "preview_mensagens") {
