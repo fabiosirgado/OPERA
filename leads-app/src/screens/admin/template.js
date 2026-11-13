@@ -97,7 +97,9 @@ export const TEMPLATE = `
     <h3 class="op-sec">Vendas <small>· contratos fechados no período</small></h3>
     <div class="op-tiles">
       ${ctile("novos", "Vendas novas", "periodo", "vendas_novas", "eur", `${t("periodo", "contratos_novos", "int")} contratos novos`)}
-      ${ctile("novos", "Ticket médio", "periodo", "ticket_medio", "eur", "Valor do pack")}
+      ${ctile("novos", "Ticket médio geral", "periodo", "ticket_medio", "eur", `Valor do pack · ${t("periodo", "ticket_n", "int")} contratos (inclui bundle)`)}
+      ${ctile("novos", "Ticket médio SA", "periodo", "ticket_medio_sa", "eur", `${t("periodo", "ticket_n_sa", "int")} contratos OPERA SA`)}
+      ${ctile("novos", "Ticket médio BO", "periodo", "ticket_medio_bo", "eur", `${t("periodo", "ticket_n_bo", "int")} contratos OPERA BO`)}
       ${ctile("novos_pif", "Vendas em PIF", "periodo", "pct_pif_vendas", "pct", "Meta da Ana: 50% ou mais", ' data-min="0.5"')}
       ${ctile("novos_bundle", "Bundle SA + BO", "periodo", "pct_bundle", "pct", "Dos contratos novos")}
       ${ctile("renovacoes", "Renovações", "periodo", "renovacoes", "int", "Packs renovados com início no período")}
