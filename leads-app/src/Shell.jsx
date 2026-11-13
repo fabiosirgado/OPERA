@@ -71,18 +71,25 @@ export default function Shell({ access }) {
   const bumpTimer = useRef();
   const bumpLast = useRef(0);
   const bumpPending = useRef(false);
-  const bump = useCallback(() => {
+  // Leads que mudaram desde a última atualização ("*" = não se sabe qual): a ficha aberta só volta a pedir
+  // os dados quando a mudança é nela, em vez de a cada mudança em qualquer lead.
+  const changedRef = useRef(new Set());
+  const [changedLeads, setChangedLeads] = useState(() => new Set());
+  const bump = useCallback((leadId) => {
+    if (leadId !== undefined) changedRef.current.add(leadId || "*");
     if (document.visibilityState === "hidden") { bumpPending.current = true; return; }
     if (bumpTimer.current) return;
     bumpTimer.current = setTimeout(() => {
       bumpTimer.current = null;
       bumpLast.current = Date.now();
+      setChangedLeads(changedRef.current);
+      changedRef.current = new Set();
       setVersion((v) => v + 1);
     }, Math.max(400, bumpLast.current + 2000 - Date.now()));
   }, []);
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible" && bumpPending.current) { bumpPending.current = false; bump(); }
+      if (document.visibilityState === "visible" && bumpPending.current) { bumpPending.current = false; bump("*"); }
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -121,7 +128,8 @@ export default function Shell({ access }) {
     if (opera && table === "lead_events" && payload?.eventType === "INSERT") festaFecho(payload.new);
     if (table === "lead_events" && payload?.eventType === "INSERT" && !payload.new?.pinned
         && !(modalRef.current?.kind === "lead" && modalRef.current.id === payload.new?.lead_id)) return;
-    bump();
+    const row = payload?.new && Object.keys(payload.new).length ? payload.new : payload?.old;
+    bump((table === "leads" ? row?.id : row?.lead_id) || "*");
     if (!opera || table !== "leads" || !["INSERT", "UPDATE"].includes(payload?.eventType)) return;
     const l = payload.new;
     // Lead nova, ou lead que já existia e acabou de fazer um novo pedido (new_at acabado de acender).
@@ -145,18 +153,26 @@ export default function Shell({ access }) {
     countNewLeads().then(setNewCount).catch(() => {});
   }, [opera, stages, version]);
 
-  // Número no menu "Hoje": tarefas até ao fim do dia.
+  // Número no menu "Hoje": tarefas até ao fim do dia. Pede a lista toda, por isso no máximo uma vez por minuto
+  // (antes era a cada mudança em qualquer lead, o que deixava tudo mais lento).
+  const dueTimer = useRef(null);
+  const dueLast = useRef(0);
   useEffect(() => {
-    if (!opera) return;
-    today(null, null).then((r) => {
-      const end = new Date(); end.setHours(23, 59, 59, 999);
-      const n = r.filter((t) => new Date(t.due_at) <= end).length;
-      setDueToday(r.length >= 500 && n === r.length ? "500+" : n);
-    }).catch(() => {});
+    if (!opera || dueTimer.current) return;
+    dueTimer.current = setTimeout(() => {
+      dueTimer.current = null;
+      dueLast.current = Date.now();
+      today(null, null).then((r) => {
+        const end = new Date(); end.setHours(23, 59, 59, 999);
+        const n = r.filter((t) => new Date(t.due_at) <= end).length;
+        setDueToday(r.length >= 500 && n === r.length ? "500+" : n);
+      }).catch(() => {});
+    }, Math.max(0, dueLast.current + 60000 - Date.now()));
   }, [opera, version]);
+  useEffect(() => () => clearTimeout(dueTimer.current), []);
 
   const ctx = useMemo(() => ({
-    me: profile.id, opera, myClient, stages, labels, clients, version, filterClient, setFilterClient,
+    me: profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, setFilterClient,
     defaultClient: filterClient,
     onChanged: () => { bump(); },
     onRefsChanged: () => { loadRefs(); bump(); },
@@ -166,7 +182,7 @@ export default function Shell({ access }) {
     onNewStage: () => setModal({ kind: "newStage" }),
     onOpenLabels: () => setModal((m) => ({ kind: "labels", back: m?.kind === "lead" ? m.id : null })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [profile.id, opera, myClient, stages, labels, clients, version, filterClient, bump, loadRefs]);
+  }), [profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, bump, loadRefs]);
 
   // Links dos emails e das notificações: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login).
   const openFromLink = (search) => {

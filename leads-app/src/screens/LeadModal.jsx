@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addNote, addTask, businessMinutes, updateTask, clientUsers, completeTask, deleteTask, taskNotDone, eraseSubject, getLead, leadEvents, leadTasks,
   callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
@@ -75,8 +75,15 @@ export default function LeadModal({ id, ctx, onClose }) {
     else setFirstCallMin(null);
   }, [id, onClose, toast, opera]);
   useEffect(() => { load().catch((e) => toast(e.message)); }, [load, toast]);
-  // Atualiza sozinha quando alguém mexe nesta lead (tempo real).
-  useEffect(() => { if (ctx.version) load().catch(() => {}); }, [ctx.version, load]);
+  // Atualiza sozinha quando alguém mexe nesta lead (tempo real). Só quando a mudança é nesta lead,
+  // e não ao abrir (aí já carrega acima).
+  const seenVersion = useRef(ctx.version);
+  useEffect(() => {
+    if (ctx.version === seenVersion.current) return;
+    seenVersion.current = ctx.version;
+    const ch = ctx.changedLeads;
+    if (!ch || ch.has("*") || ch.has(id)) load().catch(() => {});
+  }, [ctx.version, ctx.changedLeads, id, load]);
 
   const stageById = useMemo(() => Object.fromEntries(stages.map((s) => [s.id, s])), [stages]);
   const cur = lead && stageById[lead.stage_id];
