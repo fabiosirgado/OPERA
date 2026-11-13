@@ -135,6 +135,8 @@ html.light .layer{background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(2
 .face.back p{color:#fff;font-size:21px}
 .face .num{font-size:15px;font-weight:800;color:var(--accent2);letter-spacing:.14em}
 .face h3{font-size:30px;font-weight:800}
+.face.st{position:relative;inset:auto;height:260px}
+.face.st p{font-size:20px;margin-top:12px}
 .face small{font-size:14px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
 
 /* S5 services */
@@ -170,6 +172,9 @@ html.light .ico svg{stroke:var(--accent)}
 @keyframes fall{0%{opacity:0;top:0;left:var(--x0)}10%{opacity:1}85%{opacity:1;top:500px;left:255px}100%{opacity:0;top:540px;left:255px}}
 .goal{position:absolute;left:50%;bottom:0;transform:translateX(-50%);padding:14px 24px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#1B3FA8);color:#fff;font-weight:800;font-size:18px;letter-spacing:.06em;box-shadow:0 20px 50px -10px var(--glow)}
 
+/* S12 passos estáticos */
+.steps-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+.steps-grid .panel{position:relative;left:auto;top:auto;width:auto;height:auto;min-height:330px;cursor:default}
 /* carousel */
 .carousel{position:relative;width:640px;height:400px;perspective:1300px;margin-left:auto}
 .car-in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.75,.2,1)}
@@ -311,10 +316,10 @@ html.still .layer,html.still .orbit .o,html.still .orbit .k,html.still .pt{anima
   <h2 class="title rise" style="--d:.08s">Tu tratas do negócio. <span class="accent">A OPERA trata da operação.</span></h2>
   <p class="lead rise" style="--d:.16s;margin-top:26px;max-width:1150px">A OPERA é um departamento operacional externo, especializado no setor imobiliário. Não somos mais um consultor externo: somos a equipa que trabalha nos bastidores para que o negócio funcione.</p>
   <div class="row rise" style="--d:.24s;margin-top:44px">
-    <div class="flip" style="flex:1"><div class="flip-in"><div class="face"><span class="num">01</span><div><h3>Executamos</h3><small>Passa o rato</small></div></div><div class="face back"><p>Assumimos a execução de tarefas e processos que suportam a tua atividade.</p></div></div></div>
-    <div class="flip" style="flex:1"><div class="flip-in"><div class="face"><span class="num">02</span><div><h3>Organizamos</h3><small>Passa o rato</small></div></div><div class="face back"><p>Documentação, prazos e informação em ordem, em cada etapa do negócio.</p></div></div></div>
-    <div class="flip" style="flex:1"><div class="flip-in"><div class="face"><span class="num">03</span><div><h3>Acompanhamos</h3><small>Passa o rato</small></div></div><div class="face back"><p>Cada processo é seguido até à conclusão, com o estado sempre atualizado.</p></div></div></div>
-    <div class="flip" style="flex:1"><div class="flip-in"><div class="face"><span class="num">04</span><div><h3>Centralizamos</h3><small>Passa o rato</small></div></div><div class="face back"><p>Tudo numa única equipa e numa plataforma centralizada.</p></div></div></div>
+    <div class="face st" style="flex:1"><span class="num">01</span><div><h3>Executamos</h3><p>Assumimos a execução de tarefas e processos que suportam a tua atividade.</p></div></div>
+    <div class="face st" style="flex:1"><span class="num">02</span><div><h3>Organizamos</h3><p>Documentação, prazos e informação em ordem, em cada etapa do negócio.</p></div></div>
+    <div class="face st" style="flex:1"><span class="num">03</span><div><h3>Acompanhamos</h3><p>Cada processo é seguido até à conclusão, com o estado sempre atualizado.</p></div></div>
+    <div class="face st" style="flex:1"><span class="num">04</span><div><h3>Centralizamos</h3><p>Tudo numa única equipa e numa plataforma centralizada.</p></div></div>
   </div>
   <div class="foot"><span><b>OPERA</b> | Apresentação Institucional</span><span>04</span></div>
 </section>
@@ -329,14 +334,12 @@ html.still .layer,html.still .orbit .o,html.still .orbit .k,html.still .pt{anima
       <div class="big">OPERA BO</div>
       <p style="font-size:22px">Um único serviço integrado que inclui Operations, Legal e Finance. Tudo centralizado numa única equipa.</p>
       <div class="tags"><span class="pill">Operations</span><span class="pill">Legal</span><span class="pill">Finance</span></div>
-      <div class="go">Ver OPERA BO →</div>
     </div>
     <div class="card tilt svc" data-goto="10">
       <span class="pill" style="align-self:flex-start">Sales Assistance</span>
       <div class="big">OPERA SA</div>
       <p style="font-size:22px">Serviço de gestão de leads: atendimento, qualificação, follow up, registo, agendamento e reativação.</p>
       <div class="tags"><span class="pill">Atende</span><span class="pill">Qualifica</span><span class="pill">Agenda</span></div>
-      <div class="go">Ver OPERA SA →</div>
     </div>
   </div>
   <p class="rise" style="--d:.3s;margin-top:28px">Podes contratar cada serviço individualmente ou escolher a solução integrada.</p>
@@ -424,10 +427,7 @@ html.still .layer,html.still .orbit .o,html.still .orbit .k,html.still .pt{anima
 <section class="slide">
   <div class="kicker rise">OPERA SA | Processo</div>
   <h2 class="title rise" style="--d:.08s">Como funciona a gestão de leads?</h2>
-  <div class="row rise" style="--d:.16s;margin-top:40px;align-items:center">
-    <div class="steps-nav" id="stepsNav"></div>
-    <div class="carousel"><div class="car-in" id="carIn"></div></div>
-  </div>
+  <div class="steps-grid rise" id="stepsGrid" style="--d:.16s;margin-top:56px"></div>
   <div class="foot"><span><b>OPERA</b> | Apresentação Institucional</span><span>12</span></div>
 </section>
 
@@ -609,27 +609,9 @@ const steps=[
  ['REGISTA','Introdução da lead, informação recolhida e notas no CRM.'],
  ['AGENDA','Marca visitas quando a lead está preparada para avançar.'],
  ['RECUPERA','Campanha mensal de reativação de leads antigas.']];
-const carIn=document.getElementById('carIn'),nav=document.getElementById('stepsNav');const R=330;let step=0,carTimer=null,userPicked=false;
-steps.forEach((s,i)=>{
-  const p=document.createElement('div');p.className='panel';p.style.transform=`rotateY(${i*60}deg) translateZ(${R}px)`;
-  p.innerHTML=`<div class="n">${i+1}</div><h4>${s[0]}</h4><p>${s[1]}</p>`;p.onclick=()=>{userPicked=true;setStep(i)};carIn.appendChild(p);
-  const b=document.createElement('button');b.className='stepbtn';b.innerHTML=`<em>${i+1}</em>${s[0]}`;b.onclick=()=>{userPicked=true;setStep(i)};nav.appendChild(b);
-});
-let carAngle=0,carHold=0,carLast=0;
-function mark(i){if(i===step&&carLast)return;step=i;[...carIn.children].forEach((p,k)=>p.classList.toggle('cur',k===i));[...nav.children].forEach((b,k)=>b.classList.toggle('on',k===i))}
-function setStep(i){
-  const target=-i*60;carAngle=target+360*Math.round((carAngle-target)/360);
-  carIn.style.transition='transform 1s cubic-bezier(.2,.75,.2,1)';carIn.style.transform=`translateZ(-${R}px) rotateY(${carAngle}deg)`;
-  carHold=performance.now()+7000;step=-1;mark(i);
-}
-function spin(now){
-  const dt=carLast?Math.min(64,now-carLast):0;carLast=now;
-  if(cur===11&&!still&&now>carHold){carIn.style.transition='none';carAngle-=dt*0.015;
-    carIn.style.transform=`translateZ(-${R}px) rotateY(${carAngle}deg)`;
-    mark(((Math.round(-carAngle/60))%6+6)%6)}
-  requestAnimationFrame(spin);
-}
-step=-1;mark(0);carIn.style.transform=`translateZ(-${R}px) rotateY(0deg)`;requestAnimationFrame(spin);
+const grid=document.getElementById('stepsGrid');
+steps.forEach((st,i)=>{const p=document.createElement('div');p.className='panel';p.innerHTML=`<div class="n">${i+1}</div><h4>${st[0]}</h4><p>${st[1]}</p>`;grid.appendChild(p)});
+let carTimer=null;
 
 /* ---------- dashboard features ---------- */
 const featBtns=[...document.querySelectorAll('#feat button')],zones=[...document.querySelectorAll('.mz')];let feat=0,featTimer=null,featUser=false;
@@ -663,7 +645,7 @@ function onEnter(i){
   /* animações contínuas correm 2 s em cada slide e depois param */
   clearTimeout(stillTimer);still=false;root.classList.remove('still');
   stillTimer=setTimeout(()=>{still=true;root.classList.add('still');
-    if(cur===11&&performance.now()>carHold)setStep(((Math.round(-carAngle/60))%6+6)%6)},2000);
+  },2000);
   if(i===13)tReset();
 }
 
