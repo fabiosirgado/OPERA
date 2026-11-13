@@ -243,6 +243,7 @@ html.light .mstep .k{color:var(--accent)}
 .price.best .pill{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.3)}
 .save{margin-top:auto;font-weight:700;font-size:18px}
 
+html.still .layer,html.still .orbit .o,html.still .orbit .k,html.still .pt{animation-play-state:paused!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -623,7 +624,7 @@ function setStep(i){
 }
 function spin(now){
   const dt=carLast?Math.min(64,now-carLast):0;carLast=now;
-  if(cur===11&&now>carHold){carIn.style.transition='none';carAngle-=dt*0.015;
+  if(cur===11&&!still&&now>carHold){carIn.style.transition='none';carAngle-=dt*0.015;
     carIn.style.transform=`translateZ(-${R}px) rotateY(${carAngle}deg)`;
     mark(((Math.round(-carAngle/60))%6+6)%6)}
   requestAnimationFrame(spin);
@@ -656,9 +657,13 @@ for(let i=0;i<=10;i++){const b=document.createElement('button');b.textContent=i;
 };npsEl.appendChild(b)}
 
 /* ---------- per slide enter ---------- */
+let still=false,stillTimer=null;
 function onEnter(i){
   clearInterval(carTimer);clearInterval(featTimer);
-  if(i===12&&!featUser){featTimer=setInterval(()=>{if(featUser)return clearInterval(featTimer);setFeat((feat+1)%6)},2200)}
+  /* animações contínuas correm 2 s em cada slide e depois param */
+  clearTimeout(stillTimer);still=false;root.classList.remove('still');
+  stillTimer=setTimeout(()=>{still=true;root.classList.add('still');
+    if(cur===11&&performance.now()>carHold)setStep(((Math.round(-carAngle/60))%6+6)%6)},2000);
   if(i===13)tReset();
 }
 
@@ -666,9 +671,10 @@ function onEnter(i){
 const cv=document.getElementById('bg'),cx=cv.getContext('2d');let W,H,DPR,bgDirty=true;
 function size(){DPR=Math.min(2,devicePixelRatio||1);W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR}
 addEventListener('resize',size);size();
-let t0=performance.now(),pmx=0,pmy=0;
+let tAnim=0,tLast=null,pmx=0,pmy=0;
 function draw(now){
-  const t=(now-t0)/1000,light=root.classList.contains('light');
+  if(tLast!==null&&!still)tAnim+=Math.min(64,now-tLast);tLast=now;
+  const t=tAnim/1000,light=root.classList.contains('light');
   pmx+=(mx-pmx)*.04;pmy+=(my-pmy)*.04;
   const base=light?['#F6F8FE','#E4EBFB']:['#040A20','#081232'];
   const g=cx.createLinearGradient(0,0,W,H);g.addColorStop(0,base[0]);g.addColorStop(1,base[1]);cx.fillStyle=g;cx.fillRect(0,0,W,H);
