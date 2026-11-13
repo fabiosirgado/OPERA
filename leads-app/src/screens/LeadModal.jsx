@@ -250,7 +250,7 @@ export default function LeadModal({ id, ctx, onClose }) {
             </div>
           </div>
           <div className="panel"><h3>Contacto</h3>
-            {[["phone", "Telemóvel"], ["email", "Email"], ["interest", "Interesse ou imóvel"], ["name", "Nome"]].map(([f, label]) => (
+            {[["phone", "Telemóvel"], ["email", "Email"], ["interest", "Interesse ou imóvel"], ["name", "Nome"], ["referrer", "Referenciador"]].map(([f, label]) => (
               <label key={f} className="kv"><span>{label}</span>
                 <input defaultValue={lead[f] || ""} key={`${f}-${lead.updated_at}`}
                   onBlur={(e) => e.target.value.trim() !== (lead[f] || "") && save({ [f]: e.target.value.trim() || (f === "name" ? lead.name : null) })} /></label>
