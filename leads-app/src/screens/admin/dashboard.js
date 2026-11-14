@@ -333,6 +333,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
   const PER = "no período escolhido", HOJE = "hoje", ANA = "no período de comissão atual";
   const LISTAS = {
     reunioes: ["Reuniões agendadas", PER, "reuniões", "Detalhe"],
+    reunioes_feitas: ["Reuniões realizadas", PER, "reuniões", "Detalhe"],
     R1: ["Clientes que entraram em R1", PER, "clientes", "Fase atual"],
     R2: ["Clientes que entraram em R2", PER, "clientes", "Fase atual"],
     Fecho: ["Clientes fechados", PER, "clientes", "Fase atual"],
