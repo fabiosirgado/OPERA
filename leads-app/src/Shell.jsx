@@ -180,7 +180,7 @@ export default function Shell({ access }) {
     onGo: (v) => go(v),
     onNewLead: () => setModal({ kind: "newLead" }),
     onNewStage: () => setModal({ kind: "newStage" }),
-    onOpenLabels: () => setModal((m) => ({ kind: "labels", back: m?.kind === "lead" ? m.id : null })),
+    onOpenLabels: (client) => setModal((m) => ({ kind: "labels", back: m?.kind === "lead" ? m.id : null, client })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, bump, loadRefs]);
 
@@ -282,7 +282,7 @@ export default function Shell({ access }) {
       {modal?.kind === "newLead" && <NewLeadModal ctx={ctx} onClose={closeModal} />}
       {modal?.kind === "newStage" && <StageModal ctx={refCtx} onClose={closeModal} />}
       {modal?.kind === "labels" && (
-        <LabelsModal ctx={refCtx} onClose={() => (modal.back ? setModal({ kind: "lead", id: modal.back }) : closeModal())} />
+        <LabelsModal ctx={refCtx} client={modal.client} onClose={() => (modal.back ? setModal({ kind: "lead", id: modal.back }) : closeModal())} />
       )}
     </div>
   );

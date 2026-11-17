@@ -92,8 +92,14 @@ export default function Pipeline({ ctx }) {
   useEffect(() => { const t = setTimeout(() => setQDebounced(q), 300); return () => clearTimeout(t); }, [q]);
 
   const client = opera ? ctx.filterClient : myClient?.id;
-  const filters = useMemo(() => ({ client, label: prefs.label, q: qDebounced, mine: !opera && prefs.mine }),
-    [client, prefs.label, qDebounced, opera, prefs.mine]);
+  // Etiquetas de cada cliente: com um cliente escolhido só aparecem as dele; com todos, o nome leva o cliente.
+  const clientName = useMemo(() => Object.fromEntries(clients.map((c) => [c.id, c.name])), [clients]);
+  const labelOpts = useMemo(() => (client ? labels.filter((x) => x.client_id === client) : labels)
+    .map((x) => ({ id: x.id, text: client ? x.name : `${x.name} · ${clientName[x.client_id] || "OPERA"}` }))
+    .sort((a, b) => a.text.localeCompare(b.text, "pt")), [labels, client, clientName]);
+  const label = labelOpts.some((x) => x.id === prefs.label) ? prefs.label : "";
+  const filters = useMemo(() => ({ client, label, q: qDebounced, mine: !opera && prefs.mine }),
+    [client, label, qDebounced, opera, prefs.mine]);
   const columns = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === client), [stages, client]);
 
   // Quantas leads cada etapa mostra depois de "Mostrar mais". Ao recarregar o quadro (por exemplo ao fechar a ficha
@@ -194,8 +200,8 @@ export default function Pipeline({ ctx }) {
             <button type="button" className={prefs.layout === "list" ? "on" : ""} aria-pressed={prefs.layout === "list"} onClick={() => setPref("layout", "list")}>Lista</button>
           </div>
           <label className="f" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><span className="vh">Etiqueta</span>
-            <select value={prefs.label} onChange={(e) => setPref("label", e.target.value)} style={{ minHeight: 44 }}>
-              <option value="">Todas as etiquetas</option>{labels.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+            <select value={label} onChange={(e) => setPref("label", e.target.value)} style={{ minHeight: 44 }}>
+              <option value="">Todas as etiquetas</option>{labelOpts.map((x) => <option key={x.id} value={x.id}>{x.text}</option>)}</select></label>
           {!opera && (
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, minHeight: 44 }}>
               <input type="checkbox" checked={prefs.mine} onChange={(e) => setPref("mine", e.target.checked)} />Só as minhas</label>

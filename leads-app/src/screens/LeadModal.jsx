@@ -242,10 +242,10 @@ export default function LeadModal({ id, ctx, onClose }) {
           <div className="panel">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3>Etiquetas</h3>
-              {opera && <button type="button" className="link" onClick={ctx.onOpenLabels}>Gerir etiquetas</button>}
+              {opera && <button type="button" className="link" onClick={() => ctx.onOpenLabels(lead.client_id)}>Gerir etiquetas</button>}
             </div>
             <div className="chips" style={{ marginTop: 10 }} role="group" aria-label="Etiquetas da lead">
-              {labels.map((x) => {
+              {labels.filter((x) => x.client_id === lead.client_id).map((x) => {
                 const on = labelIds.includes(x.id);
                 const [bg, fg] = LABEL_COLORS[x.color] || LABEL_COLORS.cinzento;
                 return (
