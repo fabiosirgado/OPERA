@@ -146,7 +146,7 @@ export const TEMPLATE = `
     <div class="op-tiles">
       ${atile("Fechos", "fechos", "int", `Objetivo ${aw("obj_fechos", "int")}`, "", "ana_fechos")}
       ${atile("Vendas novas", "vendas", "eur", "Objetivo 15.000 € · ao preço integral", "", "ana_fechos")}
-      ${atile("Reuniões (R1)", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`, "", "ana_r1")}
+      ${atile("Reuniões realizadas", "reunioes", "int", `Objetivo ${aw("obj_reunioes", "int")} (15 por semana)`, "", "ana_r1")}
       ${atile("Conversão", "conversao", "pct", `Fechos ÷ reuniões · objetivo ${META_CONV_TXT}`, ` data-min="${META_CONV}"`)}
       ${atile("Pagamentos integrais", "pct_pif", "pct", "Objetivo 50% ou mais", ' data-min="0.5"', "ana_fechos")}
       ${atile("Comissão a pagar", "comissao_garantida", "eur", `Já recebido · prevista ${aw("comissao_prevista", "eur")}`)}

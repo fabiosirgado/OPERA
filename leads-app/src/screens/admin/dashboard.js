@@ -356,7 +356,7 @@ export function mountDashboard(el, { load, nivel, onOpenLead, pages = {} }) {
     ativos_hoje: ["Clientes ativos hoje", HOJE, "contratos", "Detalhe", "Por mês"],
     em_atraso: ["Pagamentos vencidos por confirmar", HOJE, "prestações", "Prestação"],
     ana_fechos: ["Fechos da Ana", ANA, "contratos", "Pagamento", "Valor integral"],
-    ana_r1: ["R1 marcadas pela Ana", ANA, "clientes", "Detalhe"],
+    ana_r1: ["Reuniões realizadas pela Ana", ANA, "reuniões", "Detalhe"],
   };
   const FUNIL = ["R1", "R2", "Fecho"];
   const UM = { clientes: "cliente", contratos: "contrato", "prestações": "prestação", "reuniões": "reunião" };
