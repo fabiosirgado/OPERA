@@ -136,7 +136,7 @@ export const deleteStage = async (id) => {
   if (error) throw error;
   if (!data.length) throw new Error("Sem permissão para apagar esta etapa.");
 };
-export const createLabel = (name, color) => must(sb.from("lead_labels").insert({ name, color }));
+export const createLabel = (name, color, clientId) => must(sb.from("lead_labels").insert({ name, color, client_id: clientId }));
 export const updateLabel = (id, patch) => must(sb.from("lead_labels").update(patch).eq("id", id));
 export const deleteLabel = (id) => must(sb.from("lead_labels").delete().eq("id", id));
 export const labelUsage = () => must(sb.from("lead_label_links").select("label_id"))

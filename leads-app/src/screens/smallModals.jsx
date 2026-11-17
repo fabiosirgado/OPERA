@@ -180,8 +180,11 @@ export function StageModal({ ctx, onClose }) {
   );
 }
 
-export function LabelsModal({ ctx, onClose }) {
-  const { labels } = ctx;
+// Cada etiqueta é de um cliente: escolhe-se o cliente e só aparecem (e se criam) as etiquetas dele.
+export function LabelsModal({ ctx, client: startClient, onClose }) {
+  const { clients } = ctx;
+  const [client, setClient] = useState(startClient || ctx.filterClient || clients[0]?.id || "");
+  const labels = ctx.labels.filter((x) => x.client_id === client);
   const [usage, setUsage] = useState({});
   const [f, setF] = useState({ name: "", color: "vermelho" });
   const [run, busy] = useAction();
@@ -193,13 +196,18 @@ export function LabelsModal({ ctx, onClose }) {
     e.preventDefault();
     const n = f.name.trim();
     if (labels.some((x) => x.name.toLowerCase() === n.toLowerCase())) return toast("Já existe uma etiqueta com esse nome");
-    await after(() => createLabel(n, f.color), "Etiqueta criada");
+    await after(() => createLabel(n, f.color, client), "Etiqueta criada");
     setF({ name: "", color: "vermelho" });
   };
 
   return (
     <Modal title="Etiquetas" onClose={onClose}>
-      <div className="sub" style={{ margin: 0 }}>As etiquetas servem para todos os clientes. Mudar o nome ou a cor atualiza todas as leads que a têm.</div>
+      <div className="sub" style={{ margin: 0 }}>Cada cliente tem as suas etiquetas e só vê essas. Mudar o nome ou a cor atualiza todas as leads que a têm.</div>
+      <label className="f">Cliente
+        <select value={client} onChange={(e) => setClient(e.target.value)}>
+          {!clients.some((c) => c.id === client) && client && <option value={client}>Cliente desta lead</option>}
+          {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+      {!labels.length && <div className="sub" style={{ margin: 0 }}>Este cliente ainda não tem etiquetas.</div>}
       <div className="list">{labels.map((x) => (
         <div key={x.id} className="item" style={{ padding: "10px 14px" }}>
           <LabelTag label={x} />
