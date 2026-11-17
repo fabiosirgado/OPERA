@@ -96,10 +96,23 @@ export default function Pipeline({ ctx }) {
     [client, prefs.label, qDebounced, opera, prefs.mine]);
   const columns = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === client), [stages, client]);
 
+  // Quantas leads cada etapa mostra depois de "Mostrar mais". Ao recarregar o quadro (por exemplo ao fechar a ficha
+  // de uma lead, ou quando alguém mexe numa lead) a etapa continua aberta com as mesmas leads. Volta ao início
+  // quando mudam os filtros ou a ordem.
+  const shown = useRef({ key: "", n: {} });
+  const viewKey = JSON.stringify([filters, prefs.sort]);
+  if (shown.current.key !== viewKey) shown.current = { key: viewKey, n: {} };
+
   const loadBoard = useCallback(async () => {
-    const b = await pipelineBoard({ ...filters, sort: prefs.sort, dir: BOARD_DIR[prefs.sort] || 1, limit: PAGE, kpis: opera });
+    const dir = BOARD_DIR[prefs.sort] || 1;
+    const b = await pipelineBoard({ ...filters, sort: prefs.sort, dir, limit: PAGE, kpis: opera });
+    const extra = Object.entries(shown.current.n).filter(([, n]) => n > PAGE);
+    const more = await Promise.all(extra.map(([stage, n]) =>
+      pipeline({ ...filters, stage, sort: prefs.sort, dir, offset: PAGE, limit: n - PAGE }).catch(() => [])));
+    const cols = { ...b.cols };
+    extra.forEach(([stage], i) => { cols[stage] = [...(cols[stage] || []), ...more[i]]; });
     setCounts(b.counts);
-    setCols(b.cols);
+    setCols(cols);
     if (b.kpis) setKpis(b.kpis);
   }, [filters, prefs.sort, opera]);
 
@@ -126,7 +139,10 @@ export default function Pipeline({ ctx }) {
   const more = async (stageId) => {
     const have = cols[stageId] || [];
     const rows = await run(() => pipeline({ ...filters, stage: stageId, sort: prefs.sort, dir: BOARD_DIR[prefs.sort] || 1, offset: have.length, limit: PAGE }));
-    if (rows) setCols((c) => ({ ...c, [stageId]: [...have, ...rows] }));
+    if (rows) {
+      shown.current.n[stageId] = have.length + rows.length;
+      setCols((c) => ({ ...c, [stageId]: [...have, ...rows] }));
+    }
   };
 
   // Arrastar entre etapas (computador). No telemóvel muda-se a etapa na ficha da lead.
