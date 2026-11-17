@@ -54,7 +54,7 @@ export const TEMPLATE = `
       ${ctile("ativos_hoje", "MRR hoje", "resumo", "receita_mensal", "eur", `Ritmo anual ${t("resumo", "receita_anual_ritmo", "eur")}`)}
       ${tile("Margem mensal", "resumo", "margem_pct", "pct", `${t("resumo", "margem_mes", "eur")}/mês sobre o MRR · meta 40%`, ' data-min="0.4"')}
       ${ctile("em_atraso", "Pagamentos vencidos", "resumo", "em_atraso", "eur", `${t("resumo", "n_em_atraso", "int")} prestações por confirmar`, ' data-max="0"')}
-      ${tile("Ocupação OPERA SA", "capacidade", "ocupacao_sa", "pct", `${t("capacidade", "slots_usados", "dec")} de ${t("capacidade", "slots_disponiveis", "int")} slots`, ' data-max="0.85"')}
+      ${tile("Ocupação OPERA SA", "capacidade", "ocupacao_sa", "pct", `${t("capacidade", "slots_usados", "int")} de ${t("capacidade", "slots_disponiveis", "int")} slots`, ' data-max="0.85"')}
       <div class="op-tile"><div class="lbl">Time to Lead · semana atual</div><div class="val" data-source="ttl_semanal" data-field="ttl_mediano_min" data-row="7" data-fmt="min" data-max="15">—</div><div class="sub"><span data-source="ttl_semanal" data-field="pct_ttl_15" data-row="7" data-fmt="pct">—</span> contactadas em 15 min</div></div>
     </div>
     <div class="op-grid">
