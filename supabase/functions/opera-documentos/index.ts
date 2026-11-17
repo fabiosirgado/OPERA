@@ -82,8 +82,11 @@ const fimPack = (c: any) => c.data_fim || addDias(addMeses(c.data_inicio, c.dura
 const b64 = (bytes: Uint8Array) => { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
 const emailOk = (e: unknown) => typeof e === "string" && /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(e.trim());
 
-const MOLDE = (corpo: string) => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#1a1a2e;max-width:620px">${corpo}
-<p style="margin-top:24px">Com os melhores cumprimentos,<br><b>Equipa Financeira OPERA</b><br>Grabbingstars, Lda. · NIPC 516486900<br>financeiro@opera-os.com · opera-os.com</p></div>`;
+// Assinaturas: os emails aos clientes seguem em nome da equipa financeira; os pedidos à contabilidade seguem com os contactos do Fábio.
+const ASSINATURA_EQUIPA = `<b>Equipa Financeira OPERA</b><br>Grabbingstars, Lda. · NIPC 516486900<br>financeiro@opera-os.com · opera-os.com`;
+const ASSINATURA_FABIO = `<b>Fábio Sirgado</b><br>OPERA · Grabbingstars, Lda. · NIPC 516486900<br>fabio.sirgado@opera-os.com · 915 444 075`;
+const MOLDE = (corpo: string, assinatura = ASSINATURA_EQUIPA) => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#1a1a2e;max-width:620px">${corpo}
+<p style="margin-top:24px">Com os melhores cumprimentos,<br>${assinatura}</p></div>`;
 const BLOCO_IBAN = `<p style="background:#F4F6FB;border-radius:8px;padding:10px 14px"><b>Dados para pagamento</b><br>Transferência bancária para Grabbingstars, Lda.<br>IBAN: <b>${IBAN}</b></p>`;
 
 async function enviar(m: { to: string[]; subject: string; html: string; attachments?: { filename: string; content: string }[]; teste_para?: string }) {
@@ -168,7 +171,7 @@ function textoPedido(fat: any, c: any) {
 <p>Pedimos a emissão da seguinte fatura em nome da Grabbingstars, Lda. (NIPC 516486900):</p>
 <table style="border-collapse:collapse;font-size:14px">${linhas.map(([k, v]) => `<tr><td style="padding:4px 14px 4px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:4px 0"><b>${esc(v)}</b></td></tr>`).join("")}</table>
 <p><b>Por favor respondam a este email com a fatura em PDF</b>, mantendo a referência ${esc(fat.ref)} no assunto, para seguir automaticamente para o cliente.</p>
-<p>Obrigado.</p>`);
+<p>Obrigado.</p>`, ASSINATURA_FABIO);
   return { subject: `Pedido de fatura [OPERA ${fat.ref}] ${f.nome}`, html };
 }
 
