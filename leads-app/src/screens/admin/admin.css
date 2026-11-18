@@ -136,6 +136,10 @@
 .opg .vazio { color: var(--color-fg-muted); font-size: 13px; padding: 6px 0; }
 .opg .msg { font-size: 13px; padding: 8px 12px; border-radius: 10px; margin-bottom: 12px; }
 .opg .msg.ok { background: #E6F7EF; color: #0E7A4F; } .opg .msg.err { background: #FDE7EA; color: #B42335; }
+.opg .aviso-confirmar { flex-basis: 100%; font-size: 13px; padding: 8px 12px; border-radius: 10px; }
+.opg .aviso-confirmar.pendente { background: #FFF4DC; color: #8A5A00; font-weight: 600; }
+.opg .aviso-confirmar.cancelado { background: #F1F2F6; color: #4A4A5A; }
+.opg button.armado { box-shadow: 0 0 0 3px rgba(255,176,32,.45); }
 .opg .msg[hidden] { display: none; }
 
 @media (max-width: 640px) { .rg-row { grid-template-columns: 1fr; gap: 6px; } .rg-val { text-align: left; } }

@@ -1,6 +1,7 @@
 // Separador "Pagamentos e contratos" do Dashboard Admin: confirmar pagamentos, completar e editar contratos,
 // renovações, custos e saldo bancário. Lê e grava pelas tabelas opera_* (RLS: só nível total) e pelas funções opera_admin_*.
 import { sb } from "../../supabase.js";
+import { confirmar2 as confirmarBase } from "./confirmar.js";
 
 const PRECO = { SA: { 1: 3000, 2: 3000, 3: 3300 }, BO: { 1: 2550, 2: 2550, 3: 2850 }, BUNDLE: { 1: 4800, 2: 4800, 3: 5100 } };
 const SERVICOS = ["SA", "BO", "BUNDLE", "OUTRO"];
@@ -63,14 +64,9 @@ export function mountGestao(box, refreshDashboard) {
     }
   }
   const tenta = (fn) => { try { fn(); } catch (e) { status(e.message, "err"); } };
-  // Botão em dois toques para ações que não se desfazem com facilidade
-  function confirmar2(btn, label, fn) {
-    let armado = false;
-    btn.addEventListener("click", () => {
-      if (!armado) { armado = true; btn.textContent = "Tens a certeza?"; setTimeout(() => { armado = false; btn.textContent = label; }, 4000); return; }
-      fn();
-    });
-  }
+  // Botão em dois toques (sem tempo limite; mensagem clara ao cancelar)
+  const confirmar2 = (btn, label, fn) => confirmarBase(btn, label, fn, { confirmar: "Tens a certeza?",
+    aviso: `"${label}" ainda não foi feito. Carrega em "Tens a certeza?" para confirmar, ou em "Cancelar".`, cancelado: `Cancelado. "${label}" não foi feito.` });
 
   // Campos de um contrato (Editar, Completar e Novo)
   function campos(r) {

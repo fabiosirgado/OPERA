@@ -3,6 +3,7 @@
 // Pedidos de fatura à contabilidade (automáticos na data prevista) → fatura recebida → validação → envio ao cliente.
 // Tudo o que envia emails ou gera documentos passa pela Edge Function opera-documentos.
 import { sb, SUPABASE_URL } from "../../supabase.js";
+import { confirmar2 } from "./confirmar.js";
 
 const EU = "fabio.sirgado@opera-os.com";
 const DESDE = "2026-11-11"; // igual a FATURAS_DESDE na Edge Function
@@ -123,13 +124,6 @@ export function mountDocumentos(box) {
     try { const r = await fn(); status(typeof okMsg === "function" ? okMsg(r) : okMsg, "ok"); await carregar(); return r; }
     catch (e) { status(e?.message || "Algo falhou.", "err"); btn.disabled = false; return null; }
   }
-  function confirmar2(btn, label, fn) {
-    let armado = false;
-    btn.addEventListener("click", () => {
-      if (!armado) { armado = true; btn.textContent = "Confirma: enviar?"; setTimeout(() => { armado = false; btn.textContent = label; }, 4000); return; }
-      armado = false; fn();
-    });
-  }
   const botao = (t, cls = "") => el("button", { textContent: t, className: cls });
   const verPdf = (path) => { const b = botao("Ver PDF"); b.addEventListener("click", () => abrirPdf(path).catch((e) => status(e.message, "err"))); return b; };
 
@@ -186,7 +180,8 @@ export function mountDocumentos(box) {
         const teste = botao("Enviar teste");
         teste.addEventListener("click", () => acao(teste, () => chamar({ action: "enviar_contrato", contrato_id: c.id, teste_para: EU }), `Teste enviado para ${EU}.`));
         const env = botao(c.contrato_enviado_em ? "Enviar outra vez" : "Enviar só o contrato");
-        confirmar2(env, env.textContent, () => acao(env, () => chamar({ action: "enviar_contrato", contrato_id: c.id }), `Contrato enviado para ${f.email}.`));
+        confirmar2(env, env.textContent, () => acao(env, () => chamar({ action: "enviar_contrato", contrato_id: c.id }), `Contrato enviado para ${f.email}.`),
+          { confirmar: "Confirmar envio", aviso: `O contrato de ${c.cliente} ainda não foi enviado. Carrega em "Confirmar envio" para o enviar para ${f.email}, ou em "Cancelar".`, cancelado: `Envio cancelado. O contrato de ${c.cliente} não foi enviado.` });
         acoes.push(teste, env);
       }
       if (c.contrato_enviado_em && !c.contrato_assinado_em) {
@@ -235,7 +230,10 @@ export function mountDocumentos(box) {
       const env = botao(label, "pri");
       if (comContrato && !ct.contrato_pdf) { env.disabled = true; env.title = "Gera primeiro o contrato, em Contratos"; }
       confirmar2(env, label, () => acao(env, () => chamar({ action: "enviar_fatura", fatura_id: fa.id }),
-        (r) => r?.com_contrato ? `Contrato e fatura ${fa.ref} enviados para ${fa.dados?.email}.` : `Fatura ${fa.ref} enviada para ${fa.dados?.email}.`));
+        (r) => r?.com_contrato ? `Contrato e fatura ${fa.ref} enviados para ${fa.dados?.email}.` : `Fatura ${fa.ref} enviada para ${fa.dados?.email}.`),
+        { confirmar: "Confirmar envio",
+          aviso: `A fatura ${fa.ref}${comContrato ? " e o contrato" : ""} de ${fa.dados?.nome || fa.cliente} ainda não ${comContrato ? "foram enviados" : "foi enviada"}. Carrega em "Confirmar envio" para enviar para ${fa.dados?.email}, ou em "Cancelar".`,
+          cancelado: `Envio cancelado. A fatura ${fa.ref} não foi enviada.` });
       return linhaFatura(fa, verPdf(fa.pdf_path), teste, env);
     }));
 
