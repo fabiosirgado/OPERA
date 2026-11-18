@@ -208,6 +208,13 @@ export const TEMPLATE = `
       ${ctile("caixa_mensal", "Recebido mensal", "periodo", "caixa_mensal", "eur", "Prestações")}
       ${tile("Saldo bancário hoje", "resumo", "saldo", "eur", `${t("resumo", "meses_de_caixa", "dec")} meses de custos`)}
     </div>
+    <h3 class="op-sec">Custos <small>· custos do período: os mensais proporcionais aos dias, os pontuais e as comissões na sua data</small></h3>
+    <div class="op-tiles">
+      ${tile("Custos", "pnl_periodo", "custos_total", "eur", `Total do período · ${t("resumo", "custos_mes", "eur")} por mês hoje`)}
+      ${tile("Custos de entrega", "pnl_periodo", "custos_entrega", "eur", "Quem presta o serviço")}
+      ${tile("Custos de aquisição", "pnl_periodo", "custos_aquisicao", "eur", "Comercial, marketing e comissões da Ana")}
+      ${tile("Outros custos", "pnl_periodo", "custos_outros", "eur", "Tecnologia, contabilidade, etc.")}
+    </div>
     <h3 class="op-sec">Regra de margens <small>· cada custo em % da receita do período</small></h3>
     <div class="op-card" style="margin-bottom:16px">
       <p class="note" style="margin-top:0">Entrega até 20% (margem de entrega de 80%), aquisição até 20%, outros até 20%, margem final de pelo menos 40%. A barra mostra o valor real; o traço marca o limite. Folga = quanto ainda cabe (ou falta) em euros no período.</p>
