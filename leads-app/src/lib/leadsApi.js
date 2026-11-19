@@ -39,6 +39,9 @@ export const search = (q) => must(sb.rpc("leads_search", { p_q: q }));
 // Clientes internos (a própria OPERA) não entram na Fila.
 export const internalClientIds = () => must(sb.from("clients").select("id").eq("leads_internal", true)).then((r) => r.map((c) => c.id));
 export const fila = (client) => must(sb.rpc("leads_fila", { p_client: client || null }));
+export const filaClientes = () => must(sb.rpc("leads_fila_clientes_resumo"));
+export const filaClienteAtiva = (client, ativa) => must(sb.rpc("leads_fila_cliente_ativa", { p_client: client, p_ativa: ativa }));
+export const filaEtapas = () => must(sb.rpc("leads_fila_etapas"));
 export const filaResultado = (leadId, resultado, quando, nota) => must(sb.rpc("leads_fila_resultado", {
   p_lead: leadId, p_resultado: resultado, p_quando: quando ? new Date(quando).toISOString() : null, p_nota: nota || null,
 }));
