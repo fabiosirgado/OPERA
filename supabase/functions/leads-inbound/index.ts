@@ -6,7 +6,9 @@
 //
 // Regras:
 //   * o conteúdo bruto fica no inbound_log antes de qualquer outra coisa: um erro nunca perde uma lead;
-//   * nos emails, a IA só recebe o assunto e o texto do email, nada mais;
+//   * nos emails, a IA recebe o assunto e o texto do email; só quando o texto não traz telefone nem email
+//     (alguns portais mandam o contacto numa imagem) recebe também as imagens do email (anexos e imagens do html),
+//     que nunca se guardam;
 //   * os emails de confirmação do Gmail não são leads: guarda-se o código para o ecrã Entradas automáticas;
 //   * em caso de erro devolve 500, para o Make avisar por email; os logs nunca levam dados da lead.
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
@@ -166,7 +168,69 @@ const SYSTEM = "Recebes emails de portais imobiliários portugueses (Idealista, 
   "Os dados de contacto da agência, do portal ou de quem reencaminhou não são da pessoa interessada. " +
   "Não inventes dados: o que não estiver no email fica vazio.";
 
-async function aiExtract(subject: string, text: string) {
+// ------------------------------------------------------------ IMAGENS
+type Img = { media_type: string; data: string };
+const IMG_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+const MAX_IMGS = 8, MIN_BYTES = 1500, MAX_BYTES = 4_500_000;
+
+function toBase64(bytes: Uint8Array) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function sniffType(bytes: Uint8Array): string {
+  if (bytes[0] === 0x89 && bytes[1] === 0x50) return "image/png";
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) return "image/jpeg";
+  if (bytes[0] === 0x47 && bytes[1] === 0x49) return "image/gif";
+  if (bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return "image/webp";
+  return "";
+}
+function bytesOf(v: unknown): Uint8Array | null {
+  try {
+    if (typeof v === "string" && v.length > 100) {
+      const b64 = v.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
+      return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    }
+    if (v && typeof v === "object" && Array.isArray((v as { data?: unknown }).data)) {
+      return Uint8Array.from((v as { data: number[] }).data);
+    }
+  } catch { /* não é uma imagem válida */ }
+  return null;
+}
+function pushImg(out: Img[], bytes: Uint8Array | null) {
+  if (!bytes || bytes.length < MIN_BYTES || bytes.length > MAX_BYTES || out.length >= MAX_IMGS) return;
+  const media_type = sniffType(bytes);
+  if (IMG_TYPES.includes(media_type)) out.push({ media_type, data: toBase64(bytes) });
+}
+
+// Anexos (vindos do Make em attachments_json) e imagens do html (data: ou https).
+async function emailImages(b: Body): Promise<Img[]> {
+  const out: Img[] = [];
+  let atts: unknown = b.attachments_json;
+  if (typeof atts === "string") { try { atts = JSON.parse(atts); } catch { atts = []; } }
+  if (Array.isArray(atts)) {
+    for (const a of atts as Record<string, unknown>[]) {
+      const ct = str(a?.contentType ?? a?.mimeType ?? a?.type).toLowerCase();
+      if (ct && !ct.startsWith("image/")) continue;
+      pushImg(out, bytesOf(a?.data ?? a?.content));
+    }
+  }
+  const srcs = [...str(b.html).matchAll(/<img\b[^>]*?\bsrc\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1].replace(/&amp;/g, "&"));
+  for (const src of srcs) {
+    if (out.length >= MAX_IMGS) break;
+    if (src.startsWith("data:image/")) { pushImg(out, bytesOf(src)); continue; }
+    if (!/^https:\/\//i.test(src)) continue;
+    try {
+      const r = await fetch(src, { signal: AbortSignal.timeout(8000), redirect: "follow" });
+      const len = Number(r.headers.get("content-length") || 0);
+      if (!r.ok || !str(r.headers.get("content-type")).startsWith("image/") || len > MAX_BYTES) { await r.body?.cancel(); continue; }
+      pushImg(out, new Uint8Array(await r.arrayBuffer()));
+    } catch { /* imagem indisponível: segue */ }
+  }
+  return out;
+}
+
+async function aiExtract(subject: string, text: string, images: Img[] = []) {
   if (!ai) return null;
   const response = await ai.beta.messages.create({
     model: "claude-opus-5-5",
@@ -175,7 +239,14 @@ async function aiExtract(subject: string, text: string) {
     fallbacks: "default",
     output_config: { effort: "low", format: { type: "json_schema", schema: LeadSchema } },
     system: SYSTEM,
-    messages: [{ role: "user", content: `Assunto: ${subject}\n\n${text}` }],
+    messages: [{ role: "user", content: images.length
+      ? [
+        ...images.map((i) => ({ type: "image" as const, source: { type: "base64" as const, media_type: i.media_type, data: i.data } })),
+        { type: "text" as const, text: "Estas são as imagens do email. Os dados da pessoa interessada podem estar " +
+          "numa destas imagens em vez do texto (ignora logótipos e fotografias do imóvel).\n\n" +
+          `Assunto: ${subject}\n\n${text}` },
+      ]
+      : `Assunto: ${subject}\n\n${text}` }],
   } as Anthropic.Beta.MessageCreateParamsNonStreaming);
   if (response.stop_reason === "refusal" || response.stop_reason === "max_tokens") return null;
   const out = response.content.find((c) => c.type === "text");
@@ -189,9 +260,18 @@ async function parseEmail(b: Body): Promise<Parsed> {
   const portal = portalOf(b);
   let x: Record<string, string | boolean> | null = null;
   let aiFailed = false;
+  let fromImage = false;
   try {
     // O texto vai inteiro; um email de portal tem poucos milhares de caracteres.
     x = await aiExtract(subject, text);
+    // Sem telefone nem email no texto: o contacto pode vir numa imagem.
+    if (x && x.is_lead !== false && !str(x.phone) && !str(x.email)) {
+      const images = await emailImages(b);
+      if (images.length) {
+        const y = await aiExtract(subject, text, images);
+        if (y && (str(y.phone) || str(y.email))) { x = y; fromImage = true; }
+      }
+    }
   } catch (e) {
     aiFailed = true;
     // A mensagem de erro da API descreve o pedido (modelo, parâmetros, saldo), nunca o conteúdo do email.
@@ -211,7 +291,7 @@ async function parseEmail(b: Body): Promise<Parsed> {
   return {
     name: str(x.name), phone: str(x.phone), email: str(x.email), message: str(x.message),
     interest: str(x.property), reference: str(x.reference), source: portal || str(x.portal) || "Portal",
-    recipients: to, review: notLead,
+    recipients: to, review: notLead, from_image: fromImage || undefined,
     review_reason: notLead ? "Este email pode não ser um pedido de contacto." : "",
   };
 }
@@ -240,7 +320,9 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "O corpo tem de ser JSON ou um formulário." }, 400);
   }
-  delete body.attachments; // os anexos nunca são precisos e não se guardam
+  // Os anexos não se guardam: só se usam as imagens, em memória, se o contacto não vier no texto.
+  const attachments = body.attachments_json ?? body.attachments;
+  delete body.attachments; delete body.attachments_json;
   const type = str(body.type).toLowerCase();
   if (type !== "meta" && type !== "email") return json({ error: "type tem de ser meta ou email." }, 400);
 
@@ -273,7 +355,7 @@ Deno.serve(async (req) => {
     }
 
     // 3. Extrair os dados e criar a lead (ou juntar à existente).
-    const parsed = type === "meta" ? parseMeta(body) : await parseEmail(body);
+    const parsed = type === "meta" ? parseMeta(body) : await parseEmail({ ...body, attachments_json: attachments });
     await must(db.from("inbound_log").update({ parsed }).eq("id", logId), "Dados extraídos");
     const result = await must(db.rpc("leads_inbound_process", { p_log_id: logId }), "Criar lead") as Record<string, unknown>;
     return json({ ok: true, log_id: logId, ...result, alert: result.status === "sem_cliente" });

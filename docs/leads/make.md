@@ -46,3 +46,10 @@ O cenário do opera-testes usa uma chave própria (só a impressão digital est�
 * Enviar um email de teste de um portal (ou reencaminhar um antigo) para o endereço do mailhook, a partir de um endereço que esteja no cartão de um cliente. Deve aparecer em "Últimas entradas" em poucos segundos.
 * No Facebook, a ferramenta **Lead Ads Testing Tool** cria uma lead de teste na página.
 * Se o Make repetir um envio, a OPERA não cria a lead duas vezes.
+
+## 2026-11-19: imagens nos emails dos portais
+
+* O cenário **"OPERA Leads (produção), emails dos portais"** (id 8170010) ganhou um módulo *Transform to JSON* com os anexos do email (`{{1.attachments}}`), enviado no campo `attachments_json`.
+* A função `leads-inbound` só usa as imagens quando a IA não encontra telefone nem email no texto: junta os anexos de imagem e as imagens do html (até 8) e pergunta outra vez. Os anexos nunca se guardam no `inbound_log`; a lead fica com `parsed.from_image = true`.
+* Testado em produção com um email de teste (anexo e imagem no html, para um endereço sem cliente): nome, telefone e email lidos da imagem. As entradas de teste foram apagadas.
+* Joana Vicente: endereço de receção `geral@real-property.pt` registado no cartão dela.
