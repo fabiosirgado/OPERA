@@ -19,6 +19,7 @@ const ImportExport = lazy(() => import("./screens/ImportExport.jsx"));
 const Dashboard = lazy(() => import("./screens/Dashboard.jsx"));
 const Entradas = lazy(() => import("./screens/Entradas.jsx"));
 const Conversas = lazy(() => import("./screens/Conversas.jsx"));
+const Fila = lazy(() => import("./screens/Fila.jsx"));
 const AdminDashboard = lazy(() => import("./screens/admin/AdminDashboard.jsx"));
 
 const VIEW_KEY = "opera-leads-vista";
@@ -37,7 +38,7 @@ export default function Shell({ access }) {
     sb.rpc("opera_admin_meu_nivel").then(({ data }) => setAdminNivel(data?.nivel || null), () => setAdminNivel(null));
   }, [opera]);
   const items = opera
-    ? [["pipeline", "Pipeline geral"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ...(adminNivel ? [["admin", "Dashboard Admin"]] : []), ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
+    ? [["pipeline", "Pipeline geral"], ["fila", "Fila"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ...(adminNivel ? [["admin", "Dashboard Admin"]] : []), ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["privacidade", "Privacidade e RGPD"]] : [])]
     : [["pipeline", "As vossas leads"], ["conversa", "Conversa com a OPERA"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
   const [view, setView] = useState(() => ((opera && read(VIEW_KEY) === "admin") || items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
@@ -263,6 +264,7 @@ export default function Shell({ access }) {
         <Suspense fallback={<div className="sub" style={{ padding: 24 }}>A carregar…</div>}>
         {stages.length > 0 && view === "pipeline" && <Pipeline ctx={ctx} />}
         {stages.length > 0 && view === "hoje" && <Hoje ctx={ctx} />}
+        {stages.length > 0 && view === "fila" && <Fila ctx={ctx} />}
         {stages.length > 0 && view === "io" && <ImportExport ctx={ctx} />}
         {(view === "conversas" || view === "conversa") && (
           <Conversas ctx={ctx} list={chats} selected={chatClient} onSelect={setChatClient} chatVersion={chatVersion} onRead={loadChats} />

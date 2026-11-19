@@ -51,7 +51,18 @@ function TaskFields({ form, set }) {
 }
 
 // Ficha da lead. ctx: { me, opera, stages, labels, clients, onChanged, onOpenLabels }
-export default function LeadModal({ id, ctx, onClose }) {
+// Na Fila a ficha aparece dentro do ecrã, sem janela por cima (inline).
+function Inline({ title, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {typeof title === "string" ? <h2 style={{ margin: 0 }}>{title}</h2> : <div style={{ fontSize: 22, fontWeight: 700, minWidth: 0 }}>{title}</div>}
+      {children}
+    </div>
+  );
+}
+
+export default function LeadModal({ id, ctx, onClose, inline = false }) {
+  const Frame = inline ? Inline : Modal;
   const { me, opera, stages, labels, clients } = ctx;
   const [lead, setLead] = useState(null);
   const [events, setEvents] = useState([]);
@@ -88,7 +99,7 @@ export default function LeadModal({ id, ctx, onClose }) {
   const stageById = useMemo(() => Object.fromEntries(stages.map((s) => [s.id, s])), [stages]);
   const cur = lead && stageById[lead.stage_id];
   // A ficha pode abrir antes das etapas (link ?lead= de um email): espera por elas em vez de falhar.
-  if (!lead || !cur) return <Modal title="A carregar…" onClose={onClose} wide><div className="empty">A carregar…</div></Modal>;
+  if (!lead || !cur) return <Frame title="A carregar…" onClose={onClose} wide><div className="empty">A carregar…</div></Frame>;
 
   const cols = stages.filter((s) => s.client_id === null || s.client_id === lead.client_id);
   const ci = cols.findIndex((s) => s.id === lead.stage_id);
@@ -187,7 +198,7 @@ export default function LeadModal({ id, ctx, onClose }) {
   const canEdit = (e) => e.kind === "note" && (opera || e.author_id === me);
 
   return (
-    <Modal wide onClose={onClose} title={
+    <Frame wide onClose={onClose} title={
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <div className="tags">
           <ClientTag name={lead.client.name} color={lead.client.color} />
@@ -420,7 +431,7 @@ export default function LeadModal({ id, ctx, onClose }) {
           </div>
         </section>
       </div>
-    </Modal>
+    </Frame>
   );
 }
 
