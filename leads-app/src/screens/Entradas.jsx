@@ -8,6 +8,7 @@ const STATUS = {
   revisao: ["rev", "Criada, precisa de revisão"],
   duplicado: ["off", "Repetida, juntada à existente"],
   sem_cliente: ["rev", "Sem cliente"],
+  ignorado: ["off", "Ignorado, não é um pedido de contacto"],
   erro: ["del", "Erro"],
   recebido: ["inv", "A processar"],
 };
