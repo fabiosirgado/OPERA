@@ -35,6 +35,13 @@ export const pipelineBoard = ({ client, label, q, mine, sort, dir = 1, limit = P
 export const pipelineKpis =(client) => must(sb.rpc("leads_pipeline_kpis", { p_client: client || null })).then((r) => r[0]);
 export const today = (client, q) => must(sb.rpc("leads_today", { p_client: client || null, p_q: q || null }));
 export const search = (q) => must(sb.rpc("leads_search", { p_q: q }));
+// Fila: as leads do gestor pela ordem certa (novas, hora marcada, follow ups, BD) e o resultado de cada chamada.
+// Clientes internos (a própria OPERA) não entram na Fila.
+export const internalClientIds = () => must(sb.from("clients").select("id").eq("leads_internal", true)).then((r) => r.map((c) => c.id));
+export const fila = (client) => must(sb.rpc("leads_fila", { p_client: client || null }));
+export const filaResultado = (leadId, resultado, quando, nota) => must(sb.rpc("leads_fila_resultado", {
+  p_lead: leadId, p_resultado: resultado, p_quando: quando ? new Date(quando).toISOString() : null, p_nota: nota || null,
+}));
 
 // ---------- Lead
 export const getLead = (id) =>
