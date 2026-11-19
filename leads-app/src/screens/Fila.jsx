@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { callLead, fila, filaResultado, internalClientIds } from "../lib/leadsApi.js";
+import { callLead, fila, filaClienteAtiva, filaClientes, filaEtapas, filaResultado, internalClientIds } from "../lib/leadsApi.js";
 import { dueFrom, localInput } from "../lib/format.js";
 import { useAction } from "../ui/feedback.jsx";
 import { ClientTag, Icon } from "../ui/bits.jsx";
@@ -41,15 +41,34 @@ export default function Fila({ ctx }) {
   const [run, busy] = useAction();
   const topRef = useRef(null);
 
+  const [resumo, setResumo] = useState(null);
+  const [etapas, setEtapas] = useState(null);
+  const [feitas, setFeitas] = useState([]);
+  // Cada carregamento tem um número: uma resposta antiga (de outro cliente ou da fila anterior) nunca substitui a mais recente.
+  const reqRef = useRef(0);
   const load = useCallback(async () => {
+    const req = ++reqRef.current;
     const r = await fila(mode);
+    const all = mode ? await fila(null) : null;
+    if (req !== reqRef.current) return;
     setRows(r);
-    if (mode) {
-      const all = await fila(null);
-      setOthers(all.filter((x) => x.grupo_ordem <= 3 && x.client_id !== mode).length);
-    } else setOthers(0);
+    setOthers(all ? all.filter((x) => x.grupo_ordem <= 3 && x.client_id !== mode).length : 0);
   }, [mode]);
+  const loadPaineis = useCallback(() => {
+    filaClientes().then(setResumo).catch(() => setResumo([]));
+    filaEtapas().then(setEtapas).catch(() => setEtapas([]));
+  }, []);
   useEffect(() => { load().catch((e) => setMsg({ erro: true, texto: e.message })); }, [load, version]);
+  useEffect(() => { loadPaineis(); }, [loadPaineis, version]);
+  // Etapas e leads do dia em tempo real: atualiza a cada 30 segundos.
+  useEffect(() => { const t = setInterval(loadPaineis, 30000); return () => clearInterval(t); }, [loadPaineis]);
+
+  // Trocar entre a fila automática e um cliente: a fila antiga sai logo, para a próxima lead vir da fila nova.
+  const trocar = (m) => {
+    setMode(m); setRows(null); setCurId(null); setHistory([]); setSkipped(new Map()); setPick(null); setMsg(null);
+  };
+  const toggleAtiva = (c) => run(() => filaClienteAtiva(c.client_id, !c.ativa),
+    c.ativa ? `${c.name} saiu da fila automática` : `${c.name} voltou à fila automática`).then((ok) => { if (ok) { loadPaineis(); load(); } });
 
   // As que foram passadas com "Seguinte" vão para o fim do seu grupo, por ordem de quando foram passadas.
   const queue = useMemo(() => {
@@ -93,11 +112,15 @@ export default function Fila({ ctx }) {
     const id = curId;
     return run(async () => {
       const r = await filaResultado(id, tipo, quando, nota);
+      const lead = queue.find((q) => q.lead_id === id);
+      setFeitas((f) => [{ id, name: lead?.name ?? "Lead", client: lead?.client_name, color: lead?.client_color, tipo, at: Date.now() }, ...f]);
       setHistory((h) => [...h, id]);
+      setRows(null);
       setPick(null);
       setMsg({ texto: r?.mensagem || "Registado." });
       setCurId(null);
       await load();
+      loadPaineis();
       ctx.onChanged();
       goTop();
     });
@@ -121,9 +144,9 @@ export default function Fila({ ctx }) {
       </div>
 
       <div className="pills" role="group" aria-label="Trabalhar">
-        <button type="button" className={`pill ${!mode ? "on" : ""}`} onClick={() => { setMode(null); setCurId(null); setHistory([]); }}>Fila automática</button>
+        <button type="button" className={`pill ${!mode ? "on" : ""}`} onClick={() => trocar(null)}>Fila automática</button>
         {clients.map((c) => (
-          <button key={c.id} type="button" className={`pill ${mode === c.id ? "on" : ""}`} onClick={() => { setMode(c.id); setCurId(null); setHistory([]); }}>
+          <button key={c.id} type="button" className={`pill ${mode === c.id ? "on" : ""}`} onClick={() => trocar(c.id)}>
             <span className="dot" style={{ width: 8, height: 8, flex: "0 0 8px", background: c.color }}></span>{c.name}</button>
         ))}
       </div>
@@ -131,18 +154,17 @@ export default function Fila({ ctx }) {
       {mode && others > 0 && (
         <div className="banner orange" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <span style={{ flex: 1, minWidth: 220 }}><b>{others} leads novas ou com hora marcada de outros clientes à espera.</b> O Time to Lead está a contar.</span>
-          <button type="button" className="btn dark sm" onClick={() => { setMode(null); setCurId(null); }}>Voltar à fila automática</button>
+          <button type="button" className="btn dark sm" onClick={() => trocar(null)}>Voltar à fila automática</button>
         </div>
       )}
 
       {msg && <div className={`banner ${msg.erro ? "orange" : "blue"}`}>{msg.texto}</div>}
 
-      {!rows && <div className="empty">A carregar a fila…</div>}
-      {rows && !cur && !curId && <div className="panel"><b>A fila está vazia.</b><div className="sub">Não há leads para trabalhar agora. Volta a ver mais tarde ou escolhe um cliente em Trabalhar.</div></div>}
-
-      {curId && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "flex-start" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "flex-start" }}>
           <div style={{ flex: "999 1 640px", minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
+            {!rows && <div className="empty">A carregar a fila…</div>}
+            {rows && !curId && <div className="panel"><b>A fila está vazia.</b><div className="sub">Não há leads para trabalhar agora. Volta a ver mais tarde ou escolhe um cliente em Trabalhar.</div></div>}
+            {curId && (<>
 
             <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 12, position: "sticky", top: 0, zIndex: 4 }}>
               {cur && (
@@ -191,6 +213,7 @@ export default function Fila({ ctx }) {
             </div>
 
             <LeadModal key={curId} id={curId} ctx={ctx} inline onClose={seguinte} />
+            </>)}
           </div>
 
           <div style={{ flex: "1 1 280px", minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -228,9 +251,88 @@ export default function Fila({ ctx }) {
                 <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
               </div>
             </details>
+            <PainelClientes resumo={resumo} busy={busy} onToggle={toggleAtiva} />
+            <PainelEtapas etapas={etapas} />
+            <PainelFeitas feitas={feitas} />
           </div>
-        </div>
-      )}
+      </div>
     </>
+  );
+}
+
+const RESULTADO = { nao_atendeu: "Não atendeu", mais_tarde: "Ligar mais tarde", follow_up: "Follow up", qualificada: "Qualificada", desqualificada: "Desqualificada" };
+const hora = (t) => new Date(t).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
+const Barra = ({ pct, cor }) => (
+  <div style={{ height: 8, borderRadius: 999, background: "#EEF2F7", overflow: "hidden" }}>
+    <div style={{ width: `${Math.min(100, Math.max(0, pct))}%`, height: "100%", borderRadius: 999, background: cor }} />
+  </div>
+);
+
+// Leads trabalhadas hoje e na semana por cliente, contra as leads do dia, e se o cliente entra na fila automática.
+function PainelClientes({ resumo, busy, onToggle }) {
+  return (
+    <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <h3>Clientes na fila e leads do dia</h3>
+      {!resumo && <div className="sub" style={{ fontSize: 13 }}>A carregar…</div>}
+      {resumo?.map((c) => {
+        const completo = c.hoje >= c.leads_dia;
+        return (
+          <div key={c.client_id} style={{ display: "flex", flexDirection: "column", gap: 6, opacity: c.ativa ? 1 : 0.6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="dot" style={{ background: c.color }}></span>
+              <b style={{ flex: 1, minWidth: 0, fontSize: 14 }}>{c.name}</b>
+              <span style={{ fontSize: 13, color: completo ? "var(--greenText)" : "#334155", whiteSpace: "nowrap" }}>hoje {c.hoje} de {c.leads_dia}{completo ? " · completo" : ""}</span>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer", minHeight: 28 }}>
+              <input type="checkbox" checked={c.ativa} disabled={busy} onChange={() => onToggle(c)} />Na fila automática
+            </label>
+            <Barra pct={(c.hoje / Math.max(1, c.leads_dia)) * 100} cor={c.color} />
+            <span style={{ fontSize: 12, color: "var(--mute)" }}>Semana: {c.semana} de {c.leads_dia * c.dias}</span>
+          </div>
+        );
+      })}
+      <span style={{ fontSize: 12, color: "var(--mute2)", lineHeight: 1.5 }}>
+        Cada cliente tem direito a 25 leads trabalhadas por dia por cada slot contratado. Um cliente fora da fila automática deixa de ter
+        follow ups e BD na fila (trabalham-se escolhendo o cliente em cima), mas as leads novas e as chamadas com hora marcada dele entram sempre.
+      </span>
+    </div>
+  );
+}
+
+// Quantas leads há em cada etapa, em todos os clientes da fila. Atualiza a cada 30 segundos e a cada resultado.
+function PainelEtapas({ etapas }) {
+  const max = Math.max(1, ...(etapas ?? []).map((e) => e.n));
+  return (
+    <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <h3>Etapas no Pipeline · em tempo real</h3>
+      {!etapas && <div className="sub" style={{ fontSize: 13 }}>A carregar…</div>}
+      {etapas?.map((e) => (
+        <div key={e.stage_id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 90px 48px", alignItems: "center", gap: 10, fontSize: 13 }}>
+          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.name}</span>
+          <Barra pct={(e.n / max) * 100} cor={e.color || "#3B6FE0"} />
+          <b style={{ textAlign: "right" }}>{e.n.toLocaleString("pt-PT")}</b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Resultados registados nesta sessão do ecrã (desde que a Fila foi aberta).
+function PainelFeitas({ feitas }) {
+  return (
+    <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h3>Feitas nesta sessão</h3>{feitas.length > 0 && <span className="sub" style={{ margin: 0, fontSize: 12 }}>{feitas.length}</span>}
+      </div>
+      {feitas.length === 0 && <div className="sub" style={{ fontSize: 13 }}>Ainda nada.</div>}
+      {feitas.map((f) => (
+        <div key={`${f.id}-${f.at}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #EEF2F7", fontSize: 13 }}>
+          <span className="dot" style={{ background: f.color }}></span>
+          <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 600 }}>{f.name}</span>
+          <span style={{ color: "var(--mute)" }}>{RESULTADO[f.tipo]}</span>
+          <span style={{ color: "var(--mute2)", fontSize: 12 }}>{hora(f.at)}</span>
+        </div>
+      ))}
+    </div>
   );
 }
