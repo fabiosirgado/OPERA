@@ -6,7 +6,7 @@
 //
 // Regras:
 //   * o conteúdo bruto fica no inbound_log antes de qualquer outra coisa: um erro nunca perde uma lead;
-//   * nos emails, a IA recebe o assunto e o texto do email; só quando o texto não traz telefone nem email
+//   * nos emails, a IA recebe o assunto e o texto do email; só quando o texto não traz telefone
 //     (alguns portais mandam o contacto numa imagem) recebe também as imagens do email (anexos e imagens do html),
 //     que nunca se guardam;
 //   * os emails de confirmação do Gmail não são leads: guarda-se o código para o ecrã Entradas automáticas;
@@ -265,12 +265,12 @@ async function parseEmail(b: Body): Promise<Parsed> {
   try {
     // O texto vai inteiro; um email de portal tem poucos milhares de caracteres.
     x = await aiExtract(subject, text);
-    // Sem telefone nem email no texto: o contacto pode vir numa imagem.
-    if (x && x.is_lead !== false && !str(x.phone) && !str(x.email)) {
+    // Sem telefone no texto: o telefone pode vir numa imagem (o Idealista, por exemplo).
+    if (x && x.is_lead !== false && !str(x.phone)) {
       const images = await emailImages(b);
       if (images.length) {
         const y = await aiExtract(subject, text, images);
-        if (y && (str(y.phone) || str(y.email))) { x = y; fromImage = true; }
+        if (y && str(y.phone)) { x = { ...y, email: str(y.email) || str(x.email) }; fromImage = true; }
       }
     }
   } catch (e) {
