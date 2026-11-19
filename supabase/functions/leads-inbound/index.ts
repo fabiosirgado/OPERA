@@ -10,6 +10,7 @@
 //     (alguns portais mandam o contacto numa imagem) recebe também as imagens do email (anexos e imagens do html),
 //     que nunca se guardam;
 //   * os emails de confirmação do Gmail não são leads: guarda-se o código para o ecrã Entradas automáticas;
+//   * os emails dos portais que não são pedidos de contacto (resumos, alertas, faturas) ficam como "ignorado", sem lead;
 //   * em caso de erro devolve 500, para o Make avisar por email; os logs nunca levam dados da lead.
 import { createClient } from "npm:@supabase/supabase-js@2.118.0";
 import Anthropic from "npm:@anthropic-ai/sdk@0.132.0";
@@ -291,7 +292,7 @@ async function parseEmail(b: Body): Promise<Parsed> {
   return {
     name: str(x.name), phone: str(x.phone), email: str(x.email), message: str(x.message),
     interest: str(x.property), reference: str(x.reference), source: portal || str(x.portal) || "Portal",
-    recipients: to, review: notLead, from_image: fromImage || undefined,
+    recipients: to, review: notLead, not_lead: notLead || undefined, from_image: fromImage || undefined,
     review_reason: notLead ? "Este email pode não ser um pedido de contacto." : "",
   };
 }
@@ -357,6 +358,17 @@ Deno.serve(async (req) => {
     // 3. Extrair os dados e criar a lead (ou juntar à existente).
     const parsed = type === "meta" ? parseMeta(body) : await parseEmail({ ...body, attachments_json: attachments });
     await must(db.from("inbound_log").update({ parsed }).eq("id", logId), "Dados extraídos");
+    // Emails do portal que não são pedidos de contacto (resumos, alertas, faturas): ficam registados, sem lead.
+    if (type === "email" && parsed.not_lead && !str(parsed.phone) && !str(parsed.email)) {
+      const addrs = (parsed.recipients as string[] | undefined) ?? [];
+      const owner = addrs.length
+        ? await must(db.from("client_inbox_addresses").select("client_id").in("address", addrs).limit(1).maybeSingle(), "Endereço")
+        : null;
+      await must(db.from("inbound_log").update({
+        status: "ignorado", client_id: (owner as { client_id?: string } | null)?.client_id ?? null,
+      }).eq("id", logId), "Entrada ignorada");
+      return json({ ok: true, status: "ignorado", log_id: logId });
+    }
     const result = await must(db.rpc("leads_inbound_process", { p_log_id: logId }), "Criar lead") as Record<string, unknown>;
     return json({ ok: true, log_id: logId, ...result, alert: result.status === "sem_cliente" });
   } catch (e) {
