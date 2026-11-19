@@ -186,7 +186,7 @@ export default function Fila({ ctx }) {
                 </div>
               )}
               <span style={{ fontSize: 12, color: "var(--mute2)" }}>
-                Não atendeu à 1.ª: fica marcada a 2.ª tentativa daqui a 3 h. À 2.ª seguida: sai da fila e fica à espera da mensagem de WhatsApp.
+                Não atendeu à 1.ª: fica marcada a 2.ª tentativa daqui a 3 h. À 2.ª seguida: sai da fila e fica à espera da mensagem de WhatsApp. Volta quando lhe marcares uma chamada ou follow up.
               </span>
             </div>
 
@@ -225,6 +225,7 @@ export default function Fila({ ctx }) {
                 <span>4. BD cliente a cliente, até às leads do dia de cada um (25). O dia começa pelo cliente com menos leads trabalhadas na semana.</span>
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
                 <span>6. Uma lead com tarefa marcada para mais tarde sai da fila e volta à hora certa.</span>
+                <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
               </div>
             </details>
           </div>
