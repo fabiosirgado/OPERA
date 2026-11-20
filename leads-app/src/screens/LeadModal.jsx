@@ -77,14 +77,18 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
   const [run, busy] = useAction();
   const toast = useToast();
 
+  // onClose fica numa referência: quem abre a ficha (a Fila, por exemplo) pode passar uma função nova a cada desenho,
+  // e isso não pode voltar a pedir os dados da lead (era o que tornava o Leads lento com a Fila aberta).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const load = useCallback(async () => {
     const [l, e, t] = await Promise.all([getLead(id), leadEvents(id), leadTasks(id)]);
-    if (!l) { toast("Esta lead já não está disponível."); onClose(); return; }
+    if (!l) { toast("Esta lead já não está disponível."); onCloseRef.current(); return; }
     setLead(l); setEvents(e); setTasks(t);
     clientUsers(l.client_id).then(setUsers).catch(() => setUsers([]));
     if (opera && l.first_call_at) businessMinutes(l.created_at, l.first_call_at).then(setFirstCallMin).catch(() => setFirstCallMin(null));
     else setFirstCallMin(null);
-  }, [id, onClose, toast, opera]);
+  }, [id, toast, opera]);
   useEffect(() => { load().catch((e) => toast(e.message)); }, [load, toast]);
   // Atualiza sozinha quando alguém mexe nesta lead (tempo real). Só quando a mudança é nesta lead,
   // e não ao abrir (aí já carrega acima).

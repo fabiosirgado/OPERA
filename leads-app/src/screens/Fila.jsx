@@ -50,31 +50,52 @@ export default function Fila({ ctx }) {
   const [escolher, setEscolher] = useState(false);
   // Cada carregamento tem um número: uma resposta antiga (de outro cliente ou da fila anterior) nunca substitui a mais recente.
   const reqRef = useRef(0);
+  const ultimoLoad = useRef(0);
+  const loadTimer = useRef(null);
   const load = useCallback(async () => {
     const req = ++reqRef.current;
+    ultimoLoad.current = Date.now();
     const r = await fila(mode);
-    const all = mode ? await fila(null) : null;
     if (req !== reqRef.current) return;
     setRows(r);
-    setOthers(all ? all.filter((x) => x.grupo_ordem <= 3 && x.client_id !== mode).length : 0);
+  }, [mode]);
+  // Leads novas e horas marcadas de outros clientes (o aviso laranja com um cliente escolhido): só com um cliente
+  // escolhido, e no máximo a cada minuto, porque pede a fila inteira.
+  const loadOutros = useCallback(() => {
+    if (!mode) { setOthers(0); return; }
+    fila(null).then((all) => setOthers(all.filter((x) => x.grupo_ordem <= 3 && x.client_id !== mode).length)).catch(() => {});
   }, [mode]);
   const loadPaineis = useCallback(() => {
     filaClientes().then(setResumo).catch(() => setResumo([]));
     filaEtapas().then(setEtapas).catch(() => setEtapas([]));
   }, []);
-  useEffect(() => { load().catch((e) => setMsg({ erro: true, texto: e.message })); }, [load, version]);
-  useEffect(() => { loadPaineis(); }, [loadPaineis, version]);
-  // Rede de segurança do tempo real: a fila e os painéis voltam a ser pedidos a cada 30 segundos (com a janela à vista),
-  // para uma lead nova aparecer mesmo que o aviso em tempo real se perca (ligação caída, portátil a dormir).
+  useEffect(() => { loadOutros(); }, [loadOutros]);
+  useEffect(() => { loadPaineis(); }, [loadPaineis]);
+  // Tempo real: quando alguém mexe numa lead, a fila volta a ser pedida, mas no máximo uma vez a cada 5 segundos
+  // (com várias pessoas a trabalhar, cada mudança fazia toda a gente pedir a fila outra vez, e a fila é pesada).
+  // Ao trocar de cliente (load muda) pede logo; nas mudanças em tempo real espera pelos 5 segundos.
+  const loadVisto = useRef(null);
   useEffect(() => {
-    const t = setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      loadPaineis(); load().catch(() => {});
-    }, 30000);
-    const onVisible = () => { if (document.visibilityState === "visible") { loadPaineis(); load().catch(() => {}); } };
+    const correr = () => {
+      loadTimer.current = null;
+      load().catch((e) => setMsg({ erro: true, texto: e.message }));
+    };
+    const trocou = loadVisto.current !== load;
+    loadVisto.current = load;
+    const espera = ultimoLoad.current + 5000 - Date.now();
+    if (trocou || espera <= 0) { clearTimeout(loadTimer.current); correr(); }
+    else if (!loadTimer.current) loadTimer.current = setTimeout(correr, espera);
+  }, [load, version]);
+  useEffect(() => () => clearTimeout(loadTimer.current), []);
+  // Rede de segurança do tempo real e horas marcadas a chegar: a cada minuto (com a janela à vista) volta a pedir a fila,
+  // os painéis e o aviso dos outros clientes; e logo que se volta à janela.
+  useEffect(() => {
+    const tudo = () => { load().catch(() => {}); loadPaineis(); loadOutros(); };
+    const t = setInterval(() => { if (document.visibilityState === "visible") tudo(); }, 60000);
+    const onVisible = () => { if (document.visibilityState === "visible") tudo(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
-  }, [load, loadPaineis]);
+  }, [load, loadPaineis, loadOutros]);
 
   // Trocar entre a fila automática e um cliente: a fila antiga sai logo, para a próxima lead vir da fila nova.
   const trocar = (m) => {
@@ -372,7 +393,7 @@ function PainelClientes({ resumo, busy, onToggle }) {
   );
 }
 
-// Quantas leads há em cada etapa, em todos os clientes da fila. Atualiza a cada 30 segundos e a cada resultado.
+// Quantas leads há em cada etapa, em todos os clientes da fila. Atualiza a cada minuto e a cada resultado.
 function PainelEtapas({ etapas }) {
   const max = Math.max(1, ...(etapas ?? []).map((e) => e.n));
   return (
