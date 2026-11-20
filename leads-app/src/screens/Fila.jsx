@@ -60,8 +60,17 @@ export default function Fila({ ctx }) {
   }, []);
   useEffect(() => { load().catch((e) => setMsg({ erro: true, texto: e.message })); }, [load, version]);
   useEffect(() => { loadPaineis(); }, [loadPaineis, version]);
-  // Etapas e leads do dia em tempo real: atualiza a cada 30 segundos.
-  useEffect(() => { const t = setInterval(loadPaineis, 30000); return () => clearInterval(t); }, [loadPaineis]);
+  // Rede de segurança do tempo real: a fila e os painéis voltam a ser pedidos a cada 30 segundos (com a janela à vista),
+  // para uma lead nova aparecer mesmo que o aviso em tempo real se perca (ligação caída, portátil a dormir).
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      loadPaineis(); load().catch(() => {});
+    }, 30000);
+    const onVisible = () => { if (document.visibilityState === "visible") { loadPaineis(); load().catch(() => {}); } };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
+  }, [load, loadPaineis]);
 
   // Trocar entre a fila automática e um cliente: a fila antiga sai logo, para a próxima lead vir da fila nova.
   const trocar = (m) => {
