@@ -219,7 +219,17 @@ export default function Fila({ ctx }) {
         <div><h1>Fila</h1><div className="sub">As leads dos teus clientes, uma de cada vez, pela ordem certa</div></div>
       </div>
 
-      <div className="stats">
+      <div className="stats" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+        {(() => {
+          // Contactadas hoje: leads com chamada registada hoje (a mesma conta das leads do dia), contra a meta do dia.
+          const cs = (resumo ?? []).filter((c) => (mode ? c.client_id === mode : c.ativa));
+          const feitas = cs.reduce((n, c) => n + c.hoje, 0);
+          const meta = cs.reduce((n, c) => n + c.leads_dia, 0);
+          return (
+            <div className="stat"><span>Contactadas hoje</span><b>{resumo ? feitas : "…"}</b>
+              <small>{resumo ? `de ${meta} · ${meta ? Math.round((feitas / meta) * 100) : 0}% das leads do dia` : "a contar…"}</small></div>
+          );
+        })()}
         <div className="stat"><span>Na fila</span><b>{rows ? queue.length : "…"}</b><small>{mode ? `só ${clients.find((c) => c.id === mode)?.name ?? ""}` : "todos os teus clientes"}</small></div>
         <div className={`stat ${waiting ? "warn" : ""}`}><span>Leads novas e com hora marcada</span><b>{waiting}</b><small>passam à frente de tudo</small></div>
         <div className="stat"><span>Follow ups</span><b>{queue.filter((q) => q.grupo_ordem === 4).length}</b><small>de hoje ou atrasados</small></div>
