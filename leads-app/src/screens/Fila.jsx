@@ -198,8 +198,20 @@ export default function Fila({ ctx }) {
   };
 
   const waiting = queue.filter((q) => q.grupo_ordem <= 3).length;
-  const nextList = queue.filter((q) => q.lead_id !== curId).slice(0, 12);
   const grupoLabel = (q) => (q.grupo_ordem >= 4 ? `${q.grupo} · ${q.client_name}` : q.grupo);
+  // "A seguir" por blocos (grupo e, nos follow ups e BD, cliente), pela ordem da fila: cada bloco mostra as primeiras
+  // e o número das restantes, para se ver a fila toda de relance (BD incluída). Um bloco pode abrir-se por inteiro.
+  const [abertos, setAbertos] = useState(() => new Set());
+  const blocos = useMemo(() => {
+    const b = [];
+    queue.filter((q) => q.lead_id !== curId).forEach((q) => {
+      const label = grupoLabel(q);
+      const ultimo = b[b.length - 1];
+      if (ultimo && ultimo.label === label) ultimo.leads.push(q);
+      else b.push({ label, g: q.grupo_ordem, leads: [q] });
+    });
+    return b;
+  }, [queue, curId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -314,20 +326,33 @@ export default function Fila({ ctx }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h3>A seguir</h3><span className="sub" style={{ margin: 0, fontSize: 12 }}>{queue.length} na fila</span>
               </div>
-              {nextList.length === 0 && <div className="sub" style={{ fontSize: 13 }}>Nada mais por agora.</div>}
-              {nextList.map((q, k) => {
-                const head = k === 0 || grupoLabel(nextList[k - 1]) !== grupoLabel(q);
+              {blocos.length === 0 && <div className="sub" style={{ fontSize: 13 }}>Nada mais por agora.</div>}
+              {blocos.map((bl) => {
+                const max = urgente(bl.g) ? 5 : 3;
+                const aberto = abertos.has(bl.label);
+                const ver = aberto ? bl.leads : bl.leads.slice(0, max);
+                const resto = bl.leads.length - ver.length;
                 return (
-                  <div key={q.lead_id}>
-                    {head && <div style={{ margin: "12px 0 2px", fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: GRUPO_COR[q.grupo_ordem] }}>{grupoLabel(q)}</div>}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #EEF2F7" }}>
-                      <span className="dot" style={{ background: q.client_color }}></span>
-                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{q.name}</span>
-                        <span style={{ fontSize: 12, color: "var(--mute)" }}>{q.grupo_ordem >= 4 ? q.motivo : q.client_name}</span>
-                      </div>
-                      {skipped.has(q.lead_id) && <span className="src">passada</span>}
+                  <div key={bl.label}>
+                    <div style={{ margin: "12px 0 2px", display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: GRUPO_COR[bl.g] }}>
+                      <span>{bl.label}</span><span>{bl.leads.length}</span>
                     </div>
+                    {ver.map((q) => (
+                      <div key={q.lead_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #EEF2F7" }}>
+                        <span className="dot" style={{ background: q.client_color }}></span>
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{q.name}</span>
+                          <span style={{ fontSize: 12, color: "var(--mute)" }}>{q.grupo_ordem >= 4 ? q.motivo : q.client_name}</span>
+                        </div>
+                        {skipped.has(q.lead_id) && <span className="src">passada</span>}
+                      </div>
+                    ))}
+                    {(resto > 0 || aberto) && bl.leads.length > max && (
+                      <button type="button" className="link" style={{ fontSize: 12 }}
+                        onClick={() => setAbertos((a) => { const n = new Set(a); if (n.has(bl.label)) n.delete(bl.label); else n.add(bl.label); return n; })}>
+                        {aberto ? "Mostrar menos" : `+ ${resto} ${resto === 1 ? "lead" : "leads"}`}
+                      </button>
+                    )}
                   </div>
                 );
               })}
