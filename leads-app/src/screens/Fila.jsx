@@ -197,7 +197,7 @@ export default function Fila({ ctx }) {
         <div className="row" style={{ alignItems: "center" }}>
           <button type="button" className="btn sm" onClick={() => setEscolher(true)}>Escolher leads de BD</button>
           <span style={{ fontSize: 12, color: "var(--mute)" }}>
-            Escolhe as leads de BD de {clients.find((c) => c.id === mode)?.name ?? "este cliente"} que queres na fila: passam à frente da BD automática.
+            Escolhe as leads de BD de {clients.find((c) => c.id === mode)?.name ?? "este cliente"} que queres na fila: passam à frente da BD automática, dentro das leads do dia.
           </span>
         </div>
       )}
@@ -311,7 +311,7 @@ export default function Fila({ ctx }) {
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
                 <span>6. Uma lead com tarefa marcada para mais tarde sai da fila e volta à hora certa.</span>
                 <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
-                <span>8. Leads de BD escolhidas à mão (com um cliente selecionado, "Escolher leads de BD") entram sempre e passam à frente da BD automática desse cliente, mesmo com 2 ou mais tentativas. Contam para as leads do dia e saem da escolha quando lhes dás um resultado.</span>
+                <span>8. Leads de BD escolhidas à mão (com um cliente selecionado, "Escolher leads de BD") passam à frente da BD automática desse cliente, mesmo com 2 ou mais tentativas, dentro das leads do dia (25): as que não couberem entram nos dias seguintes. Saem da escolha quando lhes dás um resultado.</span>
               </div>
             </details>
             <PainelClientes resumo={resumo} busy={busy} onToggle={toggleAtiva} />
@@ -401,56 +401,78 @@ function PainelFeitas({ feitas }) {
 }
 
 // Escolher à mão as leads de BD de um cliente que entram na fila (pedido do Fábio, 2026-11-20).
+// Vêm todas as leads de BD do cliente (todas as etapas de entrada, sem limite); o filtro por etapa e a pesquisa são feitos aqui.
+const MOSTRAR = 400;
+const so = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 function EscolherBD({ client, onClose, onSaved }) {
   const [q, setQ] = useState("");
+  const [etapa, setEtapa] = useState(null);
   const [list, setList] = useState(null);
   const [inicial, setInicial] = useState(() => new Set());
   const [sel, setSel] = useState(() => new Set());
+  const [mostrar, setMostrar] = useState(MOSTRAR);
   const [run, busy] = useAction();
-  const primeira = useRef(true);
-  const inicialTocadas = useRef(new Set());
   useEffect(() => {
     let vivo = true;
-    const t = setTimeout(() => {
-      filaBdCandidatas(client.id, q).then((r) => {
-        if (!vivo) return;
-        setList(r);
-        // Na primeira vez, as que já estão escolhidas ficam marcadas. Depois, a pesquisa não mexe no que já se marcou.
-        if (primeira.current) {
-          primeira.current = false;
-          const ja = new Set(r.filter((x) => x.escolhida).map((x) => x.lead_id));
-          setInicial(ja); setSel(new Set(ja));
-        } else {
-          setInicial((i) => { const n = new Set(i); r.filter((x) => x.escolhida).forEach((x) => n.add(x.lead_id)); return n; });
-          setSel((s0) => { const n = new Set(s0); r.filter((x) => x.escolhida && !s0.has(x.lead_id) && !inicialTocadas.current.has(x.lead_id)).forEach((x) => n.add(x.lead_id)); return n; });
-        }
-      }).catch(() => vivo && setList([]));
-    }, q ? 300 : 0);
-    return () => { vivo = false; clearTimeout(t); };
-  }, [client.id, q]);
-  const toggle = (id) => {
-    inicialTocadas.current.add(id);
-    setSel((s0) => { const n = new Set(s0); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  };
+    filaBdCandidatas(client.id).then((r) => {
+      if (!vivo) return;
+      const ja = new Set(r.filter((x) => x.escolhida).map((x) => x.lead_id));
+      setList(r); setInicial(ja); setSel(new Set(ja));
+    }).catch(() => vivo && setList([]));
+    return () => { vivo = false; };
+  }, [client.id]);
+  useEffect(() => { setMostrar(MOSTRAR); }, [q, etapa]);
+
+  const etapas = useMemo(() => {
+    const m = new Map();
+    (list ?? []).forEach((l) => m.set(l.stage_name, (m.get(l.stage_name) ?? 0) + 1));
+    return [...m.entries()];
+  }, [list]);
+  const visiveis = useMemo(() => {
+    const t = so(q.trim());
+    const dig = q.replace(/\D/g, "");
+    return (list ?? []).filter((l) => (!etapa || l.stage_name === etapa)
+      && (!t || so(l.name).includes(t) || (dig && String(l.phone || "").replace(/\D/g, "").includes(dig))));
+  }, [list, q, etapa]);
+  const todasMarcadas = visiveis.length > 0 && visiveis.every((l) => sel.has(l.lead_id));
+  const marcarVisiveis = () => setSel((s0) => {
+    const n = new Set(s0);
+    visiveis.forEach((l) => (todasMarcadas ? n.delete(l.lead_id) : n.add(l.lead_id)));
+    return n;
+  });
+  const toggle = (id) => setSel((s0) => { const n = new Set(s0); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const add = [...sel].filter((id) => !inicial.has(id));
   const rem = [...inicial].filter((id) => !sel.has(id));
-  const guardar = () => run(async () => { await filaEscolher(add, true); await filaEscolher(rem, false); },
-    `${sel.size} ${sel.size === 1 ? "lead escolhida" : "leads escolhidas"} para a fila de ${client.name}`).then((ok) => ok && onSaved());
+  const guardar = () => run(async () => {
+    for (let i = 0; i < add.length; i += 500) await filaEscolher(add.slice(i, i + 500), true);
+    for (let i = 0; i < rem.length; i += 500) await filaEscolher(rem.slice(i, i + 500), false);
+  }, `${sel.size} ${sel.size === 1 ? "lead escolhida" : "leads escolhidas"} para a fila de ${client.name}`).then((ok) => ok && onSaved());
 
   return (
     <Modal title={`Leads de BD de ${client.name}`} onClose={onClose} wide>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <span className="sub" style={{ margin: 0, fontSize: 13 }}>
-          Marca as que queres na fila. Entram sempre, à frente da BD automática deste cliente, e saem da escolha quando lhes dás um resultado.
-          Aqui só aparecem leads de BD sem tarefa marcada.
+          Marca as que queres na fila. Passam à frente da BD automática deste cliente, dentro das leads do dia (25): as que não couberem hoje entram nos dias seguintes. Saem da escolha quando lhes dás um resultado.
+          Aparecem todas as leads de BD sem tarefa marcada, de todas as etapas de entrada.
         </span>
-        <label className="search" style={{ width: "100%" }}>
-          <input style={{ width: "100%" }} placeholder="Procurar por nome ou telefone" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
-        </label>
+        <div className="chips">
+          <button type="button" className={`pill ${!etapa ? "on" : ""}`} onClick={() => setEtapa(null)}>Todas · {(list?.length ?? 0).toLocaleString("pt-PT")}</button>
+          {etapas.map(([nome, n]) => (
+            <button key={nome} type="button" className={`pill ${etapa === nome ? "on" : ""}`} onClick={() => setEtapa(nome)}>{nome} · {n.toLocaleString("pt-PT")}</button>
+          ))}
+        </div>
+        <div className="row" style={{ alignItems: "center" }}>
+          <label className="search" style={{ flex: 1, minWidth: 200 }}>
+            <input style={{ width: "100%" }} placeholder="Procurar por nome ou telefone" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+          </label>
+          <button type="button" className="btn sm" disabled={!visiveis.length} onClick={marcarVisiveis}>
+            {todasMarcadas ? "Desmarcar" : "Marcar"} {visiveis.length === list?.length ? "todas" : `as ${visiveis.length.toLocaleString("pt-PT")}`}
+          </button>
+        </div>
         <div style={{ maxHeight: "50vh", overflowY: "auto", border: "1px solid var(--line)", borderRadius: 10 }}>
-          {!list && <div className="sub" style={{ padding: 14, fontSize: 13 }}>A carregar…</div>}
-          {list && list.length === 0 && <div className="sub" style={{ padding: 14, fontSize: 13 }}>Nenhuma lead de BD{q ? " com esta pesquisa" : ""}.</div>}
-          {list?.map((l) => (
+          {!list && <div className="sub" style={{ padding: 14, fontSize: 13 }}>A carregar todas as leads de BD…</div>}
+          {list && visiveis.length === 0 && <div className="sub" style={{ padding: 14, fontSize: 13 }}>Nenhuma lead de BD{q || etapa ? " com este filtro" : ""}.</div>}
+          {visiveis.slice(0, mostrar).map((l) => (
             <label key={l.lead_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: "1px solid #EEF2F7", cursor: "pointer", background: sel.has(l.lead_id) ? "#F0F6FF" : "#fff" }}>
               <input type="checkbox" checked={sel.has(l.lead_id)} onChange={() => toggle(l.lead_id)} />
               <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
@@ -463,10 +485,14 @@ function EscolherBD({ client, onClose, onSaved }) {
               </div>
             </label>
           ))}
+          {visiveis.length > mostrar && (
+            <button type="button" className="link" style={{ padding: "10px 14px" }} onClick={() => setMostrar((m) => m + MOSTRAR)}>
+              Mostrar mais ({(visiveis.length - mostrar).toLocaleString("pt-PT")} por mostrar)
+            </button>
+          )}
         </div>
-        {list?.length === 300 && <span style={{ fontSize: 12, color: "var(--mute2)" }}>Mostram-se as primeiras 300. Usa a pesquisa para encontrar outras.</span>}
         <div className="row" style={{ alignItems: "center" }}>
-          <span style={{ flex: 1, fontSize: 13 }}><b>{sel.size}</b> {sel.size === 1 ? "escolhida" : "escolhidas"}{add.length || rem.length ? ` · ${add.length} a juntar, ${rem.length} a tirar` : ""}</span>
+          <span style={{ flex: 1, fontSize: 13 }}><b>{sel.size.toLocaleString("pt-PT")}</b> {sel.size === 1 ? "escolhida" : "escolhidas"}{add.length || rem.length ? ` · ${add.length} a juntar, ${rem.length} a tirar` : ""}</span>
           <button type="button" className="btn" onClick={onClose}>Cancelar</button>
           <button type="button" className="btn primary" disabled={busy || (!add.length && !rem.length)} onClick={guardar}>Guardar</button>
         </div>

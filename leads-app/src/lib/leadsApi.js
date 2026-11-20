@@ -38,10 +38,26 @@ export const search = (q) => must(sb.rpc("leads_search", { p_q: q }));
 // Fila: as leads do gestor pela ordem certa (novas, hora marcada, follow ups, BD) e o resultado de cada chamada.
 // Clientes internos (a própria OPERA) não entram na Fila.
 export const internalClientIds = () => must(sb.from("clients").select("id").eq("leads_internal", true)).then((r) => r.map((c) => c.id));
-export const fila = (client) => must(sb.rpc("leads_fila", { p_client: client || null }));
+// A fila pode passar das 1000 linhas (muitas leads de BD escolhidas): pede-se às páginas, como as candidatas.
+export async function fila(client) {
+  const all = [];
+  for (let from = 0; ; from += 1000) {
+    const page = await must(sb.rpc("leads_fila", { p_client: client || null }).range(from, from + 999));
+    all.push(...page);
+    if (page.length < 1000) return all;
+  }
+}
 export const filaClientes = () => must(sb.rpc("leads_fila_clientes_resumo"));
 export const filaClienteAtiva = (client, ativa) => must(sb.rpc("leads_fila_cliente_ativa", { p_client: client, p_ativa: ativa }));
-export const filaBdCandidatas = (client, q) => must(sb.rpc("leads_fila_bd_candidatas", { p_client: client, p_q: q || null }));
+// A API devolve no máximo 1000 linhas de cada vez: as leads de BD de um cliente pedem-se às páginas, até virem todas.
+export async function filaBdCandidatas(client) {
+  const all = [];
+  for (let from = 0; ; from += 1000) {
+    const page = await must(sb.rpc("leads_fila_bd_candidatas", { p_client: client, p_q: null }).range(from, from + 999));
+    all.push(...page);
+    if (page.length < 1000) return all;
+  }
+}
 export const filaEscolher = (ids, escolher) => (ids.length ? must(sb.rpc("leads_fila_escolher", { p_leads: ids, p_escolher: escolher })) : Promise.resolve(0));
 export const filaEtapas = () => must(sb.rpc("leads_fila_etapas"));
 export const filaResultado = (leadId, resultado, quando, nota) => must(sb.rpc("leads_fila_resultado", {
