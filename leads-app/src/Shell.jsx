@@ -5,6 +5,7 @@ import { activeClients, conversations, countNewLeads, isAutoNewLead, listLabels,
 import GlobalSearch from "./ui/GlobalSearch.jsx";
 import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
 import AppSetup from "./ui/AppSetup.jsx";
+import VersaoNova from "./ui/VersaoNova.jsx";
 import { forgetDevice } from "./lib/push.js";
 import Pipeline from "./screens/Pipeline.jsx";
 import Hoje from "./screens/Hoje.jsx";
@@ -222,6 +223,7 @@ export default function Shell({ access }) {
 
   return (
     <div className="app">
+      <VersaoNova />
       <nav className="side" aria-label="Menu principal">
         <div className="brand"><b>OPERA</b><span>Leads</span></div>
         <GlobalSearch opera={opera} onOpen={ctx.onOpenLead} />
