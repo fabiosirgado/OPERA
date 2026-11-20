@@ -1,6 +1,11 @@
--- OPERA Leads, Fila: a BD (e os follow ups) começa pelo cliente com menos contactos hoje (pedido do Fábio, 2026-11-20).
--- Antes: primeiro o cliente em que o gestor já estava a fazer BD hoje, depois o mais atrasado na semana.
--- Os contactos contam como nas leads do dia: leads com chamada registada hoje, em proporção das leads do dia do cliente.
+-- OPERA Leads, Fila: ordem dos clientes na BD (e nos follow ups), pedido do Fábio, 2026-11-20:
+--   1. Rondas de 25: ninguém passa das leads do dia (25) enquanto houver um cliente da fila automática abaixo (dos que
+--      ainda têm BD para trabalhar); quando todos lá chegam, abre a ronda seguinte (até 50), e assim por diante.
+--   2. Começa pelo cliente com menos contactos hoje (leads com chamada registada, em proporção das leads do dia);
+--      no empate, o com menos contactos na semana.
+--   3. Blocos de 5: o gestor fica 5 leads seguidas no mesmo cliente antes de a fila voltar a escolher; se o cliente
+--      chegar ao fim da ronda a meio do bloco, passa logo para outro.
+-- Antes: primeiro o cliente em que o gestor já estava a fazer BD hoje, depois o mais atrasado na semana, e só 25 por dia.
 
 create or replace function public.leads_fila(p_client uuid default null)
 returns table (lead_id uuid, grupo text, grupo_ordem integer, ordem bigint, name text, phone text, interest text, source text,
@@ -36,12 +41,47 @@ begin
      where e.type = 'call' and e.created_at >= v_week and l.client_id in (select id from clientes)
      group by l.client_id
   ),
+  -- Clientes que ainda têm BD para trabalhar (as mesmas condições da BD mais abaixo).
+  disp as (
+    select distinct l.client_id
+      from public.leads l
+      join public.lead_stages s on s.id = l.stage_id
+      left join public.lead_fila f on f.lead_id = l.id
+     where l.client_id in (select id from clientes) and not l.anonymized and l.new_at is null and l.next_task_at is null
+       and f.aguarda_whatsapp_at is null
+       and (s.key in ('meta', 'imoveis', 'bd') or (s.client_id is not null and s.position < 40))
+       and (f.escolhida_at is not null or (l.attempts < 2 and coalesce(f.sem_resposta, 0) < 2))
+  ),
+  -- Rondas de leads do dia: ninguém passa das 25 (as leads do dia) enquanto houver um cliente da fila automática abaixo
+  -- (que ainda tenha BD para trabalhar); quando todos lá chegam, abre a ronda seguinte (até 50), e assim por diante.
+  ronda as (
+    select coalesce(floor(min(coalesce(t.hoje, 0)::numeric / greatest(1, c.leads_dia))), 0) + 1 as r
+      from clientes c left join trab t on t.client_id = c.id
+     where c.auto and c.id in (select d.client_id from disp d)
+  ),
+  -- Blocos de 5: as chamadas do gestor hoje, da mais recente para trás. O cliente da última chamada e quantas leads
+  -- seguidas já leva nele.
+  seq as (
+    select l.client_id, e.lead_id, row_number() over (order by e.created_at desc) as rn
+      from public.lead_events e join public.leads l on l.id = e.lead_id
+     where e.author_id = v_me and e.type = 'call' and e.created_at >= v_today and l.client_id in (select id from clientes)
+  ),
+  atual as (
+    select s.client_id,
+           (select count(distinct s2.lead_id) from seq s2
+             where s2.rn < coalesce((select min(s3.rn) from seq s3 where s3.client_id <> s.client_id), 2147483647)) as seguidas
+      from seq s where s.rn = 1
+  ),
   rk as (
-    -- Primeiro o cliente com menos contactos hoje (leads com chamada registada); no empate, o mais atrasado na semana.
+    -- Primeiro o cliente em que se está a meio de um bloco de 5 (se ainda tiver lugar na ronda); depois o cliente com
+    -- menos contactos hoje; no empate, o com menos contactos na semana.
     select c.id,
-           row_number() over (order by coalesce(t.hoje, 0)::numeric / greatest(1, c.leads_dia),
+           row_number() over (order by case when c.id = (select a.client_id from atual a)
+                                             and (select a.seguidas from atual a) % 5 <> 0
+                                             and (select r from ronda) * c.leads_dia > coalesce(t.hoje, 0) then 0 else 1 end,
+                                       coalesce(t.hoje, 0)::numeric / greatest(1, c.leads_dia),
                                        coalesce(t.semana, 0)::numeric / greatest(1, c.leads_dia * v_days), c.name) as rk,
-           greatest(0, c.leads_dia - coalesce(t.hoje, 0)) as resta
+           greatest(0, (select r from ronda) * c.leads_dia - coalesce(t.hoje, 0)) as resta
       from clientes c left join trab t on t.client_id = c.id
   ),
   base as (
