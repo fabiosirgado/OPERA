@@ -1,6 +1,8 @@
 -- OPERA Leads, Fila: a BD inclui as etapas próprias de cada cliente antes de Follow Up (por exemplo "Nova lead crédito"
 -- da Gerações Team), além de Nova Lead Meta, Nova lead imóveis e Nova Lead BD. A lista para escolher leads de BD deixa
--- de ter o limite de 300 e a fila passa a devolver até 2000 leads, para caberem muitas escolhidas (pedido do Fábio, 2026-11-20).
+-- de ter o limite de 300 e a fila passa a devolver até 2000 leads (pedido do Fábio, 2026-11-20).
+-- As escolhidas à mão respeitam as leads do dia (25): passam à frente da BD automática do cliente, mas só entram
+-- as que cabem no que falta do dia; as restantes ficam escolhidas para os dias seguintes.
 
 create or replace function public.leads_fila(p_client uuid default null)
 returns table (lead_id uuid, grupo text, grupo_ordem integer, ordem bigint, name text, phone text, interest text, source text,
@@ -100,7 +102,7 @@ begin
        where b.new_at is null and b.next_task_at is null
          and (b.escolhida_at is not null
               or (b.auto and b.sbd and b.attempts < 2 and b.sr < 2))
-    ) x where x.escolhida_at is not null or x.rn <= x.resta
+    ) x where x.rn <= x.resta
   ),
   tudo as (
     select n.id, n.g, n.o, n.m, n.name, n.phone, n.interest, n.source, n.client_id, n.cname, n.ccolor, n.sname, n.attempts, n.sr, n.new_at, n.next_task_at, n.next_task_type from nova n

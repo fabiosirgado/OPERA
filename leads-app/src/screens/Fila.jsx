@@ -197,7 +197,7 @@ export default function Fila({ ctx }) {
         <div className="row" style={{ alignItems: "center" }}>
           <button type="button" className="btn sm" onClick={() => setEscolher(true)}>Escolher leads de BD</button>
           <span style={{ fontSize: 12, color: "var(--mute)" }}>
-            Escolhe as leads de BD de {clients.find((c) => c.id === mode)?.name ?? "este cliente"} que queres na fila: passam à frente da BD automática.
+            Escolhe as leads de BD de {clients.find((c) => c.id === mode)?.name ?? "este cliente"} que queres na fila: passam à frente da BD automática, dentro das leads do dia.
           </span>
         </div>
       )}
@@ -311,7 +311,7 @@ export default function Fila({ ctx }) {
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
                 <span>6. Uma lead com tarefa marcada para mais tarde sai da fila e volta à hora certa.</span>
                 <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
-                <span>8. Leads de BD escolhidas à mão (com um cliente selecionado, "Escolher leads de BD") entram sempre e passam à frente da BD automática desse cliente, mesmo com 2 ou mais tentativas. Contam para as leads do dia e saem da escolha quando lhes dás um resultado.</span>
+                <span>8. Leads de BD escolhidas à mão (com um cliente selecionado, "Escolher leads de BD") passam à frente da BD automática desse cliente, mesmo com 2 ou mais tentativas, dentro das leads do dia (25): as que não couberem entram nos dias seguintes. Saem da escolha quando lhes dás um resultado.</span>
               </div>
             </details>
             <PainelClientes resumo={resumo} busy={busy} onToggle={toggleAtiva} />
@@ -452,7 +452,7 @@ function EscolherBD({ client, onClose, onSaved }) {
     <Modal title={`Leads de BD de ${client.name}`} onClose={onClose} wide>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <span className="sub" style={{ margin: 0, fontSize: 13 }}>
-          Marca as que queres na fila. Entram sempre, à frente da BD automática deste cliente, e saem da escolha quando lhes dás um resultado.
+          Marca as que queres na fila. Passam à frente da BD automática deste cliente, dentro das leads do dia (25): as que não couberem hoje entram nos dias seguintes. Saem da escolha quando lhes dás um resultado.
           Aparecem todas as leads de BD sem tarefa marcada, de todas as etapas de entrada.
         </span>
         <div className="chips">
