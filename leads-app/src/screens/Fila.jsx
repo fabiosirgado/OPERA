@@ -65,6 +65,7 @@ export default function Fila({ ctx }) {
 
   // Trocar entre a fila automática e um cliente: a fila antiga sai logo, para a próxima lead vir da fila nova.
   const trocar = (m) => {
+    vistas.current = null; setChegou(null);
     setMode(m); setRows(null); setCurId(null); setHistory([]); setSkipped(new Map()); setPick(null); setMsg(null);
   };
   const toggleAtiva = (c) => run(() => filaClienteAtiva(c.client_id, !c.ativa),
@@ -77,10 +78,37 @@ export default function Fila({ ctx }) {
       a.grupo_ordem - b.grupo_ordem || (skipped.get(a.lead_id) ?? 0) - (skipped.get(b.lead_id) ?? 0) || a.i - b.i);
   }, [rows, skipped]);
 
-  // A lead aberta fica fixa: se entrar outra mais prioritária, só aparece quando se passa à seguinte.
   useEffect(() => {
     if (!curId && queue.length) setCurId(queue[0].lead_id);
   }, [curId, queue]);
+
+  // Lead nova a entrar em tempo real: passa logo para a frente, a não ser que já se esteja a ligar,
+  // a escolher um resultado ou a tratar outra lead nova. Nesses casos aparece um aviso para passar para ela.
+  const [ligouId, setLigouId] = useState(null);
+  const [chegou, setChegou] = useState(null);
+  const vistas = useRef(null);
+  useEffect(() => {
+    if (!rows) return;
+    const novas = rows.filter((r) => r.grupo_ordem === 1);
+    if (vistas.current === null) { vistas.current = new Set(novas.map((r) => r.lead_id)); return; }
+    const chegadas = novas.filter((r) => !vistas.current.has(r.lead_id));
+    novas.forEach((r) => vistas.current.add(r.lead_id));
+    if (chegou && !rows.some((r) => r.lead_id === chegou.lead_id)) setChegou(null);
+    const n = chegadas[0];
+    if (!n || !curId || n.lead_id === curId) return;
+    const atual = rows.find((r) => r.lead_id === curId);
+    if (atual && atual.grupo_ordem !== 1 && ligouId !== curId && !pick) {
+      setHistory((h) => [...h, curId]);
+      setCurId(n.lead_id); setChegou(null);
+      setMsg({ texto: `Entrou uma lead nova de ${n.client_name}: ${n.name} passou para a frente.` });
+      goTop();
+    } else setChegou(n);
+  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const passarPara = () => {
+    if (!chegou) return;
+    if (curId) setHistory((h) => [...h, curId]);
+    setCurId(chegou.lead_id); setChegou(null); setPick(null); setMsg(null); goTop();
+  };
 
   const cur = queue.find((q) => q.lead_id === curId) || null;
   const pos = cur ? queue.indexOf(cur) + 1 : 0;
@@ -104,9 +132,9 @@ export default function Fila({ ctx }) {
     setMsg({ texto: "Voltaste à lead anterior. Se lhe deste um resultado, corrige-o na ficha (etapa ou tarefas)." });
     goTop();
   };
-  const ligar = () => cur && run(() => callLead({ id: cur.lead_id, phone: cur.phone }),
+  const ligar = () => cur && (setLigouId(cur.lead_id), run(() => callLead({ id: cur.lead_id, phone: cur.phone }),
     (via) => (via === "cloudtalk" ? `A CloudTalk vai ligar-te primeiro e depois a ${cur.name}` : `A ligar a ${cur.name}`))
-    .then((ok) => ok && ctx.onChanged());
+    .then((ok) => ok && ctx.onChanged()));
 
   const resultado = (tipo, quando, nota) => {
     const id = curId;
@@ -159,6 +187,13 @@ export default function Fila({ ctx }) {
       )}
 
       {msg && <div className={`banner ${msg.erro ? "orange" : "blue"}`}>{msg.texto}</div>}
+      {chegou && chegou.lead_id !== curId && (
+        <div className="banner green" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <span style={{ flex: 1, minWidth: 220 }}><b>Entrou uma lead nova: {chegou.name}</b> ({chegou.client_name}). O Time to Lead está a contar.</span>
+          <button type="button" className="btn dark sm" onClick={passarPara}>Passar para ela</button>
+          <button type="button" className="link" onClick={() => setChegou(null)}>Depois</button>
+        </div>
+      )}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "flex-start" }}>
           <div style={{ flex: "999 1 640px", minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -242,7 +277,7 @@ export default function Fila({ ctx }) {
             <details className="panel">
               <summary style={{ cursor: "pointer", fontWeight: 600, minHeight: 28 }}>Regras da fila</summary>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 13, color: "#334155", lineHeight: 1.5 }}>
-                <span>1. Leads novas sempre primeiro: as que entraram há menos de 1 hora, a mais antiga primeiro; depois as restantes.</span>
+                <span>1. Leads novas sempre primeiro: as que entraram há menos de 1 hora, a mais antiga primeiro; depois as restantes. Uma lead nova que entra passa logo para a frente, a não ser que já estejas a ligar ou a tratar outra lead nova: aí aparece um aviso para passares para ela.</span>
                 <span>2. Chamadas com hora marcada, até 3 horas depois da hora.</span>
                 <span>3. Follow ups de hoje ou atrasados, agrupados por cliente. Fazem-se antes de qualquer BD.</span>
                 <span>4. BD cliente a cliente, até às leads do dia de cada um (25). O dia começa pelo cliente com menos leads trabalhadas na semana.</span>
