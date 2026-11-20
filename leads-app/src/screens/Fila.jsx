@@ -363,7 +363,7 @@ export default function Fila({ ctx }) {
                 <span>1. Chamadas e follow ups com hora marcada, quando chega a hora (até 3 horas depois): vão para o topo, à frente de tudo. O ecrã salta para eles quando chega a hora (se já estiveres a ligar, aparece um aviso).</span>
                 <span>2. Leads novas, pela ordem de chegada: a que espera há mais tempo primeiro. Quando entra uma lead nova e estás num follow up ou BD, a fila passa logo para as leads novas (se já estiveres a ligar, aparece um aviso).</span>
                 <span>3. Follow ups de hoje ou atrasados, agrupados por cliente. Fazem-se antes de qualquer BD.</span>
-                <span>4. BD cliente a cliente, até às leads do dia de cada um (25). O dia começa pelo cliente com menos leads trabalhadas na semana.</span>
+                <span>4. BD cliente a cliente, por rondas de 25 (as leads do dia): começa pelo cliente com menos contactos hoje e fica nele um bloco de 5 leads seguidas antes de voltar a escolher. Quem chega às 25 sai da BD até todos os clientes (com BD por trabalhar) chegarem às 25; aí abre a ronda seguinte, até às 50. Os follow ups seguem a mesma ordem de clientes.</span>
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
                 <span>6. Uma lead com tarefa marcada para mais tarde sai da fila e volta à hora certa.</span>
                 <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
