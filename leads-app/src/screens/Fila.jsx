@@ -9,6 +9,9 @@ import LeadModal from "./LeadModal.jsx";
 // A ordem vem da base de dados (leads_fila): leads novas, hora marcada, follow ups por cliente e BD por cliente.
 // O resultado da chamada faz o resto sozinho (leads_fila_resultado): tarefa seguinte, etapa e regra das 2 tentativas.
 
+// Ordem dos grupos na fila: a hora marcada (2) vem à frente das leads novas (1), quando chega a hora.
+const prio = (g) => (g === 2 ? 0 : g);
+const urgente = (g) => g === 1 || g === 2;
 const GRUPO_COR = { 1: "#15803D", 2: "#0B1B3A", 3: "#1D4ED8", 4: "#78350F", 5: "#334155" };
 const GRUPO_FUNDO = { 1: "#DCFCE7", 2: "#E2E8F0", 3: "#DCE8FF", 4: "#FEF3C7", 5: "#EEF2F7" };
 
@@ -85,36 +88,41 @@ export default function Fila({ ctx }) {
   const queue = useMemo(() => {
     if (!rows) return [];
     return rows.map((r, i) => ({ ...r, i })).sort((a, b) =>
-      a.grupo_ordem - b.grupo_ordem || (skipped.get(a.lead_id) ?? 0) - (skipped.get(b.lead_id) ?? 0) || a.i - b.i);
+      prio(a.grupo_ordem) - prio(b.grupo_ordem) || (skipped.get(a.lead_id) ?? 0) - (skipped.get(b.lead_id) ?? 0) || a.i - b.i);
   }, [rows, skipped]);
 
   useEffect(() => {
     if (!curId && queue.length) setCurId(queue[0].lead_id);
   }, [curId, queue]);
 
-  // Lead nova a entrar em tempo real: as leads novas passam à frente de tudo, pela ordem de chegada (a mais antiga
-  // primeiro). Se a lead aberta for um follow up ou BD, salta-se logo para a lead nova mais antiga, a não ser que já
-  // se esteja a ligar ou a escolher um resultado: aí aparece um aviso para passar para ela.
-  // Se a lead aberta já for uma lead nova, a que entrou fica na lista, pela ordem.
+  // Lead nova a entrar, ou chamada/follow up a chegar à hora marcada: vai para o topo da fila e o ecrã salta logo para
+  // ela (a hora marcada primeiro, depois a lead nova que espera há mais tempo). Não salta se já se estiver a ligar ou a
+  // escolher um resultado: aí aparece um aviso. Se a lead aberta já for uma lead nova, só uma hora marcada a interrompe;
+  // se já for uma hora marcada, nada a interrompe.
   const [ligouId, setLigouId] = useState(null);
   const [chegou, setChegou] = useState(null);
   const vistas = useRef(null);
   useEffect(() => {
     if (!rows) return;
-    const novas = rows.filter((r) => r.grupo_ordem === 1);
-    if (vistas.current === null) { vistas.current = new Set(novas.map((r) => r.lead_id)); return; }
-    const chegadas = novas.filter((r) => !vistas.current.has(r.lead_id));
-    novas.forEach((r) => vistas.current.add(r.lead_id));
+    const topo = rows.filter((r) => urgente(r.grupo_ordem));
+    const chave = (r) => `${r.lead_id}:${r.grupo_ordem}`;
+    if (vistas.current === null) { vistas.current = new Set(topo.map(chave)); return; }
+    const chegadas = topo.filter((r) => !vistas.current.has(chave(r)));
+    topo.forEach((r) => vistas.current.add(chave(r)));
     if (chegou && !rows.some((r) => r.lead_id === chegou.lead_id)) setChegou(null);
     if (!chegadas.length || !curId) return;
     const atual = rows.find((r) => r.lead_id === curId);
-    if (atual && atual.grupo_ordem === 1) return;
-    const n = novas.find((r) => r.lead_id !== curId);
+    if (atual?.grupo_ordem === 2) return;
+    if (atual?.grupo_ordem === 1 && !chegadas.some((r) => r.grupo_ordem === 2)) return;
+    // rows vem pela ordem da fila: a primeira urgente é a que deve ser feita já.
+    const n = topo.find((r) => r.lead_id !== curId && (atual?.grupo_ordem !== 1 || r.grupo_ordem === 2));
     if (!n) return;
     if (atual && ligouId !== curId && !pick) {
       setHistory((h) => [...h, curId]);
       setCurId(n.lead_id); setChegou(null);
-      setMsg({ texto: `Entrou uma lead nova (${chegadas[0].name}, ${chegadas[0].client_name}). As leads novas passam à frente: começa por ${n.name}, a que espera há mais tempo.` });
+      setMsg({ texto: n.grupo_ordem === 2
+        ? `Chegou a hora marcada de ${n.name} (${n.client_name}): passou para o topo da fila.`
+        : `Entrou uma lead nova (${chegadas[0].name}, ${chegadas[0].client_name}). As leads novas passam à frente: começa por ${n.name}, a que espera há mais tempo.` });
       goTop();
     } else setChegou(n);
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -216,7 +224,9 @@ export default function Fila({ ctx }) {
       {msg && <div className={`banner ${msg.erro ? "orange" : "blue"}`}>{msg.texto}</div>}
       {chegou && chegou.lead_id !== curId && (
         <div className="banner green" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-          <span style={{ flex: 1, minWidth: 220 }}><b>Há leads novas à espera.</b> A que espera há mais tempo é {chegou.name} ({chegou.client_name}). O Time to Lead está a contar.</span>
+          <span style={{ flex: 1, minWidth: 220 }}>{chegou.grupo_ordem === 2
+            ? <><b>Chegou a hora marcada de {chegou.name}</b> ({chegou.client_name}). {chegou.motivo}.</>
+            : <><b>Há leads novas à espera.</b> A que espera há mais tempo é {chegou.name} ({chegou.client_name}). O Time to Lead está a contar.</>}</span>
           <button type="button" className="btn dark sm" onClick={passarPara}>Passar para ela</button>
           <button type="button" className="link" onClick={() => setChegou(null)}>Depois</button>
         </div>
@@ -304,8 +314,8 @@ export default function Fila({ ctx }) {
             <details className="panel">
               <summary style={{ cursor: "pointer", fontWeight: 600, minHeight: 28 }}>Regras da fila</summary>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 13, color: "#334155", lineHeight: 1.5 }}>
-                <span>1. Leads novas sempre primeiro, pela ordem de chegada: a que espera há mais tempo primeiro. Quando entra uma lead nova e estás num follow up ou BD, a fila passa logo para as leads novas (se já estiveres a ligar, aparece um aviso).</span>
-                <span>2. Chamadas com hora marcada, até 3 horas depois da hora.</span>
+                <span>1. Chamadas e follow ups com hora marcada, quando chega a hora (até 3 horas depois): vão para o topo, à frente de tudo. O ecrã salta para eles quando chega a hora (se já estiveres a ligar, aparece um aviso).</span>
+                <span>2. Leads novas, pela ordem de chegada: a que espera há mais tempo primeiro. Quando entra uma lead nova e estás num follow up ou BD, a fila passa logo para as leads novas (se já estiveres a ligar, aparece um aviso).</span>
                 <span>3. Follow ups de hoje ou atrasados, agrupados por cliente. Fazem-se antes de qualquer BD.</span>
                 <span>4. BD cliente a cliente, até às leads do dia de cada um (25). O dia começa pelo cliente com menos leads trabalhadas na semana.</span>
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
