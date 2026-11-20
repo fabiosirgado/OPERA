@@ -91,8 +91,10 @@ export default function Fila({ ctx }) {
     if (!curId && queue.length) setCurId(queue[0].lead_id);
   }, [curId, queue]);
 
-  // Lead nova a entrar em tempo real: passa logo para a frente, a não ser que já se esteja a ligar,
-  // a escolher um resultado ou a tratar outra lead nova. Nesses casos aparece um aviso para passar para ela.
+  // Lead nova a entrar em tempo real: as leads novas passam à frente de tudo, pela ordem de chegada (a mais antiga
+  // primeiro). Se a lead aberta for um follow up ou BD, salta-se logo para a lead nova mais antiga, a não ser que já
+  // se esteja a ligar ou a escolher um resultado: aí aparece um aviso para passar para ela.
+  // Se a lead aberta já for uma lead nova, a que entrou fica na lista, pela ordem.
   const [ligouId, setLigouId] = useState(null);
   const [chegou, setChegou] = useState(null);
   const vistas = useRef(null);
@@ -103,13 +105,15 @@ export default function Fila({ ctx }) {
     const chegadas = novas.filter((r) => !vistas.current.has(r.lead_id));
     novas.forEach((r) => vistas.current.add(r.lead_id));
     if (chegou && !rows.some((r) => r.lead_id === chegou.lead_id)) setChegou(null);
-    const n = chegadas[0];
-    if (!n || !curId || n.lead_id === curId) return;
+    if (!chegadas.length || !curId) return;
     const atual = rows.find((r) => r.lead_id === curId);
-    if (atual && atual.grupo_ordem !== 1 && ligouId !== curId && !pick) {
+    if (atual && atual.grupo_ordem === 1) return;
+    const n = novas.find((r) => r.lead_id !== curId);
+    if (!n) return;
+    if (atual && ligouId !== curId && !pick) {
       setHistory((h) => [...h, curId]);
       setCurId(n.lead_id); setChegou(null);
-      setMsg({ texto: `Entrou uma lead nova de ${n.client_name}: ${n.name} passou para a frente.` });
+      setMsg({ texto: `Entrou uma lead nova (${chegadas[0].name}, ${chegadas[0].client_name}). As leads novas passam à frente: começa por ${n.name}, a que espera há mais tempo.` });
       goTop();
     } else setChegou(n);
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -198,7 +202,7 @@ export default function Fila({ ctx }) {
       {msg && <div className={`banner ${msg.erro ? "orange" : "blue"}`}>{msg.texto}</div>}
       {chegou && chegou.lead_id !== curId && (
         <div className="banner green" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-          <span style={{ flex: 1, minWidth: 220 }}><b>Entrou uma lead nova: {chegou.name}</b> ({chegou.client_name}). O Time to Lead está a contar.</span>
+          <span style={{ flex: 1, minWidth: 220 }}><b>Há leads novas à espera.</b> A que espera há mais tempo é {chegou.name} ({chegou.client_name}). O Time to Lead está a contar.</span>
           <button type="button" className="btn dark sm" onClick={passarPara}>Passar para ela</button>
           <button type="button" className="link" onClick={() => setChegou(null)}>Depois</button>
         </div>
@@ -286,7 +290,7 @@ export default function Fila({ ctx }) {
             <details className="panel">
               <summary style={{ cursor: "pointer", fontWeight: 600, minHeight: 28 }}>Regras da fila</summary>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 13, color: "#334155", lineHeight: 1.5 }}>
-                <span>1. Leads novas sempre primeiro: as que entraram há menos de 1 hora, a mais antiga primeiro; depois as restantes. Uma lead nova que entra passa logo para a frente, a não ser que já estejas a ligar ou a tratar outra lead nova: aí aparece um aviso para passares para ela.</span>
+                <span>1. Leads novas sempre primeiro, pela ordem de chegada: a que espera há mais tempo primeiro. Quando entra uma lead nova e estás num follow up ou BD, a fila passa logo para as leads novas (se já estiveres a ligar, aparece um aviso).</span>
                 <span>2. Chamadas com hora marcada, até 3 horas depois da hora.</span>
                 <span>3. Follow ups de hoje ou atrasados, agrupados por cliente. Fazem-se antes de qualquer BD.</span>
                 <span>4. BD cliente a cliente, até às leads do dia de cada um (25). O dia começa pelo cliente com menos leads trabalhadas na semana.</span>
