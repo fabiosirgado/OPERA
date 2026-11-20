@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { callLead, fila, filaClienteAtiva, filaClientes, filaEtapas, filaResultado, internalClientIds } from "../lib/leadsApi.js";
-import { dueFrom, localInput } from "../lib/format.js";
-import { useAction } from "../ui/feedback.jsx";
+import { callLead, fila, filaBdCandidatas, filaClienteAtiva, filaClientes, filaEscolher, filaEtapas, filaResultado, internalClientIds } from "../lib/leadsApi.js";
+import { dueFrom, fmtDate, localInput } from "../lib/format.js";
+import { Modal, useAction } from "../ui/feedback.jsx";
 import { ClientTag, Icon } from "../ui/bits.jsx";
 import LeadModal from "./LeadModal.jsx";
 
@@ -44,6 +44,7 @@ export default function Fila({ ctx }) {
   const [resumo, setResumo] = useState(null);
   const [etapas, setEtapas] = useState(null);
   const [feitas, setFeitas] = useState([]);
+  const [escolher, setEscolher] = useState(false);
   // Cada carregamento tem um número: uma resposta antiga (de outro cliente ou da fila anterior) nunca substitui a mais recente.
   const reqRef = useRef(0);
   const load = useCallback(async () => {
@@ -192,6 +193,19 @@ export default function Fila({ ctx }) {
         ))}
       </div>
 
+      {mode && (
+        <div className="row" style={{ alignItems: "center" }}>
+          <button type="button" className="btn sm" onClick={() => setEscolher(true)}>Escolher leads de BD</button>
+          <span style={{ fontSize: 12, color: "var(--mute)" }}>
+            Escolhe as leads de BD de {clients.find((c) => c.id === mode)?.name ?? "este cliente"} que queres na fila: passam à frente da BD automática.
+          </span>
+        </div>
+      )}
+      {escolher && mode && (
+        <EscolherBD client={clients.find((c) => c.id === mode)} onClose={() => setEscolher(false)}
+          onSaved={() => { setEscolher(false); load().catch(() => {}); ctx.onChanged(); }} />
+      )}
+
       {mode && others > 0 && (
         <div className="banner orange" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           <span style={{ flex: 1, minWidth: 220 }}><b>{others} leads novas ou com hora marcada de outros clientes à espera.</b> O Time to Lead está a contar.</span>
@@ -297,6 +311,7 @@ export default function Fila({ ctx }) {
                 <span>5. Seguinte passa à próxima sem registar resultado: a lead vai para o fim do seu grupo.</span>
                 <span>6. Uma lead com tarefa marcada para mais tarde sai da fila e volta à hora certa.</span>
                 <span>7. Não atendeu 2 vezes seguidas: sai da fila à espera do WhatsApp. Volta à fila se alguém lhe marcar uma chamada ou follow up.</span>
+                <span>8. Leads de BD escolhidas à mão (com um cliente selecionado, "Escolher leads de BD") entram sempre e passam à frente da BD automática desse cliente, mesmo com 2 ou mais tentativas. Contam para as leads do dia e saem da escolha quando lhes dás um resultado.</span>
               </div>
             </details>
             <PainelClientes resumo={resumo} busy={busy} onToggle={toggleAtiva} />
@@ -382,5 +397,80 @@ function PainelFeitas({ feitas }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// Escolher à mão as leads de BD de um cliente que entram na fila (pedido do Fábio, 2026-11-20).
+function EscolherBD({ client, onClose, onSaved }) {
+  const [q, setQ] = useState("");
+  const [list, setList] = useState(null);
+  const [inicial, setInicial] = useState(() => new Set());
+  const [sel, setSel] = useState(() => new Set());
+  const [run, busy] = useAction();
+  const primeira = useRef(true);
+  const inicialTocadas = useRef(new Set());
+  useEffect(() => {
+    let vivo = true;
+    const t = setTimeout(() => {
+      filaBdCandidatas(client.id, q).then((r) => {
+        if (!vivo) return;
+        setList(r);
+        // Na primeira vez, as que já estão escolhidas ficam marcadas. Depois, a pesquisa não mexe no que já se marcou.
+        if (primeira.current) {
+          primeira.current = false;
+          const ja = new Set(r.filter((x) => x.escolhida).map((x) => x.lead_id));
+          setInicial(ja); setSel(new Set(ja));
+        } else {
+          setInicial((i) => { const n = new Set(i); r.filter((x) => x.escolhida).forEach((x) => n.add(x.lead_id)); return n; });
+          setSel((s0) => { const n = new Set(s0); r.filter((x) => x.escolhida && !s0.has(x.lead_id) && !inicialTocadas.current.has(x.lead_id)).forEach((x) => n.add(x.lead_id)); return n; });
+        }
+      }).catch(() => vivo && setList([]));
+    }, q ? 300 : 0);
+    return () => { vivo = false; clearTimeout(t); };
+  }, [client.id, q]);
+  const toggle = (id) => {
+    inicialTocadas.current.add(id);
+    setSel((s0) => { const n = new Set(s0); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  };
+  const add = [...sel].filter((id) => !inicial.has(id));
+  const rem = [...inicial].filter((id) => !sel.has(id));
+  const guardar = () => run(async () => { await filaEscolher(add, true); await filaEscolher(rem, false); },
+    `${sel.size} ${sel.size === 1 ? "lead escolhida" : "leads escolhidas"} para a fila de ${client.name}`).then((ok) => ok && onSaved());
+
+  return (
+    <Modal title={`Leads de BD de ${client.name}`} onClose={onClose} wide>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <span className="sub" style={{ margin: 0, fontSize: 13 }}>
+          Marca as que queres na fila. Entram sempre, à frente da BD automática deste cliente, e saem da escolha quando lhes dás um resultado.
+          Aqui só aparecem leads de BD sem tarefa marcada.
+        </span>
+        <label className="search" style={{ width: "100%" }}>
+          <input style={{ width: "100%" }} placeholder="Procurar por nome ou telefone" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        </label>
+        <div style={{ maxHeight: "50vh", overflowY: "auto", border: "1px solid var(--line)", borderRadius: 10 }}>
+          {!list && <div className="sub" style={{ padding: 14, fontSize: 13 }}>A carregar…</div>}
+          {list && list.length === 0 && <div className="sub" style={{ padding: 14, fontSize: 13 }}>Nenhuma lead de BD{q ? " com esta pesquisa" : ""}.</div>}
+          {list?.map((l) => (
+            <label key={l.lead_id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: "1px solid #EEF2F7", cursor: "pointer", background: sel.has(l.lead_id) ? "#F0F6FF" : "#fff" }}>
+              <input type="checkbox" checked={sel.has(l.lead_id)} onChange={() => toggle(l.lead_id)} />
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</span>
+                <span style={{ fontSize: 12, color: "var(--mute)" }}>
+                  {[l.phone, l.stage_name, `${l.attempts} ${l.attempts === 1 ? "tentativa" : "tentativas"}`,
+                    l.last_contact_at ? `último contacto ${fmtDate(l.last_contact_at)}` : "nunca contactada",
+                    l.aguarda_whatsapp ? "à espera do WhatsApp" : null].filter(Boolean).join(" · ")}
+                </span>
+              </div>
+            </label>
+          ))}
+        </div>
+        {list?.length === 300 && <span style={{ fontSize: 12, color: "var(--mute2)" }}>Mostram-se as primeiras 300. Usa a pesquisa para encontrar outras.</span>}
+        <div className="row" style={{ alignItems: "center" }}>
+          <span style={{ flex: 1, fontSize: 13 }}><b>{sel.size}</b> {sel.size === 1 ? "escolhida" : "escolhidas"}{add.length || rem.length ? ` · ${add.length} a juntar, ${rem.length} a tirar` : ""}</span>
+          <button type="button" className="btn" onClick={onClose}>Cancelar</button>
+          <button type="button" className="btn primary" disabled={busy || (!add.length && !rem.length)} onClick={guardar}>Guardar</button>
+        </div>
+      </div>
+    </Modal>
   );
 }

@@ -41,6 +41,8 @@ export const internalClientIds = () => must(sb.from("clients").select("id").eq("
 export const fila = (client) => must(sb.rpc("leads_fila", { p_client: client || null }));
 export const filaClientes = () => must(sb.rpc("leads_fila_clientes_resumo"));
 export const filaClienteAtiva = (client, ativa) => must(sb.rpc("leads_fila_cliente_ativa", { p_client: client, p_ativa: ativa }));
+export const filaBdCandidatas = (client, q) => must(sb.rpc("leads_fila_bd_candidatas", { p_client: client, p_q: q || null }));
+export const filaEscolher = (ids, escolher) => (ids.length ? must(sb.rpc("leads_fila_escolher", { p_leads: ids, p_escolher: escolher })) : Promise.resolve(0));
 export const filaEtapas = () => must(sb.rpc("leads_fila_etapas"));
 export const filaResultado = (leadId, resultado, quando, nota) => must(sb.rpc("leads_fila_resultado", {
   p_lead: leadId, p_resultado: resultado, p_quando: quando ? new Date(quando).toISOString() : null, p_nota: nota || null,
