@@ -42,14 +42,16 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
     if (period === "custom" && !rangeOk) return;
     const custom = period === "custom" ? { p_from: range.from, p_to: range.to } : {};
     run(async () => {
-      const [dash, load, rk, act] = await Promise.all([
+      const [dash, load, rk, act, wa] = await Promise.all([
         sb.rpc("leads_dashboard", { p_client: client || null, p_period: period, ...custom }),
         isAdmin ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
         opera ? sb.rpc("leads_qualified_ranking", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
         isAdmin ? sb.rpc("leads_managers_activity", { p_period: period, ...custom }) : Promise.resolve({ data: null }),
+        // Vista do cliente com o WhatsApp em funcionamento (wa_live): mensagens entregues, para "Contactos realizados".
+        !opera ? sb.rpc("wa_contactos", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
       ]);
       if (dash.error) throw dash.error;
-      setD(dash.data);
+      setD({ ...dash.data, wa_entregues: wa.error ? null : wa.data });
       setManagers(load.data || []);
       setRank(rk.data || null);
       setActivity(act.data || null);
@@ -120,8 +122,14 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           <div className="stat s6"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia{d.calls_new != null ? ` · ${d.calls_new} ${d.calls_new === 1 ? "chamada" : "chamadas"} a estas leads` : ""}</small></div>
           <div className={`stat s6 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
           {/* Chamadas feitas = atendidas (conversa de 10 segundos ou mais) + tentativas (não atendidas ou mais curtas). */}
-          <div className="stat s4"><span>Chamadas feitas</span><b>{d.calls}</b>
-            <small>A {d.leads_called ?? 0} leads · {d.leads_called ? dec(d.calls / d.leads_called) : "0"} por lead</small></div>
+          {d.wa_entregues != null ? (
+            // Um só número para o cliente: chamadas feitas mais mensagens de WhatsApp entregues (secção 10.1).
+            <div className="stat s4"><span>Contactos realizados</span><b>{d.calls + d.wa_entregues}</b>
+              <small>A {d.leads_called ?? 0} leads e por mensagem</small></div>
+          ) : (
+            <div className="stat s4"><span>Chamadas feitas</span><b>{d.calls}</b>
+              <small>A {d.leads_called ?? 0} leads · {d.leads_called ? dec(d.calls / d.leads_called) : "0"} por lead</small></div>
+          )}
           <div className="stat s4"><span>Chamadas atendidas</span><b>{d.answered}</b>
             <small>{pct(d.answered, d.calls)} das chamadas feitas · conversa de 10 s ou mais</small></div>
           <div className="stat s4"><span>Tentativas</span><b>{d.attempts ?? d.calls - d.answered}</b>

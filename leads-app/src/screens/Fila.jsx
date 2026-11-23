@@ -11,7 +11,7 @@ import LeadModal from "./LeadModal.jsx";
 
 // Ordem dos grupos na fila: a hora marcada (2) vem à frente das leads novas (1), quando chega a hora.
 const prio = (g) => (g === 2 ? 0 : g);
-const urgente = (g) => g === 1 || g === 2;
+const urgente = (g) => g >= 1 && g <= 3; // hora marcada, lead nova e reativada pelo WhatsApp
 const GRUPO_COR = { 1: "#15803D", 2: "#0B1B3A", 3: "#1D4ED8", 4: "#78350F", 5: "#334155" };
 const GRUPO_FUNDO = { 1: "#DCFCE7", 2: "#E2E8F0", 3: "#DCE8FF", 4: "#FEF3C7", 5: "#EEF2F7" };
 
