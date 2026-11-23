@@ -241,3 +241,31 @@ export function subscribeChanges(onChange) {
   });
   return () => { stopped = true; auth.subscription.unsubscribe(); if (ch) sb.removeChannel(ch); };
 }
+
+// ---------- WhatsApp (reativação; ecrã só para admin). Os segredos da Meta ficam no servidor.
+export const waPainel = () => must(sb.rpc("wa_painel"));
+export const waPrevisao = (client) => must(sb.rpc("wa_previsao", { p_client: client }));
+export const waClienteDefinir = (client, p) => must(sb.rpc("wa_cliente_definir", { p_client: client, p }));
+export const waDefinicoesGuardar = (p) => must(sb.rpc("wa_definicoes_guardar", { p }));
+export const waLigar = (live) => must(sb.rpc("wa_ligar", { p_live: live }));
+export const waFilaHoje = () => must(sb.rpc("wa_fila_hoje"));
+export const waMetricas = (de, ate) => must(sb.rpc("wa_metricas", { p_de: de, p_ate: ate }));
+export const waBloquear = (lead, bloquear) => must(sb.rpc("wa_bloquear", { p_lead: lead, p_bloquear: bloquear }));
+export const waContactos = (client, period, from, to) =>
+  must(sb.rpc("wa_contactos", { p_client: client || null, p_period: period, p_from: from || null, p_to: to || null }));
+export async function waMeta(action) {
+  const { data: s } = await sb.auth.getSession();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/wa_send_batch`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${s.session?.access_token ?? ""}`,
+    },
+    body: JSON.stringify({ action }),
+  });
+  if (res.status === 401) await sessionEnded();
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || "A função do WhatsApp não respondeu. Tenta outra vez.");
+  return body;
+}

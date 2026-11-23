@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addNote, addTask, businessMinutes, updateTask, clientUsers, completeTask, deleteTask, taskNotDone, eraseSubject, getLead, leadEvents, leadTasks,
-  callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead,
+  callAnalysis, callLead, callNote, callRecording, snoozeTask, toggleLabel, updateEvent, updateLead, waBloquear,
 } from "../lib/leadsApi.js";
 import { exportSubject } from "../lib/exportSubject.js";
 import {
@@ -49,6 +49,14 @@ function TaskFields({ form, set }) {
     </>
   );
 }
+
+// Estado do WhatsApp da lead (reativação), como aparece na ficha.
+const WA_ESTADO = {
+  enviada: "mensagem enviada", entregue: "mensagem entregue", lida: "mensagem lida", respondeu_sim: "respondeu sim",
+  respondeu_mais_tarde: "respondeu mais tarde", respondeu_ja_nao: "já não procura", nao_contactar: "não contactar",
+  respondeu_texto: "respondeu por escrito", falhou: "entrega falhou", sem_resposta: "sem resposta",
+  reativada_sem_contacto: "reativada sem contacto", so_fim_de_semana: "só fim de semana",
+};
 
 // Ficha da lead. ctx: { me, opera, stages, labels, clients, onChanged, onOpenLabels }
 // Na Fila a ficha aparece dentro do ecrã, sem janela por cima (inline).
@@ -188,6 +196,10 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
   ].sort((a, b) => new Date(b.when) - new Date(a.when));
   const eventTitle = (e) => {
     if (e.kind === "stage") return "Mudou de etapa";
+    if (e.kind === "whatsapp") {
+      const estado = { sent: "enviada", delivered: "entregue", read: "lida", failed: "falhou" }[e.meta?.estado];
+      return `${e.title || "WhatsApp"}${e.meta?.direcao === "out" && estado ? ` · ${estado}` : ""}`;
+    }
     if (e.kind === "call") {
       const m = e.meta || {};
       return `Chamada${m.answered === true ? " atendida" : m.answered === false ? " não atendida" : ""}${m.duration_s ? ` · ${fmtDur(m.duration_s / 60)}` : ""}`;
@@ -207,6 +219,8 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
         <div className="tags">
           <ClientTag name={lead.client.name} color={lead.client.color} />
           {lead.source && <span className="src">Origem: {lead.source}</span>}
+          {lead.buy_and_sell && <span className="tag" style={{ background: "#DCFCE7", color: "#166534" }}>Compra e venda</span>}
+          {opera && lead.wa_status && lead.wa_status !== "nao_enviada" && <span className="src">WhatsApp: {WA_ESTADO[lead.wa_status] ?? lead.wa_status}</span>}
           <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 400 }}>
             Entrou {fmtRel(lead.created_at)}{opera && firstCallMin != null && ` · Time to Lead ${fmtDur(firstCallMin)}`}
           </span>
@@ -227,12 +241,24 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
         </div>
       )}
 
+      {lead.do_not_contact && (
+        <div className="banner orange" role="alert" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          <span style={{ flex: 1, minWidth: 220 }}><b>Pediu para não ser contactado.</b> Não ligar nem enviar mensagens a esta lead.</span>
+          {opera && <button type="button" className="link" disabled={busy}
+            onClick={() => window.confirm("Desbloquear esta lead? Só se ela pediu para voltar a ser contactada.") && after(() => waBloquear(lead.id, false), "Lead desbloqueada")}>Desbloquear</button>}
+        </div>
+      )}
       <div className="panel" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="row">
-          {opera && <button type="button" className="btn primary" disabled={busy || !lead.phone || lead.anonymized} onClick={call}
+          {opera && <button type="button" className="btn primary" disabled={busy || !lead.phone || lead.anonymized || lead.do_not_contact} onClick={call}
             aria-describedby={!lead.phone && !lead.anonymized ? "sem-telefone" : undefined}><Icon.phone />Ligar</button>}
           {opera && !lead.phone && !lead.anonymized && (
             <span id="sem-telefone" style={{ fontSize: 13, color: "var(--mute)" }}>Sem telemóvel: escreve-o em Contacto para poder ligar.</span>
+          )}
+          {opera && !lead.do_not_contact && !lead.anonymized && (
+            <button type="button" className="link" style={{ marginLeft: "auto", fontSize: 12 }} disabled={busy}
+              onClick={() => window.confirm("Marcar como não contactar? Deixa de receber chamadas e mensagens, e as tarefas em aberto são canceladas.")
+                && after(() => waBloquear(lead.id, true), "Marcada como não contactar")}>Não contactar</button>
           )}
           {lead.phone && <a className="btn" href={waLink(lead.phone)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
           {lead.email && <a className="btn" href={`mailto:${lead.email}`}>Email</a>}
