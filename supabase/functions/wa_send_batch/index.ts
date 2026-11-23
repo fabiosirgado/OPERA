@@ -134,12 +134,13 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* sem corpo */ }
   const action = body.action ?? "process";
   try {
+    // A própria base de dados (chave das entradas automáticas) pode correr todas as ações; o ecrã, só o admin.
+    const servidor = Boolean((await db.rpc("leads_inbound_verify", { p_secret: req.headers.get("x-opera-secret") ?? "" })).data);
     if (action === "process") {
-      const ok = await db.rpc("leads_inbound_verify", { p_secret: req.headers.get("x-opera-secret") ?? "" });
-      if (!ok.data) return json({ error: "Sem acesso." }, 401);
+      if (!servidor) return json({ error: "Sem acesso." }, 401);
       return json(await processar());
     }
-    if (!(await isAdmin(req))) return json({ error: "Só o administrador." }, 403);
+    if (!servidor && !(await isAdmin(req))) return json({ error: "Só o administrador." }, 403);
     const cfg = await config();
     if (action === "templates") return json({ modelos: await syncTemplates(cfg) });
     if (action === "estado") {
