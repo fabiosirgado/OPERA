@@ -462,21 +462,14 @@ header.nav.scrolled{
 
 /* ---------- TESTIMONIALS ---------- */
 .testimonials{background:var(--navy-950);}
-.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
-.testi-card{border-radius:var(--radius-lg);overflow:hidden;background:var(--glass);border:1px solid var(--glass-border);transition:transform .4s var(--ease), border-color .4s;}
+.testi-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;}
+.testi-card{width:100%;max-width:340px;border-radius:var(--radius-lg);overflow:hidden;background:var(--glass);border:1px solid var(--glass-border);transition:transform .4s var(--ease), border-color .4s;}
 .testi-card:hover{transform:translateY(-5px);border-color:rgba(255,255,255,.18);}
-.testi-video-wrap{position:relative;aspect-ratio:16/9;background:linear-gradient(160deg,#101c4d,#0a1130);display:flex;align-items:center;justify-content:center;}
+.testi-video-wrap{position:relative;aspect-ratio:9/16;background:linear-gradient(160deg,#101c4d,#0a1130);}
 .testi-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
-.testi-play{
-  width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
-  display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;backdrop-filter:blur(4px);
-  position:relative;z-index:2;
-}
-.testi-placeholder-label{position:absolute;bottom:14px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);z-index:2;}
 .testi-info{padding:18px 20px;}
 .testi-name{font-family:'Archivo',sans-serif;font-weight:800;font-size:15.5px;color:#fff;}
 .testi-role{font-size:13px;color:var(--ink-500);margin-top:2px;}
-@media (max-width:900px){.testi-grid{grid-template-columns:1fr;}}
 
 @media (max-width:900px){
   .pillar-flip,.pillar-flip.reverse{grid-template-columns:1fr;direction:ltr;}
@@ -991,11 +984,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 
   <!-- TESTIMONIALS -->
   <!--
-    ATENÇÃO: os 3 cartões abaixo são placeholders. Substitui cada um por:
-    1) um vídeo real: troca o <div class="testi-video-wrap">...</div>
-       por <video controls poster="caminho/para/capa.jpg"><source src="caminho/para/video.mp4" type="video/mp4"></video>
-       (ou um <iframe> do YouTube/Vimeo, se preferires alojar lá)
-    2) o nome e cargo reais do cliente, em vez de "Nome do Cliente" / "Cargo · Empresa"
+    Para acrescentar um testemunho: duplica um <div class="testi-card reveal"> e troca o vídeo
+    (MP4 vertical 9:16 em media/testemunhos/), a capa (poster) e o nome e cargo reais do cliente.
     Nunca publiques esta secção com conteúdo inventado.
   -->
   <section class="section testimonials" id="testemunhos">
@@ -1007,32 +997,13 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
       <div class="testi-grid stagger">
         <div class="testi-card reveal">
           <div class="testi-video-wrap">
-            <div class="testi-play">▶</div>
-            <span class="testi-placeholder-label">Vídeo por adicionar</span>
+            <video controls playsinline preload="none" poster="media/testemunhos/bruno-fernandes.jpg" aria-label="Testemunho em vídeo de Bruno Fernandes">
+              <source src="media/testemunhos/bruno-fernandes.mp4" type="video/mp4">
+            </video>
           </div>
           <div class="testi-info">
-            <div class="testi-name">Nome do Cliente</div>
-            <div class="testi-role">Cargo · Empresa</div>
-          </div>
-        </div>
-        <div class="testi-card reveal">
-          <div class="testi-video-wrap">
-            <div class="testi-play">▶</div>
-            <span class="testi-placeholder-label">Vídeo por adicionar</span>
-          </div>
-          <div class="testi-info">
-            <div class="testi-name">Nome do Cliente</div>
-            <div class="testi-role">Cargo · Empresa</div>
-          </div>
-        </div>
-        <div class="testi-card reveal">
-          <div class="testi-video-wrap">
-            <div class="testi-play">▶</div>
-            <span class="testi-placeholder-label">Vídeo por adicionar</span>
-          </div>
-          <div class="testi-info">
-            <div class="testi-name">Nome do Cliente</div>
-            <div class="testi-role">Cargo · Empresa</div>
+            <div class="testi-name">Bruno Fernandes</div>
+            <div class="testi-role">Cliente OPERA SA</div>
           </div>
         </div>
       </div>
