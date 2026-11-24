@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { callLead, fila, filaBdCandidatas, filaClienteAtiva, filaClientes, filaEscolher, filaEtapas, filaResultado, internalClientIds } from "../lib/leadsApi.js";
+import { callLead, fila, filaBdCandidatas, filaClienteAtiva, filaClientes, filaEscolher, filaEtapas, filaResultado, internalClientIds, updateLead } from "../lib/leadsApi.js";
+import { meetingIso } from "../lib/setting.js";
 import { dueFrom, fmtDate, localInput } from "../lib/format.js";
 import { Modal, useAction } from "../ui/feedback.jsx";
 import { ClientTag, Icon } from "../ui/bits.jsx";
@@ -179,16 +180,22 @@ export default function Fila({ ctx }) {
     (via) => (via === "cloudtalk" ? `A CloudTalk vai ligar-te primeiro e depois a ${cur.name}` : `A ligar a ${cur.name}`))
     .then((ok) => ok && ctx.onChanged()));
 
-  const resultado = (tipo, quando, nota) => {
+  // Setting B2B: antes de agendar grava os dados da reunião e antes de desqualificar grava o motivo (obrigatórios).
+  const curSetting = !!cur && ctx.setting.isSetting(cur.client_id);
+  const [reuniao, setReuniao] = useState({ date: "", time: "", with: "", link: "" });
+  const [outroMotivo, setOutroMotivo] = useState(null);
+  const resultado = (tipo, quando, nota, antes) => {
     const id = curId;
     return run(async () => {
+      if (antes) await updateLead(id, antes);
       const r = await filaResultado(id, tipo, quando, nota);
       const lead = queue.find((q) => q.lead_id === id);
       setFeitas((f) => [{ id, name: lead?.name ?? "Lead", client: lead?.client_name, color: lead?.client_color, tipo, at: Date.now() }, ...f]);
       setHistory((h) => [...h, id]);
       setRows(null);
       setPick(null);
-      setMsg({ texto: r?.mensagem || "Registado." });
+      setReuniao({ date: "", time: "", with: "", link: "" }); setOutroMotivo(null);
+      setMsg({ texto: tipo === "qualificada" && antes?.meeting_at ? "Reunião agendada. O cliente vai ser avisado." : r?.mensagem || "Registado." });
       setCurId(null);
       await load();
       loadPaineis();
@@ -253,7 +260,7 @@ export default function Fila({ ctx }) {
         </div>
       )}
       {escolher && mode && (
-        <EscolherBD client={clients.find((c) => c.id === mode)} onClose={() => setEscolher(false)}
+        <EscolherBD client={clients.find((c) => c.id === mode)} label={ctx.setting.label} onClose={() => setEscolher(false)}
           onSaved={() => { setEscolher(false); load().catch(() => {}); ctx.onChanged(); }} />
       )}
 
@@ -303,20 +310,41 @@ export default function Fila({ ctx }) {
                     <button type="button" className="btn sm" disabled={busy} onClick={() => resultado("nao_atendeu")}>Não atendeu</button>
                     <button type="button" className="btn sm" disabled={busy} onClick={() => setPick("tarde")}>Ligar mais tarde</button>
                     <button type="button" className="btn sm" disabled={busy} onClick={() => setPick("fu")}>Follow up</button>
-                    <button type="button" className="btn sm green" disabled={busy} onClick={() => resultado("qualificada")}>Qualificada</button>
+                    {curSetting
+                      ? <button type="button" className="btn sm green" disabled={busy} onClick={() => setPick("reuniao")}>Agendar reunião</button>
+                      : <button type="button" className="btn sm green" disabled={busy} onClick={() => resultado("qualificada")}>Qualificada</button>}
                     <button type="button" className="btn sm" disabled={busy} style={{ color: "#B91C1C" }} onClick={() => setPick("desq")}>Desqualificar</button>
                   </div>
                 </div>
               )}
               {pick && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{pick === "tarde" ? "Quando voltar a ligar?" : pick === "fu" ? "Próximo contacto" : "Motivo"}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{pick === "tarde" ? "Quando voltar a ligar?" : pick === "fu" ? "Próximo contacto" : pick === "reuniao" ? "Dados da reunião (todos obrigatórios)" : "Motivo"}</span>
+                  {pick === "reuniao" && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" }}>
+                      <label className="f">Dia<input type="date" value={reuniao.date} onChange={(e) => setReuniao({ ...reuniao, date: e.target.value })} /></label>
+                      <label className="f">Hora<input type="time" value={reuniao.time} onChange={(e) => setReuniao({ ...reuniao, time: e.target.value })} /></label>
+                      <label className="f" style={{ flex: "1 1 160px" }}>Quem faz a reunião<input value={reuniao.with} placeholder="Ex.: Tomás" onChange={(e) => setReuniao({ ...reuniao, with: e.target.value })} /></label>
+                      <label className="f" style={{ flex: "2 1 240px" }}>Ligação<input value={reuniao.link} placeholder="https://…" onChange={(e) => setReuniao({ ...reuniao, link: e.target.value })} /></label>
+                      <button type="button" className="btn sm green" disabled={busy || !reuniao.date || !reuniao.time || !reuniao.with.trim() || !reuniao.link.trim()}
+                        onClick={() => resultado("qualificada", null, null, { meeting_at: meetingIso(reuniao.date, reuniao.time), meeting_with: reuniao.with.trim(), meeting_link: reuniao.link.trim() })}>Agendar e avisar cliente</button>
+                    </div>
+                  )}
                   <div className="chips">
                     {pick === "tarde" && opcoesMaisTarde().map(([l, t]) => (
                       <button key={l} type="button" className="chip" disabled={busy} onClick={() => resultado("mais_tarde", t)}>{l}</button>))}
                     {pick === "fu" && OPCOES_FU().map(([l, t]) => (
                       <button key={l} type="button" className="chip" disabled={busy} onClick={() => resultado("follow_up", t)}>{l}</button>))}
-                    {pick === "desq" && MOTIVOS.map((m) => (
+                    {pick === "desq" && curSetting && ctx.setting.desqReasons(cur.client_id).map((m) => (
+                      <button key={m} type="button" className="chip" disabled={busy}
+                        onClick={() => (m === "Outro" ? setOutroMotivo("") : resultado("desqualificada", null, `Desqualificada: ${m}`, { desq_reason: m }))}>{m}</button>))}
+                    {pick === "desq" && curSetting && outroMotivo !== null && (
+                      <span style={{ display: "inline-flex", gap: 6 }}>
+                        <input value={outroMotivo} onChange={(e) => setOutroMotivo(e.target.value)} placeholder="Qual o motivo?" autoFocus style={{ minHeight: 36 }} />
+                        <button type="button" className="btn sm" disabled={busy || !outroMotivo.trim()}
+                          onClick={() => resultado("desqualificada", null, `Desqualificada: Outro: ${outroMotivo.trim()}`, { desq_reason: `Outro: ${outroMotivo.trim()}` })}>Desqualificar</button>
+                      </span>)}
+                    {pick === "desq" && !curSetting && MOTIVOS.map((m) => (
                       <button key={m} type="button" className="chip" disabled={busy} onClick={() => resultado("desqualificada", null, `Desqualificada: ${m}`)}>{m}</button>))}
                     <button type="button" className="link" onClick={() => setPick(null)}>Voltar aos resultados</button>
                   </div>
@@ -470,7 +498,7 @@ function PainelFeitas({ feitas }) {
 // Vêm todas as leads de BD do cliente (todas as etapas de entrada, sem limite); o filtro por etapa e a pesquisa são feitos aqui.
 const MOSTRAR = 400;
 const so = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-function EscolherBD({ client, onClose, onSaved }) {
+function EscolherBD({ client, onClose, onSaved, label = (n) => n }) {
   const [q, setQ] = useState("");
   const [etapa, setEtapa] = useState(null);
   const [list, setList] = useState(null);
@@ -491,13 +519,13 @@ function EscolherBD({ client, onClose, onSaved }) {
 
   const etapas = useMemo(() => {
     const m = new Map();
-    (list ?? []).forEach((l) => m.set(l.stage_name, (m.get(l.stage_name) ?? 0) + 1));
+    (list ?? []).forEach((l) => m.set(label(l.stage_name, client?.id), (m.get(label(l.stage_name, client?.id)) ?? 0) + 1));
     return [...m.entries()];
   }, [list]);
   const visiveis = useMemo(() => {
     const t = so(q.trim());
     const dig = q.replace(/\D/g, "");
-    return (list ?? []).filter((l) => (!etapa || l.stage_name === etapa)
+    return (list ?? []).filter((l) => (!etapa || label(l.stage_name, client?.id) === etapa)
       && (!t || so(l.name).includes(t) || (dig && String(l.phone || "").replace(/\D/g, "").includes(dig))));
   }, [list, q, etapa]);
   const todasMarcadas = visiveis.length > 0 && visiveis.every((l) => sel.has(l.lead_id));
@@ -544,7 +572,7 @@ function EscolherBD({ client, onClose, onSaved }) {
               <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
                 <span style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</span>
                 <span style={{ fontSize: 12, color: "var(--mute)" }}>
-                  {[l.phone, l.stage_name, `${l.attempts} ${l.attempts === 1 ? "tentativa" : "tentativas"}`,
+                  {[l.phone, label(l.stage_name, client?.id), `${l.attempts} ${l.attempts === 1 ? "tentativa" : "tentativas"}`,
                     l.last_contact_at ? `último contacto ${fmtDate(l.last_contact_at)}` : "nunca contactada",
                     l.aguarda_whatsapp ? "à espera do WhatsApp" : null].filter(Boolean).join(" · ")}
                 </span>

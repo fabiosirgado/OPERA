@@ -4,7 +4,7 @@ import { ClientTag } from "./bits.jsx";
 
 // Pesquisa global no menu: nome, telefone, email, interesse, qualificação, notas e etiquetas.
 // Atalhos: / e Ctrl+K (ou Cmd+K) para abrir; setas e Enter para escolher; Esc para fechar.
-export default function GlobalSearch({ opera, onOpen }) {
+export default function GlobalSearch({ opera, onOpen, stageLabel }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState(null);
   const [sel, setSel] = useState(0);
@@ -52,7 +52,7 @@ export default function GlobalSearch({ opera, onOpen }) {
         {hits?.slice(0, 10).map((h, i) => (
           <button key={h.id} type="button" role="option" aria-selected={i === sel} className={`r ${i === sel ? "act" : ""}`}
             onMouseDown={(e) => e.preventDefault()} onClick={() => open(h.id)}>
-            <span className="tags"><b>{mark(h.name)}</b>{opera && <ClientTag name={h.client_name} color={h.client_color} />}<span className="src">{h.stage_name}</span></span>
+            <span className="tags"><b>{mark(h.name)}</b>{opera && <ClientTag name={h.client_name} color={h.client_color} />}<span className="src">{stageLabel ? stageLabel(h.stage_name, h.client_name) : h.stage_name}</span></span>
             <small>{h.phone}{h.phone ? " · " : ""}encontrado em {h.found_in}{h.snippet ? <>: {mark(h.snippet)}</> : null}</small>
           </button>
         ))}

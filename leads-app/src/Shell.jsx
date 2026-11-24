@@ -1,7 +1,8 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sb } from "./supabase.js";
 import { ROLE_LABEL, initials } from "./lib/format.js";
-import { activeClients, conversations, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
+import { makeSetting } from "./lib/setting.js";
+import { activeClients, clientSettings, conversations, countNewLeads, isAutoNewLead, listLabels, listStages, subscribeChanges, today } from "./lib/leadsApi.js";
 import GlobalSearch from "./ui/GlobalSearch.jsx";
 import NewLeadAlerts from "./ui/NewLeadAlerts.jsx";
 import AppSetup from "./ui/AppSetup.jsx";
@@ -23,6 +24,7 @@ const Conversas = lazy(() => import("./screens/Conversas.jsx"));
 const Fila = lazy(() => import("./screens/Fila.jsx"));
 const WhatsApp = lazy(() => import("./screens/WhatsApp.jsx"));
 const AdminDashboard = lazy(() => import("./screens/admin/AdminDashboard.jsx"));
+const SettingDashboard = lazy(() => import("./screens/SettingDashboard.jsx"));
 
 const VIEW_KEY = "opera-leads-vista";
 const CLIENT_KEY = "opera-leads-cliente";
@@ -39,9 +41,11 @@ export default function Shell({ access }) {
     if (!opera) { setAdminNivel(null); return; }
     sb.rpc("opera_admin_meu_nivel").then(({ data }) => setAdminNivel(data?.nivel || null), () => setAdminNivel(null));
   }, [opera]);
+  // Dashboard de Setting: a equipa OPERA vê sempre; um cliente só o vê se for de setting (ver clientCfg, mais abaixo).
+  const [clienteSetting, setClienteSetting] = useState(false);
   const items = opera
-    ? [["pipeline", "Pipeline geral"], ["fila", "Fila"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ...(adminNivel ? [["admin", "Dashboard Admin"]] : []), ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["whatsapp", "WhatsApp"], ["privacidade", "Privacidade e RGPD"]] : [])]
-    : [["pipeline", "As vossas leads"], ["conversa", "Conversa com a OPERA"], ["dash", "Dashboard"], ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
+    ? [["pipeline", "Pipeline geral"], ["fila", "Fila"], ["hoje", "Hoje"], ["conversas", "Conversas"], ["dash", "Dashboard"], ["setting", "Dashboard de Setting"], ...(adminNivel ? [["admin", "Dashboard Admin"]] : []), ["io", "Importar e exportar"], ["entradas", "Entradas automáticas"], ["clientes", "Clientes e acessos"], ...(role === "admin" ? [["whatsapp", "WhatsApp"], ["privacidade", "Privacidade e RGPD"]] : [])]
+    : [["pipeline", "As vossas leads"], ["conversa", "Conversa com a OPERA"], ...(clienteSetting ? [["setting", "Dashboard de Setting"]] : [["dash", "Dashboard"]]), ...(role === "cliente_admin" ? [["equipa", "A minha equipa"]] : [])];
   const [view, setView] = useState(() => ((opera && read(VIEW_KEY) === "admin") || items.some(([k]) => k === read(VIEW_KEY)) ? read(VIEW_KEY) : items[0][0]));
   const go = (v) => { setView(v); write(VIEW_KEY, v); };
   // Sem acesso ao Dashboard Admin (ou retirado): volta ao primeiro ecrã.
@@ -61,9 +65,11 @@ export default function Shell({ access }) {
   const [chatClient, setChatClient] = useState(null);
   const setFilterClient = (id) => { setFilterClientState(id); write(CLIENT_KEY, id); };
 
+  const [clientCfg, setClientCfg] = useState([]);
   const loadRefs = useCallback(async () => {
-    const [s, l, c] = await Promise.all([listStages(), listLabels(), opera ? activeClients() : Promise.resolve([myClient])]);
-    setStages(s); setLabels(l); setClients(c);
+    const [s, l, c, cfg] = await Promise.all([listStages(), listLabels(), opera ? activeClients() : Promise.resolve([myClient]), clientSettings()]);
+    setStages(s); setLabels(l); setClients(c); setClientCfg(cfg);
+    if (!opera) setClienteSetting(cfg.some((x) => x.id === myClient?.id && x.service_type === "setting"));
     if (opera && filterClient && !c.some((x) => x.id === filterClient)) setFilterClient(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opera, myClient]);
@@ -174,8 +180,9 @@ export default function Shell({ access }) {
   }, [opera, version]);
   useEffect(() => () => clearTimeout(dueTimer.current), []);
 
+  const setting = useMemo(() => makeSetting(stages, clientCfg, clients), [stages, clientCfg, clients]);
   const ctx = useMemo(() => ({
-    me: profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, setFilterClient,
+    me: profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, setFilterClient, setting,
     defaultClient: filterClient,
     onChanged: () => { bump(); },
     onRefsChanged: () => { loadRefs(); bump(); },
@@ -185,7 +192,7 @@ export default function Shell({ access }) {
     onNewStage: () => setModal({ kind: "newStage" }),
     onOpenLabels: (client) => setModal((m) => ({ kind: "labels", back: m?.kind === "lead" ? m.id : null, client })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, bump, loadRefs]);
+  }), [profile.id, opera, myClient, stages, labels, clients, version, changedLeads, filterClient, setting, bump, loadRefs]);
 
   // Links dos emails e das notificações: ?lead=<id> abre logo a ficha e ?conversa=<cliente> a conversa (depois do login).
   const openFromLink = (search) => {
@@ -227,7 +234,7 @@ export default function Shell({ access }) {
       <VersaoNova />
       <nav className="side" aria-label="Menu principal">
         <div className="brand"><b>OPERA</b><span>Leads</span></div>
-        <GlobalSearch opera={opera} onOpen={ctx.onOpenLead} />
+        <GlobalSearch opera={opera} onOpen={ctx.onOpenLead} stageLabel={setting.labelByClientName} />
         <div className="nav">
           {items.map(([k, label]) => (
             <button key={k} type="button" className={view === k ? "on" : ""} aria-current={view === k ? "page" : undefined} onClick={() => go(k)}>
@@ -272,10 +279,11 @@ export default function Shell({ access }) {
         {(view === "conversas" || view === "conversa") && (
           <Conversas ctx={ctx} list={chats} selected={chatClient} onSelect={setChatClient} chatVersion={chatVersion} onRead={loadChats} />
         )}
-        {view === "dash" && <Dashboard ctx={ctx} isAdmin={role === "admin"} opera={opera} />}
+        {view === "dash" && !(clienteSetting && !opera) && <Dashboard ctx={ctx} isAdmin={role === "admin"} opera={opera} />}
+        {stages.length > 0 && (view === "setting" || (view === "dash" && clienteSetting && !opera)) && <SettingDashboard ctx={ctx} />}
         {view === "entradas" && <Entradas ctx={ctx} isAdmin={role === "admin"} />}
         {view === "whatsapp" && role === "admin" && <WhatsApp />}
-        {view === "clientes" && <Clientes profile={profile} />}
+        {view === "clientes" && <Clientes profile={profile} onRefsChanged={ctx.onRefsChanged} />}
         {view === "equipa" && <Equipa profile={profile} client={myClient} />}
         {view === "privacidade" && <Privacidade />}
         {view === "admin" && adminNivel && <AdminDashboard nivel={adminNivel} onOpenLead={ctx.onOpenLead} />}

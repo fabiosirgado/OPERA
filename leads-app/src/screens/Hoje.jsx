@@ -59,7 +59,7 @@ export default function Hoje({ ctx }) {
                 <span className="t" style={{ color }}>{whenText(r.due_at)}</span>
                 <span className="ty"><TaskTag type={r.task_type} /></span>
                 <div className="who">
-                  <div className="tags"><b>{r.lead_name}</b><ClientTag name={r.client_name} color={r.client_color} /><span className="src">{r.stage_name}</span></div>
+                  <div className="tags"><b>{r.lead_name}</b><ClientTag name={r.client_name} color={r.client_color} /><span className="src">{ctx.setting.labelByClientName(r.stage_name, r.client_name)}</span></div>
                   <span className="cint">{r.task_note || r.interest}</span>
                 </div>
                 <div className="row">

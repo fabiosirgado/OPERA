@@ -9,6 +9,7 @@ import {
 } from "../lib/format.js";
 import { Modal, useAction, useToast } from "../ui/feedback.jsx";
 import { ClientTag, Icon, LabelTags, TaskTag } from "../ui/bits.jsx";
+import { DesqPanel, MeetingPanel, OutcomePanel, SettingQualPanel } from "./SettingLeadPanels.jsx";
 
 const EVENT_ICON = {
   call: ["TEL", "#DCE8FF", "#1E3A8A"], note: ["NOTA", "#FEF3C7", "#78350F"], auto: ["AUTO", "#ECE3FB", "#5B21B6"],
@@ -83,6 +84,8 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
   const [audio, setAudio] = useState({});
   const [firstCallMin, setFirstCallMin] = useState(null);
   const [run, busy] = useAction();
+  const [desqOpen, setDesqOpen] = useState(false);
+  const meetingRef = useRef(null);
   const toast = useToast();
 
   // onClose fica numa referência: quem abre a ficha (a Fila, por exemplo) pode passar uma função nova a cada desenho,
@@ -113,7 +116,9 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
   // A ficha pode abrir antes das etapas (link ?lead= de um email): espera por elas em vez de falhar.
   if (!lead || !cur) return <Frame title="A carregar…" onClose={onClose} wide><div className="empty">A carregar…</div></Frame>;
 
-  const cols = stages.filter((s) => s.client_id === null || s.client_id === lead.client_id);
+  // Setting B2B: etapas com os nomes de setting, sem "Nova lead imóveis", e as regras da reunião e do motivo.
+  const setting = ctx.setting.isSetting(lead.client_id);
+  const cols = ctx.setting.stagesFor(lead.client_id);
   const ci = cols.findIndex((s) => s.id === lead.stage_id);
   const openTasks = tasks.filter((t) => !t.done_at);
   const pins = events.filter((e) => e.pinned);
@@ -123,6 +128,12 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
   const save = (patch) => after(() => updateLead(lead.id, patch));
   const moveTo = (s) => {
     if (s.id === lead.stage_id) return;
+    if (setting && s.key === "desq") { setDesqOpen(true); return; }
+    if (setting && s.key === "qualificada") {
+      toast("Para agendar, preenche os dados da reunião e carrega em Agendar reunião.");
+      meetingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (s.key === "desq" && !confirm(`Passar ${lead.name} para Lead desqualificada? As tarefas em aberto são canceladas.`)) return;
     after(() => updateLead(lead.id, { stage_id: s.id }),
       s.key === "qualificada" && cur.position < QUALIFIED_POSITION ? (opera ? `Lead qualificada. ${lead.client.name} vai ser avisado.` : "Lead qualificada.") : `Movida para ${s.name}`);
@@ -207,7 +218,7 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
     return e.title || "Nota";
   };
   const eventBody = (e) => e.kind === "stage"
-    ? `${stageById[e.from_stage_id]?.name ?? "Etapa apagada"} → ${stageById[e.to_stage_id]?.name ?? "Etapa apagada"}`
+    ? `${stageById[e.from_stage_id] ? ctx.setting.stageName(stageById[e.from_stage_id], lead.client_id) : "Etapa apagada"} → ${stageById[e.to_stage_id] ? ctx.setting.stageName(stageById[e.to_stage_id], lead.client_id) : "Etapa apagada"}`
     : e.body;
   // Sem autor: escrito pelo sistema (entradas automáticas, CloudTalk, avisos). Com autor apagado: alguém da OPERA.
   const author = (e) => e.author ? (e.author.full_name || e.author.email) : (!e.author_id ? "Automático" : "Equipa OPERA");
@@ -219,6 +230,7 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
         <div className="tags">
           <ClientTag name={lead.client.name} color={lead.client.color} />
           {lead.source && <span className="src">Origem: {lead.source}</span>}
+          {setting && cur.key === "desq" && lead.desq_reason && <span className="tag" style={{ background: "#FEE2E2", color: "#B91C1C" }}>Motivo: {lead.desq_reason}</span>}
           {lead.buy_and_sell && <span className="tag" style={{ background: "#DCFCE7", color: "#166534" }}>Compra e venda</span>}
           {opera && lead.wa_status && lead.wa_status !== "nao_enviada" && <span className="src">WhatsApp: {WA_ESTADO[lead.wa_status] ?? lead.wa_status}</span>}
           <span style={{ fontSize: 12, color: "var(--mute)", fontWeight: 400 }}>
@@ -298,12 +310,24 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
             </div>
           </div>
           <div className="panel"><h3>Contacto</h3>
-            {[["phone", "Telemóvel"], ["email", "Email"], ["interest", "Interesse ou imóvel"], ["name", "Nome"], ["referrer", "Referenciador"]].map(([f, label]) => (
+            {[["phone", "Telemóvel"], ["email", "Email"], ["interest", setting ? "Interesse" : "Interesse ou imóvel"], ["name", "Nome"], ["referrer", "Referenciador"]].map(([f, label]) => (
               <label key={f} className="kv"><span>{label}</span>
                 <input defaultValue={lead[f] || ""} key={`${f}-${lead.updated_at}`}
                   onBlur={(e) => e.target.value.trim() !== (lead[f] || "") && save({ [f]: e.target.value.trim() || (f === "name" ? lead.name : null) })} /></label>
             ))}
           </div>
+          {setting && desqOpen && cur.key !== "desq" && (
+            <DesqPanel lead={lead} reasons={ctx.setting.desqReasons(lead.client_id)} desqId={stages.find((s) => s.key === "desq").id}
+              busy={busy} after={(fn, ok) => after(fn, ok).then((r) => { if (r) setDesqOpen(false); return r; })} onCancel={() => setDesqOpen(false)} />
+          )}
+          {setting && cur.key === "qualificada" && lead.meeting_at && (
+            <OutcomePanel lead={lead} outcomeStage={(o) => ctx.setting.outcomeStage(lead.client_id, o)} busy={busy} after={after} />
+          )}
+          {setting && !lead.anonymized && (
+            <MeetingPanel key={`${lead.id}-${lead.updated_at}`} lead={lead} stage={cur} qualificadaId={stages.find((s) => s.key === "qualificada").id}
+              busy={busy} after={after} refEl={meetingRef} />
+          )}
+          {setting ? <SettingQualPanel lead={lead} fields={ctx.setting.qualFields(lead.client_id)} busy={busy} onSave={qualSave} /> : (
           <div className="panel">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3>Qualificação</h3>
@@ -325,6 +349,7 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
                   onBlur={(e) => e.target.value.trim() !== (lead.qualification[q] || "") && qualSave(q, e.target.value)} /></label>
             ))}
           </div>
+          )}
           <div className="panel"><h3>Responsável no cliente</h3>
             <label className="f" style={{ marginTop: 10 }}><span className="vh">Responsável</span>
               <select value={lead.owner_user_id || ""} disabled={busy} onChange={(e) => save({ owner_user_id: e.target.value || null })}>
@@ -332,9 +357,9 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
                 {users.map((u) => <option key={u.id} value={u.id}>{u.full_name || u.email}</option>)}
               </select>
             </label>
-            <span className="sub" style={{ margin: "6px 0 0", fontSize: 12 }}>Quem recebe o aviso quando a lead fica qualificada.</span>
+            <span className="sub" style={{ margin: "6px 0 0", fontSize: 12 }}>{setting ? "Quem recebe o aviso quando a reunião é agendada." : "Quem recebe o aviso quando a lead fica qualificada."}</span>
           </div>
-          {opera && cur.position < QUALIFIED_POSITION && !lead.anonymized && (
+          {opera && !setting && cur.position < QUALIFIED_POSITION && !lead.anonymized && (
             <button type="button" className="btn green" disabled={busy} onClick={() => moveTo(stages.find((s) => s.key === "qualificada"))}>
               Marcar qualificada e avisar cliente</button>
           )}

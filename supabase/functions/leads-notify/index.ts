@@ -27,7 +27,10 @@ const json = (body: unknown, status = 200) =>
 type Payload = {
   id: number; kind: "qualificada" | "nova_lead_do_cliente" | "reuniao" | "etapa"; attempts: number; app_url: string | null; redirect_to: string | null;
   lead: { id: string; name: string; phone: string | null; email: string | null; source: string | null; interest: string | null;
-          qualification: Record<string, string>; created_at: string; stage: string };
+          qualification: Record<string, string>; created_at: string; stage: string;
+          meeting_at?: string | null; meeting_with?: string | null; meeting_link?: string | null; reschedules?: number };
+  // Cliente de setting B2B: o aviso de "qualificada" é o de reunião agendada, com os campos de qualificação do cliente.
+  setting?: boolean; qual_fields?: string[];
   client: string; manager: { name: string | null; email: string | null } | null; pinned: string[]; to: string[];
   task?: { due_at: string; note: string | null; created_at: string; by: string | null } | null;
   stage_event?: { at: string; to: string | null; from: string | null; by: string | null } | null;
@@ -44,6 +47,7 @@ const QUAL = ["Objetivo", "Budget", "Prazo", "Financiamento", "Tem imóvel para 
 
 // Email em português de Portugal, sem hífenes no texto, simples para abrir bem em qualquer programa de email.
 export function render(p: Payload) {
+  if (p.setting && p.kind === "qualificada") return renderSetting(p);
   const l = p.lead;
   const link = p.app_url ? `${p.app_url}${p.app_url.includes("?") ? "&" : "?"}lead=${l.id}` : null;
   const qualified = p.kind === "qualificada";
@@ -74,6 +78,48 @@ export function render(p: Payload) {
 </div><p style="font-size:12px;color:#94a3b8;text-align:center">Recebe este email porque tem acesso ao OPERA Leads de ${esc(p.client)}.</p></div></body></html>`;
   const text = [subject, "", intro, "", ...rows.map(([k, v]) => `${k}: ${v}`),
     ...(p.pinned.length ? ["", "Notas importantes:", ...p.pinned] : []), ...(link ? ["", `Abrir a lead: ${link}`] : [])].join("\n");
+  return { subject, html, text, link };
+}
+
+// Setting B2B: a OPERA agendou uma reunião para o cliente. Leva a data, quem faz a reunião, a ligação e a qualificação.
+export function renderSetting(p: Payload) {
+  const l = p.lead;
+  const link = p.app_url ? `${p.app_url}${p.app_url.includes("?") ? "&" : "?"}lead=${l.id}` : null;
+  const quando = l.meeting_at ? new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", weekday: "long", day: "2-digit", month: "2-digit" }).format(new Date(l.meeting_at))
+    + " às " + new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", hour: "2-digit", minute: "2-digit" }).format(new Date(l.meeting_at)) : "";
+  const subject = `Reunião agendada: ${l.name}${quando ? ` · ${quando}` : ""}`;
+  const intro = (l.reschedules ?? 0) > 0
+    ? `A equipa OPERA voltou a marcar a reunião com ${l.name} para ${p.client}.`
+    : `A equipa OPERA agendou uma reunião com ${l.name} para ${p.client}.`;
+  const campos = p.qual_fields ?? [];
+  const rows: [string, string][] = [
+    ["Quando", quando], ["Quem faz a reunião", l.meeting_with ?? ""], ["Ligação", l.meeting_link ?? ""],
+    ["Nome", l.name], ["Telefone", l.phone ?? ""], ["Email", l.email ?? ""], ["Origem", l.source ?? ""],
+    ...campos.filter((k) => l.qualification?.[k]).map((k) => [k, l.qualification[k]] as [string, string]),
+  ].filter(([, v]) => v) as [string, string][];
+  const cell = (k: string, v: string) => k === "Ligação" && /^https?:\/\//i.test(v)
+    ? `<a href="${esc(v)}" style="color:#1d4ed8">${esc(v)}</a>` : esc(v);
+  const table = rows.map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#64748b;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#0f172a"><b>${cell(k, v)}</b></td></tr>`).join("");
+  const notes = p.pinned.length
+    ? `<h3 style="font-size:15px;margin:24px 0 8px">Notas importantes</h3>${p.pinned.map((n) =>
+        `<p style="margin:0 0 8px;padding:10px 12px;background:#fef9c3;border-radius:8px;white-space:pre-line">${esc(n)}</p>`).join("")}`
+    : "";
+  const button = link
+    ? `<p style="margin:24px 0"><a href="${esc(link)}" style="background:#1d4ed8;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;display:inline-block">Abrir a lead</a></p>`
+    : "";
+  const after = `<p style="color:#64748b;font-size:13px">Depois da reunião, marquem o resultado no OPERA Leads (Compareceu, Não compareceu, Fechado ou Perdido). Se a pessoa não comparecer, a OPERA volta a contactá-la para remarcar.</p>`;
+  const reply = p.manager?.name ? `<p style="color:#64748b;font-size:13px">Dúvidas sobre esta reunião? Responda a este email e fala com ${esc(p.manager.name)}, da OPERA.</p>` : "";
+  const html = `<!doctype html><html lang="pt"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
+<div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:12px;padding:28px">
+<p style="margin:0 0 4px;font-size:13px;color:#64748b"><b style="color:#0f172a">OPERA</b> Leads · ${esc(p.client)}</p>
+<h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">${esc(subject)}</h2>
+<p style="margin:0 0 16px;color:#334155">${esc(intro)}</p>
+<table style="border-collapse:collapse;font-size:14px">${table}</table>${notes}${button}${after}${reply}
+</div><p style="font-size:12px;color:#94a3b8;text-align:center">Recebe este email porque tem acesso ao OPERA Leads de ${esc(p.client)}.</p></div></body></html>`;
+  const text = [subject, "", intro, "", ...rows.map(([k, v]) => `${k}: ${v}`),
+    ...(p.pinned.length ? ["", "Notas importantes:", ...p.pinned] : []), ...(link ? ["", `Abrir a lead: ${link}`] : []),
+    "", "Depois da reunião, marquem o resultado no OPERA Leads (Compareceu, Não compareceu, Fechado ou Perdido)."].join("\n");
   return { subject, html, text, link };
 }
 

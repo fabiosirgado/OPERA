@@ -8,12 +8,13 @@ import { Modal, useAction, useToast } from "../ui/feedback.jsx";
 import { exportLeads } from "../lib/exportLeads.js";
 import { downloadXlsx, fileSafe } from "../lib/excel.js";
 import { exportConversation } from "../lib/leadsApi.js";
+import { sb } from "../supabase.js";
 import { InviteForm, UserTable } from "./users.jsx";
 
 const INBOX_DOMAIN = "leads.opera-os.com";
 
 // "Clientes e acessos" (equipa OPERA): clientes, gestor atribuído e utilizadores com acesso.
-export default function Clientes({ profile }) {
+export default function Clientes({ profile, onRefsChanged }) {
   const isAdmin = profile.leads_role === "admin";
   const [clients, setClients] = useState(null);
   const [team, setTeam] = useState([]);
@@ -76,7 +77,7 @@ export default function Clientes({ profile }) {
 
       {modal?.kind === "client" && (
         <ClientModal client={clients.find((c) => c.id === modal.id)} isAdmin={isAdmin} me={profile.id}
-          onClose={close} onChanged={load} />
+          onClose={close} onChanged={load} onRefsChanged={onRefsChanged} />
       )}
       {modal?.kind === "new" && <NewClientModal managers={managers} loadOf={loadOf} onClose={close} onDone={closeAndReload} />}
       {modal?.kind === "managers" && (
@@ -87,7 +88,7 @@ export default function Clientes({ profile }) {
   );
 }
 
-function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
+function ClientModal({ client: c, isAdmin, me, onClose, onChanged, onRefsChanged }) {
   const [users, setUsers] = useState(null);
   const [run, busy] = useAction();
   const toast = useToast();
@@ -95,6 +96,21 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
   useEffect(() => { loadUsers(); }, [loadUsers]);
   const changed = () => { loadUsers(); onChanged(); };
   const inactive = c.leads_status === "inativo";
+  // Tipo de serviço (imobiliário ou setting B2B). Só o admin muda; ao passar a setting são criadas as etapas do cliente.
+  const [tipo, setTipo] = useState(null);
+  useEffect(() => {
+    sb.from("clients").select("service_type").eq("id", c.id).maybeSingle().then(({ data }) => setTipo(data?.service_type ?? "imobiliario"), () => {});
+  }, [c.id]);
+  const mudarTipo = async (novo) => {
+    if (novo === tipo) return;
+    const txt = novo === "setting"
+      ? `Passar ${c.name} a cliente de setting? O pipeline dele passa a ter Reunião Agendada, Compareceu, Não compareceu, Fechado e Perdido, e deixa de mostrar campos de imóveis.`
+      : `Voltar a pôr ${c.name} como cliente de imobiliário?`;
+    if (!confirm(txt)) return;
+    const ok = await run(async () => { const { error } = await sb.rpc("leads_cliente_tipo_servico", { p_client: c.id, p_tipo: novo }); if (error) throw error; },
+      novo === "setting" ? "Cliente passou a setting" : "Cliente passou a imobiliário");
+    if (ok) { setTipo(novo); onChanged(); onRefsChanged?.(); }
+  };
 
   const deactivate = async () => {
     if (!confirm(`Desativar ${c.name}? Todos os acessos deste cliente ficam bloqueados já. As leads ficam guardadas ${RETENTION_MONTHS} meses e depois são apagadas automaticamente.`)) return;
@@ -131,6 +147,11 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged }) {
       {users ? <UserTable users={users} me={me} manage={!inactive} onChange={changed} /> : <div className="empty">A carregar…</div>}
       {!inactive && <InviteForm clientId={c.id} roles={["cliente", "cliente_admin"]} onDone={changed} />}
 
+      {isAdmin && tipo && (
+        <label className="f" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>Tipo de serviço
+          <select value={tipo} disabled={busy || inactive} onChange={(e) => mudarTipo(e.target.value)} style={{ minHeight: 40 }}>
+            <option value="imobiliario">Imobiliário</option><option value="setting">Setting B2B (reuniões)</option></select></label>
+      )}
       {isAdmin && (
         <div className="danger">
           {!inactive ? (

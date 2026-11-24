@@ -9,3 +9,6 @@ supabase/.temp/
 supabase/.branches/
 .claude/
 leads-app/public/teste-*
+
+# Pacote do Setting B2B (especificação, desenhos, contrato da Ignite): fica só local, o repositório é público.
+docs/setting/

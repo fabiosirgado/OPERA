@@ -12,6 +12,8 @@ const must = async (query) => {
 // ---------- Referências
 export const listStages = () => must(sb.from("lead_stages").select("*").order("position"));
 export const listLabels = () => must(sb.from("lead_labels").select("*").order("name"));
+// Tipo de serviço de cada cliente (imobiliário ou setting) e a configuração do setting. A OPERA vê todos; o cliente, o seu.
+export const clientSettings = () => must(sb.from("clients").select("id,service_type,qual_fields,desq_reasons")).catch(() => []);
 export const activeClients = () => must(sb.rpc("leads_clients_overview")).then((cs) => cs.filter((c) => c.leads_status === "ativo"));
 
 // ---------- Pipeline
