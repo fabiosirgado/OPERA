@@ -74,7 +74,7 @@ const dataPT = (s?: string | null) => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/$
 const hoje = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Lisbon" });
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const SERVICO: Record<string, string> = {
-  SA: "OPERA SA (gestão de leads)", BO: "OPERA BO (back office)", BUNDLE: "OPERA SA + OPERA BO", OUTRO: "serviços OPERA",
+  SA: "OPERA SA (gestão de leads)", BO: "OPERA BO (back office)", BUNDLE: "OPERA SA + OPERA BO", SETTING: "OPERA Setting (setting B2B)", OUTRO: "serviços OPERA",
 };
 const addDias = (iso: string, d: number) => { const x = new Date(iso + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + d); return x.toISOString().slice(0, 10); };
 const addMeses = (iso: string, m: number) => { const x = new Date(iso + "T12:00:00Z"); x.setUTCMonth(x.getUTCMonth() + m); return x.toISOString().slice(0, 10); };

@@ -14,7 +14,7 @@ const pedidoEm = (venc) => { const d = new Date(venc + "T12:00:00Z"); d.setUTCDa
 const emDias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, props); kids.forEach((k) => k != null && e.append(k)); return e; };
 const must = async (q) => { const { data, error } = await q; if (error) throw error; return data; };
-const SRV = { SA: "OPERA SA", BO: "OPERA BO", BUNDLE: "Bundle SA + BO", OUTRO: "Outro" };
+const SRV = { SA: "OPERA SA", BO: "OPERA BO", BUNDLE: "Bundle SA + BO", SETTING: "OPERA Setting", OUTRO: "Outro" };
 const ESTADO_FAT = { a_pedir: "por pedir", pedida: "pedida", recebida: "por validar", enviada: "enviada", tratada_fora: "tratada fora", cancelada: "cancelada", erro: "erro" };
 
 // NIF/NIPC português: 9 dígitos com dígito de controlo
