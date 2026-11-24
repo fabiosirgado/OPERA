@@ -3,7 +3,7 @@
 import { sb } from "../../supabase.js";
 
 const PRECO = { SA: { 1: 3000, 2: 3000, 3: 3300 }, BO: { 1: 2550, 2: 2550, 3: 2850 }, BUNDLE: { 1: 4800, 2: 4800, 3: 5100 } };
-const SERVICOS = ["SA", "BO", "BUNDLE", "OUTRO"];
+const SERVICOS = ["SA", "BO", "BUNDLE", "SETTING", "OUTRO"];
 const VEND = ["Ana", "Fábio", "André"];
 const TIPOS = [["nova", "Venda nova"], ["cross_sell", "Cross sell (valor = só o acrescentado)"], ["renovacao", "Renovação normal"], ["recuperada", "Renovação recuperada pela Ana (5%)"]];
 const CATS = { entrega: "Entrega", aquisicao: "Aquisição", outros: "Outros" };
@@ -75,7 +75,7 @@ export function mountGestao(box, refreshDashboard) {
   // Campos de um contrato (Editar, Completar e Novo)
   function campos(r) {
     const nome = el("input", { type: "text", value: r.cliente || "", placeholder: "Nome do cliente" }); nome.style.minWidth = "180px";
-    const srv = el("select"); SERVICOS.forEach((s) => srv.append(el("option", { value: s, textContent: s === "BUNDLE" ? "Bundle SA + BO" : s === "OUTRO" ? "Outro" : "OPERA " + s })));
+    const srv = el("select"); SERVICOS.forEach((s) => srv.append(el("option", { value: s, textContent: s === "BUNDLE" ? "Bundle SA + BO" : s === "SETTING" ? "OPERA Setting" : s === "OUTRO" ? "Outro" : "OPERA " + s })));
     srv.value = SERVICOS.includes(r.servico) ? r.servico : "SA";
     const pres = el("select"); [1, 2, 3, 6].forEach((n) => pres.append(el("option", { value: n, textContent: n === 1 ? "PIF: pagamento único" : n + " pagamentos mensais iguais" })));
     pres.append(el("option", { value: "p", textContent: "Plano à medida (valores e datas livres)" }));
