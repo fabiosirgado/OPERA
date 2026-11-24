@@ -100,7 +100,9 @@ export default function Pipeline({ ctx }) {
   const label = labelOpts.some((x) => x.id === prefs.label) ? prefs.label : "";
   const filters = useMemo(() => ({ client, label, q: qDebounced, mine: !opera && prefs.mine }),
     [client, label, qDebounced, opera, prefs.mine]);
-  const columns = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === client), [stages, client]);
+  // Etapas do cliente escolhido (num cliente de setting, com os nomes de setting e sem "Nova lead imóveis").
+  const columns = useMemo(() => ctx.setting.stagesFor(client), [ctx.setting, client]);
+  const settingClient = !!client && ctx.setting.isSetting(client);
 
   // Quantas leads cada etapa mostra depois de "Mostrar mais". Ao recarregar o quadro (por exemplo ao fechar a ficha
   // de uma lead, ou quando alguém mexe numa lead) a etapa continua aberta com as mesmas leads. Volta ao início
@@ -154,6 +156,13 @@ export default function Pipeline({ ctx }) {
   // Arrastar entre etapas (computador). No telemóvel muda-se a etapa na ficha da lead.
   const drop = async (stage, leadId, fromStage) => {
     if (!leadId || stage.id === fromStage) return;
+    // Setting: Reunião Agendada pede os dados da reunião e Desqualificada pede o motivo. Abre a ficha para os indicar.
+    const leadClient = Object.values(cols).flat().find((l) => l.id === leadId)?.client_id;
+    if (ctx.setting.isSetting(leadClient) && (stage.key === "qualificada" || stage.key === "desq")) {
+      toast(stage.key === "qualificada" ? "Indica na ficha a data, quem faz a reunião e a ligação." : "Indica na ficha o motivo da desqualificação.");
+      ctx.onOpenLead(leadId);
+      return;
+    }
     if (stage.key === "desq" && !confirm("Passar esta lead para Lead desqualificada? As tarefas em aberto são canceladas.")) return;
     if (await run(() => updateLead(leadId, { stage_id: stage.id }), stage.key === "qualificada" ? (opera ? "Lead qualificada. O cliente vai ser avisado." : "Lead qualificada.") : `Movida para ${stage.name}`)) loadBoard();
     // Sem Objetivo não se qualifica: abre a ficha para o indicar.
@@ -189,7 +198,7 @@ export default function Pipeline({ ctx }) {
         </div>
         <div className="row">
           <label className="search"><Icon.search /><span className="vh">Procurar</span>
-            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrar nome, telefone ou imóvel" /></label>
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={settingClient ? "Filtrar nome ou telefone" : "Filtrar nome, telefone ou imóvel"} /></label>
           {prefs.layout !== "list" && (
             <label className="f" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><span className="vh">Ordenar</span>
               <select value={prefs.sort} onChange={(e) => setPref("sort", e.target.value)} style={{ minHeight: 44 }}>
@@ -228,6 +237,11 @@ export default function Pipeline({ ctx }) {
             <div className="stat"><span>Qualificadas por entregar</span><b>{kpis?.qualificadas ?? "…"}</b></div>
           </div>
         </>
+      ) : settingClient ? (
+        <div className={`banner ${counts[qualifiedId] ? "green" : "blue"}`}>
+          <b>{counts[qualifiedId] ? `${counts[qualifiedId]} ${counts[qualifiedId] > 1 ? "reuniões agendadas." : "reunião agendada."}` : "Sem reuniões agendadas pendentes."}</b>
+          {" "}Recebem aviso por email sempre que a OPERA agenda uma reunião. Depois da reunião, abram a lead e marquem o resultado: Compareceu, Não compareceu, Fechado ou Perdido.
+        </div>
       ) : (
         <div className={`banner ${counts[qualifiedId] ? "green" : "blue"}`}>
           <b>{counts[qualifiedId] ? `${counts[qualifiedId]} ${counts[qualifiedId] > 1 ? "leads qualificadas à vossa espera." : "lead qualificada à vossa espera."}` : "Sem leads qualificadas pendentes."}</b>
@@ -256,7 +270,7 @@ export default function Pipeline({ ctx }) {
                     <tr key={l.id} className={`rowL ${l.is_new ? "is-new" : ""}`} tabIndex={0} onClick={() => ctx.onOpenLead(l.id)} onKeyDown={(e) => e.key === "Enter" && ctx.onOpenLead(l.id)}>
                       <td>{l.is_new && <><span className="nova">Nova</span> </>}<b>{l.name}</b>{l.pinned_note && <span style={{ color: "var(--pinText)" }} title="Tem nota afixada"> <Icon.pin /></span>}<div className="cint">{l.phone}</div></td>
                       {opera && <td><ClientTag name={l.client_name} color={l.client_color} /></td>}
-                      <td>{l.stage_name}</td><td>{l.source}</td>
+                      <td>{ctx.setting.label(l.stage_name, l.client_id)}</td><td>{l.source}</td>
                       <td style={{ whiteSpace: "nowrap" }}>{fmtRel(l.created_at)}</td>
                       <td style={{ whiteSpace: "nowrap", ...(late ? { color: "#C2410C", fontWeight: 600 } : {}) }}>
                         {l.next_task_at ? `${TASK_TYPES[l.next_task_type]} · ${fmtRel(l.next_task_at)}` : <span style={{ color: "var(--mute2)" }}>Sem tarefa</span>}</td>
@@ -297,7 +311,7 @@ export default function Pipeline({ ctx }) {
             );
           })}
           <button type="button" className="addStage" onClick={ctx.onNewStage}><Icon.plus />Etapas
-            <small>criar, mudar a ordem, o nome ou apagar, depois de Qualificada</small></button>
+            <small>criar, mudar a ordem, o nome ou apagar, depois de {settingClient ? "Reunião Agendada" : "Qualificada"}</small></button>
         </div></div>
       )}
       {prefs.layout !== "list" && <div className="boardBar" ref={barRef} hidden><div></div></div>}

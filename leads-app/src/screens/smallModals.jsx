@@ -15,6 +15,8 @@ export function NewLeadModal({ ctx, onClose }) {
   const [dup, setDup] = useState(null);
   const [run, busy] = useAction();
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value });
+  // Setting B2B: sem campos de imóveis, etapas com os nomes de setting e a reunião só se agenda na ficha da lead.
+  const setting = ctx.setting.isSetting(f.client_id);
 
   // Aviso de duplicado: mesmo telemóvel ou email no mesmo cliente.
   useEffect(() => {
@@ -55,20 +57,24 @@ export function NewLeadModal({ ctx, onClose }) {
             <button type="button" className="btn sm" onClick={() => { onClose(); ctx.onOpenLead(dup.id); }}>Abrir a existente</button>
           </div>
         )}
-        <div className="g2">
-          <label className="f">Interesse ou imóvel<input value={f.interest} onChange={set("interest")} placeholder="Ex.: T3 Telheiras" /></label>
-          <label className="f">Budget<input value={f.budget} onChange={set("budget")} placeholder="Ex.: 450 000 €" /></label>
-        </div>
+        {setting ? (
+          <label className="f">Interesse<input value={f.interest} onChange={set("interest")} placeholder="Ex.: pediu proposta de campanha" /></label>
+        ) : (
+          <div className="g2">
+            <label className="f">Interesse ou imóvel<input value={f.interest} onChange={set("interest")} placeholder="Ex.: T3 Telheiras" /></label>
+            <label className="f">Budget<input value={f.budget} onChange={set("budget")} placeholder="Ex.: 450 000 €" /></label>
+          </div>
+        )}
         {opera ? (
           <label className="f">Etapa inicial<select value={f.stage} onChange={set("stage")}>
             <option value="auto">Automática pela origem</option>
-            {ctx.stages.filter((s) => s.is_base && s.key !== "desq").map((s) => <option key={s.id} value={s.key}>{s.name}</option>)}
+            {ctx.setting.stagesFor(f.client_id).filter((s) => s.is_base && s.key !== "desq" && !(setting && s.key === "qualificada")).map((s) => <option key={s.id} value={s.key}>{s.name}</option>)}
           </select></label>
         ) : (
           <fieldset style={{ border: 0, margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
             <legend className="f" style={{ marginBottom: 8 }}>Quem trata desta lead?</legend>
             <label className="radio"><input type="radio" name="who" checked={f.stage === "auto"} onChange={() => setF({ ...f, stage: "auto" })} />A OPERA contacta e qualifica</label>
-            <label className="radio"><input type="radio" name="who" checked={f.stage === "qualificada"} onChange={() => setF({ ...f, stage: "qualificada" })} />Fico eu com ela (já está qualificada)</label>
+            {!setting && <label className="radio"><input type="radio" name="who" checked={f.stage === "qualificada"} onChange={() => setF({ ...f, stage: "qualificada" })} />Fico eu com ela (já está qualificada)</label>}
           </fieldset>
         )}
         <label className="f">Nota<textarea value={f.note} onChange={set("note")} placeholder="Contexto, quem referenciou, o que pediu" /></label>
@@ -88,7 +94,7 @@ export function StageModal({ ctx, onClose }) {
   const [f, setF] = useState({ name: "", scope: opera ? "client" : "client", clientId: myClient?.id || ctx.defaultClient || clients[0]?.id, after: "", owner: "cliente" });
   const [run, busy] = useAction();
   const cid = f.scope === "all" ? null : f.clientId;
-  const all = useMemo(() => stages.filter((s) => s.client_id === null || s.client_id === cid).sort((a, b) => a.position - b.position), [stages, cid]);
+  const all = useMemo(() => ctx.setting.stagesFor(cid).sort((a, b) => a.position - b.position), [ctx.setting, cid]);
   const afterOpts = all.filter((s) => s.position >= QUALIFIED_POSITION && s.key !== "desq");
   const afterId = afterOpts.some((s) => s.id === f.after) ? f.after : afterOpts[afterOpts.length - 1]?.id;
   const idx = all.findIndex((s) => s.id === afterId);
@@ -151,7 +157,7 @@ export function StageModal({ ctx, onClose }) {
           <span className="f">Como fica o pipeline</span>
           <div className="preview">{preview.map((n, i) => n === null
             ? <span key="new" className="new">{f.name.trim() || "Nova etapa"}</span> : <span key={i}>{n}</span>)}</div>
-          <span className="sub" style={{ margin: 0, fontSize: 12 }}>Só dá para acrescentar etapas depois de Lead Qualificada. Até aí o funil é igual para todos os clientes.</span>
+          <span className="sub" style={{ margin: 0, fontSize: 12 }}>Só dá para acrescentar etapas depois de {ctx.setting.isSetting(cid) ? "Reunião Agendada" : "Lead Qualificada"}. Até aí o funil é igual para todos os clientes.</span>
         </div>
         <div className="actions"><button type="button" className="btn" onClick={onClose}>Fechar</button>
           <button type="submit" className="btn primary" disabled={busy}>Criar etapa</button></div>
