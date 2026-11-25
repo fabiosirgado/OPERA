@@ -1,8 +1,8 @@
 // Ficha da lead de um cliente de setting B2B: qualificação com os campos do cliente, dados da reunião (obrigatórios
 // para Reunião Agendada), resultado da reunião com um toque e motivo de desqualificação obrigatório.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updateLead } from "../lib/leadsApi.js";
-import { OUTCOMES, fmtMeeting, meetingIso, meetingParts } from "../lib/setting.js";
+import { OUTCOMES, bookingLink, fmtMeeting, meetingIso, meetingParts } from "../lib/setting.js";
 
 // Campos de qualificação definidos no cliente: texto, sim ou não, escolha.
 export function SettingQualPanel({ lead, fields, busy, onSave }) {
@@ -40,10 +40,20 @@ export function SettingQualPanel({ lead, fields, busy, onSave }) {
 }
 
 // Dados da reunião. Antes de agendar: o botão grava os dados e passa a lead para Reunião Agendada no mesmo pedido.
-export function MeetingPanel({ lead, stage, qualificadaId, busy, after, refEl }) {
+export function MeetingPanel({ lead, stage, qualificadaId, busy, after, refEl, bookingUrl, hosts = [], clientName, toast }) {
   const p = meetingParts(lead.meeting_at);
   const [f, setF] = useState({ date: p.date, time: p.time, with: lead.meeting_with || "", link: lead.meeting_link || "" });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  // Agenda de marcações do cliente (Calendly, Cal.com, Google, Outlook…), aberta aqui dentro para marcar com a lead.
+  const [agenda, setAgenda] = useState(false);
+  const link = bookingLink(bookingUrl, lead);
+  useEffect(() => {
+    if (!agenda) return undefined;
+    // O Calendly avisa quando a marcação fica feita; as outras agendas não, e aí basta preencher o dia e a hora.
+    const onMsg = (e) => { if (e?.data?.event === "calendly.event_scheduled") toast?.("Reunião marcada na agenda do cliente. Confirma abaixo o dia, a hora e quem faz."); };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [agenda, toast]);
   const agendada = stage.key === "qualificada";
   const desq = stage.key === "desq";
   const ok = f.date && f.time && f.with.trim() && f.link.trim();
@@ -59,11 +69,24 @@ export function MeetingPanel({ lead, stage, qualificadaId, busy, after, refEl })
           {lead.reschedules === 1 ? "1 remarcação" : `${lead.reschedules} remarcações`}</span>}
       </div>
       {agendada && lead.meeting_at && <span className="sub" style={{ margin: "6px 0 0", fontSize: 13 }}><b>{fmtMeeting(lead.meeting_at)}</b> com {lead.meeting_with}</span>}
+      {link && !desq && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="row">
+            <button type="button" className="btn" onClick={() => setAgenda((a) => !a)}>{agenda ? "Fechar a agenda" : `Marcar na agenda${clientName ? ` de ${clientName}` : " do cliente"}`}</button>
+            <a href={link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>Abrir num separador</a>
+          </div>
+          {agenda && (<>
+            <iframe title="Agenda do cliente" src={link} style={{ width: "100%", height: 640, border: "1px solid var(--line)", borderRadius: 10, background: "#fff" }} />
+            <span className="sub" style={{ margin: 0, fontSize: 12 }}>Depois de marcar, preenche aqui o dia, a hora, quem faz e a ligação que a agenda mostrar. Se a agenda não abrir aqui, usa Abrir num separador.</span>
+          </>)}
+        </div>
+      )}
       <div className="g2" style={{ marginTop: 10 }}>
         <label className="f">Dia *<input type="date" value={f.date} onChange={set("date")} disabled={busy || desq} /></label>
         <label className="f">Hora *<input type="time" value={f.time} onChange={set("time")} disabled={busy || desq} /></label>
       </div>
-      <label className="f" style={{ marginTop: 8 }}>Quem faz a reunião *<input value={f.with} onChange={set("with")} placeholder="Ex.: Tomás" disabled={busy || desq} /></label>
+      <label className="f" style={{ marginTop: 8 }}>Quem faz a reunião *<input value={f.with} onChange={set("with")} placeholder={hosts[0] ? `Ex.: ${hosts[0]}` : "Ex.: Tomás"} disabled={busy || desq} list={`hosts-${lead.id}`} /></label>
+      {hosts.length > 0 && <datalist id={`hosts-${lead.id}`}>{hosts.map((h) => <option key={h} value={h} />)}</datalist>}
       <label className="f" style={{ marginTop: 8 }}>Ligação da reunião *<input value={f.link} onChange={set("link")} placeholder="Ex.: https://meet.google.com/…" disabled={busy || desq} /></label>
       {lead.meeting_link && /^https?:\/\//i.test(lead.meeting_link) && (
         <a href={lead.meeting_link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, marginTop: 6, display: "inline-block" }}>Abrir a ligação</a>)}

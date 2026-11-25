@@ -250,6 +250,54 @@ Próximos passos: o que ficou combinado, com datas e horas se foram ditas.
 
 Devolves também os campos de qualificação da lead, com o que foi dito na chamada, numa frase curta cada (por exemplo "300 000 €", "3 meses", "crédito com 10% de entrada, sem pré aprovação", "sim, T2 em Odivelas", "sábados de manhã"). Usa null quando o ponto não foi falado ou não ficou claro; nunca deduzas. No objetivo, escolhe só o que a pessoa disse querer: Comprador (quer comprar), Proprietário (quer vender ou arrendar um imóvel seu) e Crédito (quer ajuda com o crédito habitação); lista vazia se não ficou claro.`;
 
+// Setting B2B: o resultado do trabalho é uma reunião comercial agendada. Nada de imóveis; os campos de qualificação
+// são os do cliente (clients.qual_fields) e vão no pedido, com o formato da resposta feito a partir deles.
+const NOTE_SYSTEM_SETTING = `Escreves notas de chamadas para o OPERA Leads, o sistema onde a OPERA (a equipa que contacta leads de empresas, as qualifica e agenda reuniões comerciais para os seus clientes) regista o trabalho feito com cada lead.
+
+Recebes a transcrição de uma chamada feita pelo gestor da OPERA a uma lead de um cliente, os dados que já existem sobre a lead e os critérios de qualificação desse cliente. Escreve a nota que esse gestor escreveria no histórico logo a seguir à chamada: na primeira pessoa, em português de Portugal, com um tom profissional e direto, como quem passa a um colega tudo o que apurou. Não é uma transcrição nem um resumo genérico: é um diagnóstico de qualificação para uma reunião comercial, completo e útil a quem vai fazer a reunião. Quem a lê é a equipa OPERA e o cliente (quem vai fazer a reunião).
+
+Regras:
+Usa só o que foi dito na chamada ou consta dos dados da lead. Nunca inventes nem deduzas valores, datas, nomes, cargos ou empresas; quando um ponto não foi falado, escreve "não falado".
+Escreve números, valores, prazos, nomes e datas exatamente como foram ditos.
+Não cites a conversa palavra a palavra, não incluas a transcrição e nunca a menciones (nem a gravação): escreves como quem esteve na chamada.
+Escreve texto simples, sem markdown (sem cardinais, asteriscos ou tabelas). Não uses travessões nem hífenes como pontuação.
+Não fales de imóveis nem de imobiliário, salvo se a lead o disser.
+Se não houve conversa útil (caixa de correio, número errado, pediu para ligar mais tarde, desligou), escreve só duas ou três frases a dizer o que aconteceu e qual é o próximo passo.
+
+Estrutura, com cada título numa linha própria:
+Resumo
+Três a cinco frases: quem é, que empresa representa, o que precisa, em que ponto está e como correu a chamada.
+
+Critérios de qualificação
+Uma linha por critério do cliente, pela ordem dada, com o que foi dito.
+Quem decide e situação: só o que for relevante e tiver sido dito.
+
+Necessidade e contexto
+
+Objeções, dúvidas ou receios
+
+Temperatura: quente, morno ou frio, e porquê.
+
+Reunião e próximos passos: se ficou reunião marcada, dia, hora e com quem; senão, o que ficou combinado.
+
+Devolves também os critérios de qualificação, com o que foi dito na chamada, numa frase curta cada. Usa null quando o ponto não foi falado ou não ficou claro; nunca deduzas. Num critério de sim ou não, responde só "Sim" ou "Não".`;
+
+function settingFormat(campos: { key: string }[]) {
+  return {
+    type: "json_schema" as const,
+    schema: {
+      type: "object", additionalProperties: false, required: ["nota", "qualificacao"],
+      properties: {
+        nota: { type: "string" },
+        qualificacao: {
+          type: "object", additionalProperties: false, required: campos.map((c) => c.key),
+          properties: Object.fromEntries(campos.map((c) => [c.key, { type: ["string", "null"] }])),
+        },
+      },
+    },
+  };
+}
+
 // Formato da resposta: a nota e os campos de qualificação (structured outputs).
 const NOTE_FORMAT = {
   type: "json_schema" as const,
@@ -308,7 +356,9 @@ async function writeAiNote(callId: string, force = false) {
   const { data: lead } = await admin.from("leads")
     .select("name,interest,source,qualification,created_at,client_id,anonymized").eq("id", ins.lead_id).single();
   if (!lead || lead.anonymized) return { status: "sem_lead" };
-  const { data: client } = await admin.from("clients").select("name,manager_id").eq("id", lead.client_id).single();
+  const { data: client } = await admin.from("clients").select("name,manager_id,service_type,qual_fields").eq("id", lead.client_id).single();
+  const setting = client?.service_type === "setting";
+  const campos = (setting && Array.isArray(client?.qual_fields) ? client.qual_fields : []) as { key: string; type?: string; options?: string[] }[];
   const { data: manager } = client?.manager_id
     ? await admin.from("profiles").select("full_name").eq("id", client.manager_id).maybeSingle() : { data: null };
   const { data: form } = await admin.from("lead_events").select("body").eq("lead_id", ins.lead_id).eq("type", "note")
@@ -328,6 +378,7 @@ async function writeAiNote(callId: string, force = false) {
     (call?.meta as Obj | undefined)?.direction === "incoming"
       ? `Chamada recebida: foi a lead que ligou para a OPERA (${gestor} atendeu).` : "",
     qual ? `Qualificação já registada:\n${qual}` : "",
+    setting && campos.length ? `Critérios de qualificação do cliente, por esta ordem:\n${campos.map((c) => `${c.key}${c.type === "sim_nao" ? " (sim ou não)" : c.type === "escolha" && c.options?.length ? ` (uma de: ${c.options.join(", ")})` : ""}`).join("\n")}` : "",
     form?.body ? `Respostas do formulário:\n${form.body}` : "",
     ci.summary ? `Resumo automático da CloudTalk (pode estar incompleto):\n${ci.summary}` : "",
   ].filter(Boolean).join("\n\n");
@@ -338,18 +389,18 @@ async function writeAiNote(callId: string, force = false) {
     max_tokens: 16000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
-    output_config: withFields ? { effort: "medium", format: NOTE_FORMAT } : { effort: "medium" },
-    system: NOTE_SYSTEM,
+    output_config: withFields ? { effort: "medium", format: setting ? settingFormat(campos) : NOTE_FORMAT } : { effort: "medium" },
+    system: setting ? NOTE_SYSTEM_SETTING : NOTE_SYSTEM,
     messages: [{
       role: "user",
       content: `${context}\n\nTranscrição da chamada (o agente é ${gestor}):\n${transcript}\n\nEscreve a nota de ${gestor} sobre esta chamada.`,
     }],
   });
   // Se o formato com os campos for recusado, a nota sai na mesma, só sem preencher a qualificação.
-  let withFields = true;
+  let withFields = !setting || campos.length > 0;
   let response;
   try {
-    response = await ask(true);
+    response = await ask(withFields);
   } catch (e) {
     if (!(e instanceof Anthropic.BadRequestError)) throw e;
     console.error("leads-cloudtalk: formato da nota recusado:", e.message.slice(0, 200));
@@ -359,14 +410,17 @@ async function writeAiNote(callId: string, force = false) {
   if (response.stop_reason === "refusal") return { status: "recusada" };
   if (response.stop_reason === "max_tokens") return { status: "cortada" };
   const raw = response.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
-  let out: NoteOut | null = null;
+  let out: NoteOut | { nota: string; qualificacao: Record<string, string | null> } | null = null;
   if (withFields) {
     try { out = JSON.parse(raw); } catch { return { status: "formato_invalido" }; }
   }
   const nota = out ? out.nota : raw;
   if (!nota?.trim()) return { status: "vazia" };
   return await must(admin.rpc("leads_cloudtalk_ai_note", {
-    p_call_id: callId, p_body: nota, p_model: response.model, p_fields: out?.qualificacao ? qualFields(out.qualificacao) : {},
+    p_call_id: callId, p_body: nota, p_model: response.model,
+    p_fields: !out?.qualificacao ? {} : setting
+      ? Object.fromEntries(Object.entries(out.qualificacao as Record<string, string | null>).filter(([, v]) => v && String(v).trim()).map(([k, v]) => [k, String(v).trim()]))
+      : qualFields(out.qualificacao as NoteOut["qualificacao"]),
   }), "Nota da chamada") as Obj;
 }
 

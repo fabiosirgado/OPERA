@@ -10,6 +10,7 @@ import { downloadXlsx, fileSafe } from "../lib/excel.js";
 import { exportConversation } from "../lib/leadsApi.js";
 import { sb } from "../supabase.js";
 import { InviteForm, UserTable } from "./users.jsx";
+import SettingConfig from "./SettingConfig.jsx";
 
 const INBOX_DOMAIN = "leads.opera-os.com";
 
@@ -152,6 +153,7 @@ function ClientModal({ client: c, isAdmin, me, onClose, onChanged, onRefsChanged
           <select value={tipo} disabled={busy || inactive} onChange={(e) => mudarTipo(e.target.value)} style={{ minHeight: 40 }}>
             <option value="imobiliario">Imobiliário</option><option value="setting">Setting B2B (reuniões)</option></select></label>
       )}
+      {tipo === "setting" && !inactive && <SettingConfig clientId={c.id} onSaved={() => onRefsChanged?.()} />}
       {isAdmin && (
         <div className="danger">
           {!inactive ? (

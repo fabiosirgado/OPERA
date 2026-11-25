@@ -31,9 +31,11 @@ export function makeSetting(stages, cfg, clients = []) {
     return Array.isArray(c?.qual_fields) && c.qual_fields.length ? c.qual_fields : IMOB_FIELDS;
   };
   const desqReasons = (cid) => byClient.get(cid)?.desq_reasons || [];
+  const hosts = (cid) => byClient.get(cid)?.meeting_hosts || [];
+  const bookingUrl = (cid) => byClient.get(cid)?.booking_url || null;
   const outcomeStage = (cid, outcome) => stages.find((s) => s.client_id === cid && s.outcome === outcome);
   const settingClients = (clients) => clients.filter((c) => isSetting(c.id));
-  return { isSetting, stageName, label, labelByClientName, stagesFor, qualFields, desqReasons, outcomeStage, settingClients };
+  return { isSetting, stageName, label, labelByClientName, stagesFor, qualFields, desqReasons, hosts, bookingUrl, outcomeStage, settingClients };
 }
 
 // Data e hora locais de um timestamp, para os campos <input type="date"> e <input type="time">.
@@ -47,3 +49,18 @@ export const meetingIso = (date, time) => (date && time ? new Date(`${date}T${ti
 export const fmtMeeting = (iso) => (iso
   ? new Intl.DateTimeFormat("pt-PT", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
   : "");
+
+// Link da agenda de marcações do cliente, com o nome e o email da lead já preenchidos onde a agenda o aceita
+// (Calendly e Cal.com). Noutras agendas o link segue tal como está.
+export function bookingLink(url, lead) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (/(^|\.)calendly\.com$/i.test(u.hostname) || /(^|\.)cal\.com$/i.test(u.hostname)) {
+      if (lead?.name) u.searchParams.set("name", lead.name);
+      if (lead?.email) u.searchParams.set("email", lead.email);
+      if (/calendly\.com$/i.test(u.hostname)) { u.searchParams.set("embed_type", "Inline"); u.searchParams.set("embed_domain", window.location.hostname); }
+    }
+    return u.toString();
+  } catch { return null; }
+}
