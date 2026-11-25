@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OPERA · Real Estate Operations as a Service</title>
-<meta name="description" content="A OPERA é o teu departamento operacional externo. Operations, Finance e Legal numa única estrutura. You sell. We operate.">
+<title>OPERA · Sales Assistant para o imobiliário</title>
+<meta name="description" content="A OPERA atende, qualifica e agenda as tuas leads imobiliárias, do primeiro contacto à visita marcada. You sell. We operate.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -608,6 +608,21 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
 .tool-go span{transition:transform .35s var(--ease);}
 .tool-card:hover .tool-go span{transform:translateX(4px);}
 @media (max-width:900px){.tools-grid{grid-template-columns:1fr;}.tool-card,.tool-card.featured,.tool-card.wide{grid-column:auto;}}
+/* v2: página principal centrada no OPERA SA */
+.hero-link{display:inline-flex;align-items:center;gap:8px;color:var(--ink-200);font-weight:600;font-size:15px;padding:12px 6px;}
+.hero-link span{transition:transform .3s var(--ease);}
+.hero-link:hover{color:#fff;}
+.hero-link:hover span{transform:translateX(4px);}
+.mid-cta{display:flex;justify-content:center;margin-top:8px;}
+.section-more{margin-top:36px;text-align:center;}
+.section-more a{display:inline-flex;align-items:center;gap:8px;color:var(--blue-400);font-family:'Archivo',sans-serif;font-weight:700;font-size:16px;}
+.section-more a span{transition:transform .3s var(--ease);}
+.section-more a:hover{color:#fff;}
+.section-more a:hover span{transform:translateX(4px);}
+.bo-section{background:linear-gradient(180deg,var(--navy-950),var(--navy-900));}
+.testimonials{padding-top:90px;}
+.mock-float.f1{top:-13%;}
+@media (max-width:1000px){.hero-visual{height:auto;margin-top:80px;margin-bottom:40px;}.mock-main{position:relative;left:0;top:0;width:100%;height:auto;}.mock-float.f1{top:-62px;right:0;}.mock-float.f2{display:none;}}
 </style>
 </head>
 <body>
@@ -616,190 +631,106 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
   <div class="container nav-inner">
     <a href="#top" class="logo">OPERA</a>
     <nav class="nav-links">
-      <a href="#o-que-fazemos">O que fazemos</a>
-      <a href="#operations">Operations</a>
-      <a href="#sales-assistant">Sales Assistant</a>
-      <a href="#legal">Legal</a>
-      <a href="#finance">Finance</a>
       <a href="#como-funciona">Como funciona</a>
       <a href="#testemunhos">Testemunhos</a>
+      <a href="#back-office">Back Office</a>
       <a href="#ferramentas">Ferramentas</a>
     </nav>
     <div class="nav-cta">
-      <a href="#form" class="btn btn-ghost">Falar com a equipa</a>
+      <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary">Agendar reunião</a>
       <button class="burger" id="burgerBtn" aria-label="Abrir menu"><span></span><span></span><span></span></button>
     </div>
   </div>
 </header>
 
 <div class="mobile-panel" id="mobilePanel">
-  <a href="#o-que-fazemos">O que fazemos</a>
-  <a href="#operations">Operations</a>
-  <a href="#sales-assistant">Sales Assistant</a>
-  <a href="#legal">Legal</a>
-  <a href="#finance">Finance</a>
   <a href="#como-funciona">Como funciona</a>
   <a href="#testemunhos">Testemunhos</a>
+  <a href="#back-office">Back Office</a>
   <a href="#ferramentas">Ferramentas</a>
-  <a href="#form" class="btn btn-primary" style="margin-top:10px;">Falar com a equipa</a>
+  <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:10px;">Agendar reunião</a>
 </div>
 
 <main id="top">
 
-  <!-- HERO -->
+  <!-- HERO: o serviço principal é o OPERA SA -->
   <section class="hero">
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
     <div class="container hero-grid">
       <div class="hero-copy">
-        <span class="eyebrow">Real Estate Operations as a Service</span>
-        <h1>You sell.<br><span class="accent">We operate.</span></h1>
-        <p class="hero-sub">A OPERA é o teu departamento operacional externo.</p>
-        <p class="support">Tu focas-te em angariar, vender, negociar e relacionar-te com os teus clientes. A OPERA trata da operação por trás de cada negócio.</p>
+        <span class="eyebrow">You sell. We operate.</span>
+        <h1>Nenhuma lead<br><span class="accent">sem resposta.</span></h1>
+        <p class="hero-sub">A OPERA atende, qualifica e agenda as tuas leads.</p>
+        <p class="support">Trabalhamos as leads que já chegam ao teu negócio, dos portais ao tráfego pago, do primeiro contacto até à visita marcada. Tu só entras quando é para vender.</p>
         <div class="btn-row">
-          <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
-          <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
+          <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary">Agendar uma reunião</a>
+          <a href="#como-funciona" class="hero-link">Ver como funciona <span>→</span></a>
         </div>
       </div>
       <div class="hero-visual">
         <div class="mock-card mock-main reveal">
           <div class="mock-topbar">
             <div class="mock-dot-row"><span></span><span></span><span></span></div>
-            <span class="mock-title">Processo · Av. da Liberdade 142</span>
+            <span class="mock-title">Lead nova · T3 em Alcântara</span>
           </div>
-          <div class="mock-row"><div class="lbl"><span class="ico">📄</span>CPCV · revisão jurídica</div><span class="chip chip-progress">Em curso</span></div>
-          <div class="mock-row"><div class="lbl"><span class="ico">🏦</span>Faturação do negócio</div><span class="chip chip-done">Resolvido</span></div>
-          <div class="mock-row"><div class="lbl"><span class="ico">🗓️</span>Agendamento de escritura</div><span class="chip chip-pending">Pedido</span></div>
-          <div class="mock-row"><div class="lbl"><span class="ico">✅</span>Checklist documental</div><span class="chip chip-progress">Em curso</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">📞</span>Primeiro contacto</div><span class="chip chip-done">Atendida</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">🎯</span>Qualificação</div><span class="chip chip-done">Concluída</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">📝</span>Registo no CRM</div><span class="chip chip-done">Feito</span></div>
+          <div class="mock-row"><div class="lbl"><span class="ico">🗓️</span>Visita com o consultor</div><span class="chip chip-progress">Agendada</span></div>
         </div>
         <div class="mock-card mock-float f1 reveal">
-          <div class="k">Departamento</div>
-          <div class="v">Operations</div>
-          <div class="sub">Finance · Legal</div>
+          <div class="k">Serviço</div>
+          <div class="v">Sales Assistant</div>
+          <div class="sub">Portais · Tráfego pago</div>
         </div>
         <div class="mock-card mock-float f2 reveal">
           <div class="k">Consultor</div>
           <div class="v">+ tempo comercial</div>
-          <div class="sub">Foco total no negócio</div>
+          <div class="sub">Só entra para vender</div>
         </div>
       </div>
     </div>
     <div class="scroll-cue"><div class="line"></div></div>
   </section>
 
-  <!-- O QUE FAZEMOS -->
-  <section class="section" id="o-que-fazemos" style="padding-top:110px;padding-bottom:110px;">
-    <div class="container">
-      <div class="section-head reveal" style="margin:0 auto 56px;text-align:center;max-width:720px;">
-        <span class="eyebrow" style="justify-content:center;">O que fazemos</span>
-        <h2>Todo o backoffice do teu negócio imobiliário. Numa única equipa.</h2>
-        <p class="lead" style="margin:18px auto 0;">A OPERA é a estrutura operacional que permite às empresas imobiliárias crescer sem aumentar a complexidade. Assumimos tudo o que é <strong style="color:#fff;">Operations, Finance e Legal</strong> para que consultores e equipas se concentrem naquilo que fazem melhor: vender, angariar e crescer.</p>
-      </div>
-      <div class="diff-grid stagger">
-        <a href="#operations" class="diff-card reveal" style="display:block;">
-          <div class="idx">01</div>
-          <h3>Operations</h3>
-          <p>Processos, documentação, coordenação de escrituras e follow-ups, sempre sob controlo.</p>
-        </a>
-        <a href="#legal" class="diff-card reveal" style="display:block;">
-          <div class="idx">02</div>
-          <h3>Legal</h3>
-          <p>Apoio contratual, CPCV e suporte jurídico especializado em cada transação.</p>
-        </a>
-        <a href="#finance" class="diff-card reveal" style="display:block;">
-          <div class="idx">03</div>
-          <h3>Finance</h3>
-          <p>Faturação, organização financeira e compliance fiscal do teu negócio.</p>
-        </a>
-      </div>
-      <p class="reveal" style="margin-top:44px;text-align:center;color:var(--ink-200);font-family:'Archivo',sans-serif;font-weight:700;font-size:18px;max-width:640px;margin-left:auto;margin-right:auto;">Trabalhamos lado a lado com os nossos clientes, como uma extensão da sua estrutura operacional, combinando pessoas, processos e tecnologia.</p>
-    </div>
-  </section>
-
-  <!-- PROBLEM -->
+  <!-- PROBLEMA -->
   <section class="section problem" id="problema">
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow">O problema</span>
-        <h2>O negócio cresce.<br>A operação torna-se o travão.</h2>
+        <h2>As leads chegam.<br>O difícil é o que vem a seguir.</h2>
       </div>
       <div class="problem-grid stagger">
         <div class="problem-card reveal">
           <div class="num">01</div>
-          <h3>Processos e burocracia</h3>
-          <p>Documentação, prazos, follow-ups e tarefas que não geram receita.</p>
+          <h3>Chegam quando estás ocupado</h3>
+          <p>Em visitas, reuniões ou escrituras, a chamada fica para depois. E quando ligas de volta, a lead já falou com outro consultor.</p>
         </div>
         <div class="problem-card reveal">
           <div class="num">02</div>
-          <h3>Operação fragmentada</h3>
-          <p>Informação espalhada por emails, WhatsApp, ficheiros e diferentes ferramentas. Quando alguém falta ou a equipa cresce, a operação perde consistência.</p>
+          <h3>O follow-up fica a meio</h3>
+          <p>Uma tentativa sem resposta e o contacto cai no esquecimento. Ninguém garante a segunda, a terceira ou a quarta chamada.</p>
         </div>
         <div class="problem-card reveal">
           <div class="num">03</div>
-          <h3>Falta de estrutura</h3>
-          <p>Cada pessoa acaba por criar a sua própria forma de trabalhar, o que limita o crescimento: fechar mais negócio significa muitas vezes contratar mais pessoas e mais complexidade.</p>
+          <h3>Tempo gasto com quem não vai comprar</h3>
+          <p>Sem qualificação, passas horas ao telefone com curiosos, em vez de estares com os clientes que estão prontos para avançar.</p>
         </div>
       </div>
       <div class="problem-close reveal">
-        <h2>O negócio cresce. A operação torna-se o travão.</h2>
-      </div>
-    </div>
-  </section>
-
-  <!-- OPERATIONS -->
-  <section class="section pillar" id="operations">
-    <div class="container">
-      <div class="pillar-flip">
-        <div class="pillar-copy reveal">
-          <span class="eyebrow">Operations</span>
-          <h2>Operations</h2>
-          <p class="headline">Gestão processual por trás de cada negócio.</p>
-          <div class="pillar-block">
-            <h4>Processos & Documentação</h4>
-            <ul>
-              <li>Preenchimento de CMIs e inserção de listings</li>
-              <li>Abertura e acompanhamento de processos</li>
-              <li>Gestão documental e compliance</li>
-              <li>Controlo de prazos e checklists</li>
-            </ul>
-          </div>
-          <div class="pillar-block">
-            <h4>Coordenação & Escrituras</h4>
-            <ul>
-              <li>Coordenação de intervenientes e parceiros</li>
-              <li>Acompanhamento de escrituras</li>
-              <li>Gestão de pedidos e tickets</li>
-            </ul>
-          </div>
-          <div class="pillar-block">
-            <h4>Follow-ups & Estado</h4>
-            <ul>
-              <li>Follow-ups operacionais</li>
-              <li>Atualização de estado</li>
-              <li>O consultor sabe sempre onde está o processo e quem trata dele</li>
-            </ul>
-          </div>
-        </div>
-        <div class="panel reveal">
-          <div class="panel-head"><span class="k">Processo · #A492</span><span class="chip chip-progress">Em curso</span></div>
-          <div class="panel-row"><div class="l"><span class="avatar"></span>Responsável · Equipa Operations</div></div>
-          <div class="panel-row"><div class="l">📋 Checklist documental</div><span style="color:var(--ink-500);font-size:12.5px;">7/9</span></div>
-          <div class="bar-track"><div class="bar-fill" data-bar="78"></div></div>
-          <div class="panel-row" style="margin-top:14px;"><div class="l">📄 CMI validado</div><span class="chip chip-done">Resolvido</span></div>
-          <div class="panel-row"><div class="l">🗝️ Coordenação de escritura</div><span class="chip chip-pending">Pedido</span></div>
-          <div class="panel-row"><div class="l">⏱️ Prazo</div><span style="color:var(--ink-300);font-size:12.5px;">12 dias</span></div>
-        </div>
+        <h2>Cada lead sem resposta é um negócio que nem chegou a começar.</h2>
       </div>
     </div>
   </section>
 
   <!-- SALES ASSISTANT -->
-  <section class="section sa-section" id="sales-assistant">
+  <section class="section sa-section" id="como-funciona">
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow">OPERA · Sales Assistant</span>
-        <h2>Nenhuma lead é desperdiçada.</h2>
-        <p class="lead">A OPERA SA trata da lead do primeiro contacto até à visita agendada, para o consultor só entrar quando é para vender, negociar e fechar.</p>
+        <h2>Do primeiro contacto à visita agendada.</h2>
+        <p class="lead">A OPERA SA trata da lead desde que entra até estar pronta para ti, para só entrares quando é para vender, negociar e fechar.</p>
       </div>
 
       <div class="sa-grid">
@@ -827,150 +758,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
         <div class="sa-benefit reveal"><div class="ico">💶</div><span>Mais resultados<br>para todos</span></div>
       </div>
 
-      <p class="sa-closer reveal">A OPERA cuida da primeira e mais crítica etapa. O consultor foca-se no que faz a diferença: <strong>fechar negócios.</strong></p>
-    </div>
-  </section>
-
-  <!-- LEGAL -->
-  <section class="section pillar" id="legal">
-    <div class="container">
-      <div class="pillar-flip reverse">
-        <div class="pillar-copy reveal">
-          <span class="eyebrow">Legal</span>
-          <h2>Legal</h2>
-          <p class="headline">Suporte jurídico integrado.</p>
-          <div class="pillar-block">
-            <h4>Apoio Contratual</h4>
-            <p class="simple">Revisão documental e apoio jurídico em transações imobiliárias.</p>
-          </div>
-          <div class="pillar-block">
-            <h4>CPCV & Contratos</h4>
-            <p class="simple">Elaboração, validação e revisão de CPCV e contratos imobiliários.</p>
-          </div>
-          <div class="pillar-block">
-            <h4>Suporte Legal</h4>
-            <p class="simple">Esclarecimento de dúvidas legais e coordenação jurídica especializada.</p>
-          </div>
-        </div>
-        <div class="panel reveal">
-          <div class="panel-head"><span class="k">Documento · CPCV v3</span><span class="chip chip-progress">Em revisão</span></div>
-          <div class="panel-row"><div class="l">⚖️ Revisão documental</div><span class="chip chip-done">Concluída</span></div>
-          <div class="panel-row"><div class="l">✍️ Elaboração de contrato</div><span class="chip chip-progress">Em curso</span></div>
-          <div class="panel-row"><div class="l">💬 Esclarecimento jurídico</div><span class="chip chip-pending">Pedido</span></div>
-          <div class="panel-row"><div class="l"><span class="avatar"></span>Coordenação jurídica especializada</div></div>
-        </div>
+      <div class="mid-cta reveal">
+        <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary">Agendar uma reunião</a>
       </div>
     </div>
   </section>
 
-  <!-- FINANCE -->
-  <section class="section pillar" id="finance">
-    <div class="container">
-      <div class="pillar-flip">
-        <div class="pillar-copy reveal">
-          <span class="eyebrow">Finance</span>
-          <h2>Finance</h2>
-          <p class="headline">Porque vender é uma coisa. Gerir financeiramente é outra.</p>
-          <div class="pillar-block">
-            <h4>Faturação & Pagamentos</h4>
-            <p class="simple">Faturação, controlo de pagamentos e acompanhamento de receitas vs despesas.</p>
-          </div>
-          <div class="pillar-block">
-            <h4>Organização Financeira</h4>
-            <p class="simple">Controlo de despesas, prazos e preparação para contabilidade, com relatório financeiro de gestão mensal do teu negócio.</p>
-          </div>
-          <div class="pillar-block">
-            <h4>Fiscal & Compliance</h4>
-            <p class="simple">Controlo de IVA e impostos.</p>
-          </div>
-        </div>
-        <div class="panel reveal">
-          <div class="panel-head"><span class="k">Financeiro · Visão mensal</span></div>
-          <div class="fin-stat-row">
-            <div class="fin-stat"><div class="k">Receitas</div><div class="v">▲ Registadas</div></div>
-            <div class="fin-stat"><div class="k">Despesas</div><div class="v">▼ Controladas</div></div>
-          </div>
-          <div class="panel-row"><div class="l">🧾 Faturação emitida</div><span class="chip chip-done">Atualizada</span></div>
-          <div class="panel-row"><div class="l">📊 Relatório de gestão mensal</div><span class="chip chip-progress">Disponível</span></div>
-          <div class="panel-row"><div class="l">🏛️ IVA & impostos</div><span class="chip chip-done">Em compliance</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SUPPORT -->
-  <section class="section" id="como-funciona">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Support</span>
-        <h2>Um ponto de contacto para tudo o que não deveria estar nas mãos do consultor.</h2>
-      </div>
-      <div class="flow-steps stagger">
-        <div class="flow-step reveal">
-          <div class="num">01</div>
-          <h4>Pedir</h4>
-          <p>O consultor faz um pedido simples. A OPERA recebe, classifica e direciona para Operations, Finance ou Legal.</p>
-          <div class="flow-arrow">→</div>
-        </div>
-        <div class="flow-step reveal">
-          <div class="num">02</div>
-          <h4>Acompanhar</h4>
-          <p>O consultor acompanha o estado do pedido em tempo real. Menos emails perdidos. Sem falta de resposta.</p>
-          <div class="flow-arrow">→</div>
-        </div>
-        <div class="flow-step reveal">
-          <div class="num">03</div>
-          <h4>Resolver</h4>
-          <p>A OPERA resolve e confirma.</p>
-        </div>
-      </div>
-      <div class="ticket-demo reveal" id="ticketDemo">
-        <span class="ticket-chip pedido" data-chip>Pedido</span>
-        <span class="ticket-sep">→</span>
-        <span class="ticket-chip curso" data-chip>Em curso</span>
-        <span class="ticket-sep">→</span>
-        <span class="ticket-chip resolvido" data-chip>Resolvido</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- TECNOLOGIA -->
-  <section class="section" id="tecnologia">
-    <div class="container">
-      <div class="section-head reveal">
-        <span class="eyebrow">Tecnologia</span>
-        <h2>A operação numa plataforma centralizada.</h2>
-      </div>
-      <div class="tech-grid stagger">
-        <div class="tech-card reveal">
-          <div class="ico">📁</div>
-          <h4>Processos & Docs</h4>
-          <p>Consulta processos, documentação e estado de cada negócio em tempo real.</p>
-        </div>
-        <div class="tech-card reveal">
-          <div class="ico">💬</div>
-          <h4>Pedidos & Comunicação</h4>
-          <p>Faz pedidos e comunica diretamente com a equipa OPERA numa plataforma centralizada.</p>
-        </div>
-        <div class="tech-card reveal">
-          <div class="ico">✅</div>
-          <h4>Tarefas & Financeiro</h4>
-          <p>Acompanha tarefas, prazos e consulta informação financeira atualizada a qualquer momento.</p>
-        </div>
-        <div class="tech-card reveal">
-          <div class="ico">📊</div>
-          <h4>Reporting & Automação</h4>
-          <p>Acede a reporting completo e automatiza tarefas repetitivas para ganhar escala e eficiência.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAIXA DE LOGOTIPOS
-    Logotipos embutidos no próprio ficheiro (base64), não é preciso pasta /logos/.
-  -->
+  <!-- PROVA SOCIAL: logótipos + testemunho -->
   <section class="brands" aria-label="Marcas com consultores clientes da OPERA">
-    <p class="brands-title">Consultores das <strong>maiores marcas imobiliárias</strong> já delegaram a operação</p>
+    <p class="brands-title">Consultores das <strong>maiores marcas imobiliárias</strong> já trabalham com a OPERA</p>
     <div class="brands-marquee">
       <div class="brands-track" id="brandsTrack">
         <div class="brand-logo"><img src="data:image/png;base64,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" alt="ZOME" loading="lazy"></div>
@@ -982,12 +778,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
     </div>
   </section>
 
-  <!-- TESTIMONIALS -->
-  <!--
-    Para acrescentar um testemunho: duplica um <div class="testi-card reveal"> e troca o vídeo
-    (MP4 vertical 9:16 em media/testemunhos/), a capa (poster) e o nome e cargo reais do cliente.
-    Nunca publiques esta secção com conteúdo inventado.
-  -->
+  <!-- Para acrescentar um testemunho: duplica um <div class="testi-card reveal"> e troca o vídeo,
+       a capa e o nome reais do cliente. Nunca publiques esta secção com conteúdo inventado. -->
   <section class="section testimonials" id="testemunhos">
     <div class="container">
       <div class="section-head reveal">
@@ -1010,70 +802,68 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
     </div>
   </section>
 
-  <!-- FINAL CTA -->
+  <!-- BACK OFFICE: complemento, com página própria -->
+  <section class="section bo-section" id="back-office">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">OPERA · Back Office</span>
+        <h2>E depois da visita, também tratamos da tua operação.</h2>
+        <p class="lead">Para quem quer delegar o resto: uma única equipa trata de tudo o que acontece entre a angariação e a escritura.</p>
+      </div>
+      <div class="diff-grid stagger">
+        <div class="diff-card reveal">
+          <div class="idx">01</div>
+          <h3>Operations</h3>
+          <p>Processos, documentação, coordenação de escrituras e follow-ups, sempre sob controlo.</p>
+        </div>
+        <div class="diff-card reveal">
+          <div class="idx">02</div>
+          <h3>Legal</h3>
+          <p>Apoio contratual, CPCV e suporte jurídico especializado em cada transação.</p>
+        </div>
+        <div class="diff-card reveal">
+          <div class="idx">03</div>
+          <h3>Finance</h3>
+          <p>Faturação, organização financeira e compliance fiscal do teu negócio.</p>
+        </div>
+      </div>
+      <p class="section-more reveal"><a href="/back-office">Conhecer o OPERA Back Office <span>→</span></a></p>
+    </div>
+  </section>
 
-  <!-- FERRAMENTAS -->
+  <!-- FERRAMENTAS: só duas na página principal -->
   <section class="section" id="ferramentas">
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow">Ferramentas gratuitas</span>
-        <h2>Mede, planeia e organiza a tua operação.</h2>
-        <p class="lead">Ferramentas criadas pela OPERA para consultores, equipas e investidores imobiliários. Gratuitas e sem compromisso.</p>
+        <h2>Ainda não é o momento? Começa por medir.</h2>
+        <p class="lead">Dois diagnósticos rápidos para perceberes onde estás a perder negócio.</p>
       </div>
       <div class="tools-grid stagger">
-        <a class="tool-card featured reveal" href="/score">
+        <a class="tool-card wide reveal" href="/score">
           <div class="tool-meta"><span class="tool-tag">Diagnóstico</span><span class="tool-time">3 min</span></div>
-          <h4>OPERA Score: a tua operação está preparada para acompanhar o teu negócio?</h4>
+          <h4>OPERA Score: a tua operação acompanha o teu negócio?</h4>
           <p>Recebe um score de 0 a 100, o teu principal gargalo e uma recomendação concreta para libertar capacidade comercial.</p>
           <span class="tool-go">Fazer o Score <span>→</span></span>
         </a>
-        <a class="tool-card reveal" href="/auditoria">
+        <a class="tool-card wide reveal" href="/auditoria">
           <div class="tool-meta"><span class="tool-tag">Auditoria</span><span class="tool-time">3 min</span></div>
           <h4>Quanto negócio estás a perder?</h4>
           <p>Descobre quanto tempo e potencial comercial estás a deixar preso em tarefas operacionais.</p>
           <span class="tool-go">Fazer a auditoria <span>→</span></span>
         </a>
-        <a class="tool-card reveal" href="/calculadora">
-          <div class="tool-meta"><span class="tool-tag">Calculadora</span></div>
-          <h4>Quanto tempo te tira a operação?</h4>
-          <p>Descobre quantas horas por ano a operação te tira e quanto valem em negócio.</p>
-          <span class="tool-go">Calcular <span>→</span></span>
-        </a>
-        <a class="tool-card reveal" href="/growth.html#calculadora">
-          <div class="tool-meta"><span class="tool-tag">Calculadora</span></div>
-          <h4>Quantas vendas precisas?</h4>
-          <p>Calcula os leads, angariações e vendas necessários para bater o teu objetivo de faturação.</p>
-          <span class="tool-go">Calcular <span>→</span></span>
-        </a>
-        <a class="tool-card reveal" href="/assistente">
-          <div class="tool-meta"><span class="tool-tag">Simulador</span></div>
-          <h4>Quando devo contratar uma assistente?</h4>
-          <p>Percebe se é o momento certo, que função precisas e quanto custa criar essa estrutura.</p>
-          <span class="tool-go">Simular <span>→</span></span>
-        </a>
-        <a class="tool-card wide reveal" href="/guia-equipa">
-          <div class="tool-meta"><span class="tool-tag">Guia</span></div>
-          <h4>A equipa que não depende de ti</h4>
-          <p>3 pilares, 7 funções e a ordem certa para contratar a tua equipa imobiliária.</p>
-          <span class="tool-go">Ler o guia <span>→</span></span>
-        </a>
-        <a class="tool-card wide reveal" href="/guia-investidor">
-          <div class="tool-meta"><span class="tool-tag">Guia · Investidores</span></div>
-          <h4>A empresa de investimento que não depende de ti</h4>
-          <p>Para investidores a partir de 5 transações por ano: 3 departamentos, 8 funções e a ordem certa para montar estrutura.</p>
-          <span class="tool-go">Ler o guia <span>→</span></span>
-        </a>
       </div>
+      <p class="section-more reveal"><a href="/ferramentas">Ver todas as ferramentas <span>→</span></a></p>
     </div>
   </section>
 
+  <!-- CTA FINAL -->
   <section class="final-cta">
     <div class="container reveal">
-      <h2>Foca-te no negócio.<br>Nós tratamos da operação.</h2>
-      <p>Descobre como a OPERA pode funcionar como a extensão operacional da tua estrutura.</p>
+      <h2>You sell.<br>We operate.</h2>
+      <p>Para consultores a faturar a partir de 75 mil euros por ano, equipas e investidores imobiliários.</p>
       <div class="btn-row">
-        <a href="#form" class="btn btn-primary">Quero conhecer a OPERA</a>
-        <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-ghost">Agendar uma reunião</a>
+        <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary">Agendar uma reunião</a>
       </div>
     </div>
   </section>
@@ -1084,7 +874,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
       <div class="form-wrap reveal">
         <div class="section-head">
           <span class="eyebrow">Contacto</span>
-          <h2 style="font-size:32px;">Quero conhecer a OPERA</h2>
+          <h2 style="font-size:32px;">Preferes que sejamos nós a ligar?</h2>
         </div>
         <form class="form-grid" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="return submitContactForm(event)">
           <input type="hidden" name="form-name" value="contact">
@@ -1096,7 +886,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
           <div class="field full"><label for="comerciais">Número de comerciais</label><input id="comerciais" name="comerciais" type="text"></div>
           <div class="field full"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem"></textarea></div>
           <div class="full">
-            <button type="submit" class="btn btn-primary">Quero conhecer a OPERA</button>
+            <button type="submit" class="btn btn-primary">Pedir contacto</button>
             <p class="form-success" style="display:none;color:var(--teal-300);font-size:13.5px;margin-top:14px;">Obrigado. A equipa OPERA entrará em contacto brevemente.</p>
             <p class="form-error" style="display:none;color:#e2725b;font-size:13.5px;margin-top:14px;">Não foi possível enviar agora. Tenta novamente ou escreve para geral@opera-os.com.</p>
           </div>
