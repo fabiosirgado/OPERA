@@ -552,6 +552,9 @@ footer{padding:50px 0;border-top:1px solid var(--glass-border);}
 .footer-inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
 footer .logo{font-size:18px;}
 .footer-meta{color:var(--ink-600);font-size:13px;}
+.brands-static .brands-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:30px 72px;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);padding:36px 20px;}
+.client-logo img{height:108px;width:auto;display:block;}
+@media (max-width:700px){.client-logo img{height:84px;}}
 .footer-services{display:flex;flex-wrap:wrap;gap:12px 32px;margin-top:28px;padding-top:20px;border-top:1px solid var(--glass-border);}
 .footer-services a{color:var(--ink-300);font-family:'Archivo',sans-serif;font-weight:700;font-size:14.5px;transition:color .3s;}
 .footer-services a:hover{color:var(--ink-0);}
@@ -762,6 +765,17 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{
       <div class="mid-cta reveal">
         <a href="https://cal.com/opera-os/discovery-call" target="_blank" rel="noopener" class="btn btn-primary">Agendar uma reunião</a>
       </div>
+    </div>
+  </section>
+
+  <!-- CLIENTES DE SETTING
+    Para acrescentar um cliente: duplica o <div class="client-logo"> com o logótipo em media/clientes/.
+    Só clientes reais e com autorização para mostrar o logótipo.
+  -->
+  <section class="brands brands-static" aria-label="Empresas clientes de setting da OPERA">
+    <p class="brands-title">Empresas que já <strong>confiam na OPERA</strong></p>
+    <div class="brands-row">
+      <div class="client-logo"><img src="media/clientes/ignite-media-studios.png" alt="Ignite Media Studios" width="391" height="323" loading="lazy"></div>
     </div>
   </section>
 
