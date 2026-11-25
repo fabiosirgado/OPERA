@@ -42,16 +42,19 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
     if (period === "custom" && !rangeOk) return;
     const custom = period === "custom" ? { p_from: range.from, p_to: range.to } : {};
     run(async () => {
-      const [dash, load, rk, act, wa] = await Promise.all([
+      const [dash, load, rk, act, wa, waR] = await Promise.all([
         sb.rpc("leads_dashboard", { p_client: client || null, p_period: period, ...custom }),
         isAdmin ? sb.rpc("leads_managers_load") : Promise.resolve({ data: [] }),
         opera ? sb.rpc("leads_qualified_ranking", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
         isAdmin ? sb.rpc("leads_managers_activity", { p_period: period, ...custom }) : Promise.resolve({ data: null }),
         // Vista do cliente com o WhatsApp em funcionamento (wa_live): mensagens entregues, para "Contactos realizados".
-        !opera ? sb.rpc("wa_contactos", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
+        // Mensagens de WhatsApp entregues (null com o WhatsApp desligado): entram em "Contactos" nas duas vistas.
+        sb.rpc("wa_contactos", { p_client: client || null, p_period: period, ...custom }),
+        // Vista OPERA: o volume da reativação por WhatsApp.
+        opera ? sb.rpc("wa_dashboard_resumo", { p_client: client || null, p_period: period, ...custom }) : Promise.resolve({ data: null }),
       ]);
       if (dash.error) throw dash.error;
-      setD({ ...dash.data, wa_entregues: wa.error ? null : wa.data });
+      setD({ ...dash.data, wa_entregues: wa.error ? null : wa.data, wa_resumo: waR.error ? null : waR.data });
       setManagers(load.data || []);
       setRank(rk.data || null);
       setActivity(act.data || null);
@@ -122,7 +125,15 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           <div className="stat s6"><span>Leads que entraram</span><b>{d.leads_in}</b><small>{dec(d.leads_in / d.days)} por dia{d.calls_new != null ? ` · ${d.calls_new} ${d.calls_new === 1 ? "chamada" : "chamadas"} a estas leads` : ""}</small></div>
           <div className={`stat s6 ${d.overdue ? "warn" : ""}`}><span>Tarefas atrasadas agora</span><b>{d.overdue}</b><small>Independente do período</small></div>
           {/* Chamadas feitas = atendidas (conversa de 10 segundos ou mais) + tentativas (não atendidas ou mais curtas). */}
-          {d.wa_entregues != null ? (
+          {d.wa_entregues != null && opera ? (<>
+            {/* Vista OPERA com o WhatsApp a funcionar: o total de contactos e, ao lado, as chamadas e as mensagens. */}
+            <div className="stat s4"><span>Contactos feitos</span><b>{d.calls + d.wa_entregues}</b>
+              <small>Chamadas feitas e mensagens de WhatsApp entregues</small></div>
+            <div className="stat s4"><span>Chamadas feitas</span><b>{d.calls}</b>
+              <small>A {d.leads_called ?? 0} leads · {d.leads_called ? dec(d.calls / d.leads_called) : "0"} por lead · {pct(d.calls, d.calls + d.wa_entregues)} dos contactos</small></div>
+            <div className="stat s4"><span>WhatsApp entregues</span><b>{d.wa_entregues}</b>
+              <small>{d.wa_resumo ? `A ${d.wa_resumo.leads_contactadas ?? 0} leads · ` : ""}{pct(d.wa_entregues, d.calls + d.wa_entregues)} dos contactos</small></div>
+          </>) : d.wa_entregues != null ? (
             // Um só número para o cliente: chamadas feitas mais mensagens de WhatsApp entregues (secção 10.1).
             <div className="stat s4"><span>Contactos realizados</span><b>{d.calls + d.wa_entregues}</b>
               <small>A {d.leads_called ?? 0} leads e por mensagem</small></div>
@@ -137,11 +148,12 @@ export default function Dashboard({ ctx, isAdmin, opera }) {
           {/* Conversas: chamadas atendidas com 1 minuto ou mais. O tempo e as horas contam só estas. */}
           <div className="stat s4"><span>Conversas</span><b>{d.call_time?.n ?? 0}</b>
             <small>Chamadas atendidas com 1 min ou mais · {pct(d.call_time?.n ?? 0, d.answered)} das atendidas</small></div>
-          <div className="stat s4"><span>Tempo médio de conversa</span><b>{mmss(d.call_time?.avg_s)}</b>
+          <div className={`stat ${d.wa_entregues != null && opera ? "s6" : "s4"}`}><span>Tempo médio de conversa</span><b>{mmss(d.call_time?.avg_s)}</b>
             <small>Mediana {mmss(d.call_time?.median_s)} · só conversas de 1 min ou mais</small></div>
           {/* Ocupação: todo o tempo em chamada (a chamar e em conversa), feitas e recebidas, atendidas ou não. */}
-          <div className="stat s4"><span>Horas em chamada</span><b>{hours(d.call_hours?.total_s ?? 0)}</b>
+          <div className={`stat ${d.wa_entregues != null && opera ? "s6" : "s4"}`}><span>Horas em chamada</span><b>{hours(d.call_hours?.total_s ?? 0)}</b>
             <small>Todo o tempo ao telefone, a chamar e em conversa{opera && !client ? ", incluindo as leads da OPERA" : ""} ·{hours(d.call_hours?.out_s ?? 0)} em chamadas feitas, {hours(d.call_hours?.in_s ?? 0)} em recebidas</small></div>
+          {opera && d.wa_resumo && <WaResumo w={d.wa_resumo} />}
           <div className="stat s3"><span>Leads qualificadas</span><b>{d.qual}</b><small>Decididas no período, incluindo leads de antes · Tempo até qualificar: {d.time_to_qualify == null ? "—" : fmtDur(d.time_to_qualify)}</small></div>
           <div className="stat s3"><span>Leads desqualificadas</span><b>{d.desq}</b><small>Decididas no período, incluindo leads de antes</small></div>
           <div className="stat s3"><span>Taxa de qualificação</span><b>{pct(d.qual, d.qual + d.desq)}</b><small>Qualificadas sobre decididas</small></div>
@@ -409,5 +421,28 @@ function LineChart({ data, endsToday, unit }) {
             {unit === "semana" ? "Semana de " : ""}{fmtD(a.d)}: {a.v} {a.v === 1 ? "lead" : "leads"}</text>
         </g>))}
     </svg>
+  );
+}
+
+// Reativação por WhatsApp (vista OPERA): mensagens enviadas e o que as leads responderam, no mesmo período e cliente.
+function WaResumo({ w }) {
+  const n = (v) => Number(v || 0);
+  return (
+    <div className="panel s12">
+      <h3>Reativação por WhatsApp</h3>
+      <div className="sub" style={{ margin: "4px 0 10px", fontSize: 13 }}>
+        {n(w.leads_contactadas)} leads receberam mensagens no período · {n(w.automaticas_entregues)} mensagens automáticas entregues (respostas e pedidos de horário)</div>
+      <div className="dgrid" style={{ margin: 0 }}>
+        <div className="stat s3"><span>Mensagens de reativação</span><b>{n(w.modelos_entregues)}</b>
+          <small>Entregues de {n(w.modelos_enviados)} enviadas · {pct(n(w.modelos_lidos), n(w.modelos_entregues))} lidas{n(w.modelos_falhados) ? ` · ${n(w.modelos_falhados)} falhadas` : ""}</small></div>
+        <div className="stat s3"><span>Responderam</span><b>{n(w.leads_responderam)}</b>
+          <small>{pct(n(w.leads_responderam), n(w.modelos_entregues))} das mensagens entregues{n(w.texto) ? ` · ${n(w.texto)} por escrito` : ""}</small></div>
+        <div className="stat s3" style={{ borderColor: "#A7E3C0", background: "var(--greenSoft)" }}>
+          <span style={{ color: "var(--greenText)" }}>Reativadas</span><b style={{ color: "var(--greenText)" }}>{n(w.reativadas)}</b>
+          <small style={{ color: "var(--greenText)" }}>Disseram que sim · {n(w.reativadas_qualificadas)} já qualificadas</small></div>
+        <div className="stat s3"><span>Outras respostas</span><b>{n(w.mais_tarde) + n(w.ja_nao) + n(w.nao_contactar)}</b>
+          <small>{n(w.mais_tarde)} mais tarde · {n(w.ja_nao)} já não · {n(w.nao_contactar)} não querem contactos</small></div>
+      </div>
+    </div>
   );
 }
