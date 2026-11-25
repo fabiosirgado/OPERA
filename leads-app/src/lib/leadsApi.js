@@ -13,7 +13,12 @@ const must = async (query) => {
 export const listStages = () => must(sb.from("lead_stages").select("*").order("position"));
 export const listLabels = () => must(sb.from("lead_labels").select("*").order("name"));
 // Tipo de serviço de cada cliente (imobiliário ou setting) e a configuração do setting. A OPERA vê todos; o cliente, o seu.
-export const clientSettings = () => must(sb.from("clients").select("id,service_type,qual_fields,desq_reasons")).catch(() => []);
+// (O link da agenda e quem faz as reuniões vieram depois: se a base de dados ainda não os tiver, lê-se o resto.)
+export const clientSettings = () => must(sb.from("clients").select("id,service_type,qual_fields,desq_reasons,meeting_hosts,booking_url"))
+  .catch(() => must(sb.from("clients").select("id,service_type,qual_fields,desq_reasons"))).catch(() => []);
+export const clientSettingSave = (client, cfg) => must(sb.rpc("leads_cliente_setting_guardar", {
+  p_client: client, p_qual_fields: cfg.qual_fields, p_desq_reasons: cfg.desq_reasons, p_meeting_hosts: cfg.meeting_hosts, p_booking_url: cfg.booking_url,
+}));
 export const activeClients = () => must(sb.rpc("leads_clients_overview")).then((cs) => cs.filter((c) => c.leads_status === "ativo"));
 
 // ---------- Pipeline

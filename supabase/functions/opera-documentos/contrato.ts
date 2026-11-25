@@ -1,4 +1,5 @@
-// Gera o PDF do contrato de prestação de serviços OPERA SA (gestão de leads) a partir do contrato, da ficha de fecho
+// Gera o PDF do contrato de prestação de serviços OPERA SA (gestão de leads) ou OPERA Setting (agendamento de reuniões)
+// a partir do contrato, da ficha de fecho
 // e dos pagamentos. Texto base: contrato da Joana Vicente (nov 2026), adaptado ao OPERA Leads.
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 
@@ -55,7 +56,8 @@ const M = 56.7, W = A4[0] - 2 * M;
 const DARK = rgb(0.1, 0.1, 0.18), GREY = rgb(0.4, 0.4, 0.4), LINE = rgb(0.8, 0.8, 0.8), HEAD = rgb(0.933, 0.933, 0.953);
 
 export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { rodape?: string } = {}): Promise<Uint8Array> {
-  if (c.servico !== "SA") throw new Error("Por agora só existe o modelo de contrato do OPERA SA. O BO e o bundle ainda não têm modelo.");
+  if (c.servico !== "SA" && c.servico !== "SETTING") throw new Error("Por agora só existem os modelos de contrato do OPERA SA e do OPERA Setting. O BO e o bundle ainda não têm modelo.");
+  const S = c.servico === "SETTING";
   const f = c.ficha;
   const pags = pagamentos.filter((p) => p.estado !== "cancelado").sort((a, b) => a.numero - b.numero);
   if (!pags.length) throw new Error("O contrato não tem pagamentos definidos.");
@@ -64,7 +66,7 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   const empresa = f.tipo !== "particular";
 
   const doc = await PDFDocument.create();
-  doc.setTitle(`Contrato OPERA SA · ${f.nome}`); doc.setAuthor("OPERA"); doc.setLanguage("pt-PT");
+  doc.setTitle(`Contrato OPERA ${S ? "Setting" : "SA"} · ${f.nome}`); doc.setAuthor("OPERA"); doc.setLanguage("pt-PT");
   const R = await doc.embedFont(StandardFonts.Helvetica);
   const B = await doc.embedFont(StandardFonts.HelveticaBold);
   let page = doc.addPage(A4);
@@ -126,6 +128,8 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   const H = (s: string) => { garante(40); P(s, { size: 11.5, lead: 16, bold: true, before: 10, after: 5 }); };
   const H3 = (s: string) => { garante(30); P(s, { size: 10, lead: 14, bold: true, before: 4, after: 3 }); };
   const BL = (s: string) => P(s, { bullet: true });
+  // No Setting há uma cláusula 13.ª própria, por isso as cláusulas 13.ª a 15.ª do SA avançam um número
+  const N = (t: string) => (S ? t.replace(/^(Cláusula )?(1[345])(?=\.)/, (_m, a, b) => (a ?? "") + (+b + 1)) : t);
 
   function tabela(rows: [string, string][], w1 = 170) {
     const size = 9, lead = 12, pad = 5, w2 = W - w1;
@@ -151,7 +155,7 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   const listaPags = pags.map((p) => `${euroMil(Number(p.valor))} a ${dataPT(p.data_prevista)}`).join("; ");
 
   P("CONTRATO DE PRESTAÇÃO DE SERVIÇOS", { size: 17, lead: 22, bold: true, center: true, after: 4 });
-  P("Gestão de Leads · OPERA SA", { size: 10, lead: 14, center: true, color: GREY, after: 2 });
+  P(S ? "Agendamento de Reuniões Comerciais · OPERA Setting" : "Gestão de Leads · OPERA SA", { size: 10, lead: 14, center: true, color: GREY, after: 2 });
   P("OPERA · You sell. We operate.", { size: 10, lead: 14, center: true, color: GREY, after: 12 });
 
   H("Identificação das Partes");
@@ -177,33 +181,58 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   P(`(doravante designad${empresa ? "a" : "o(a)"} por "Cliente" e, em conjunto com a OPERA, as "Partes")`);
 
   H("Considerandos");
-  P('(a) A OPERA é uma empresa especializada na prestação de serviços de suporte a profissionais e empresas do setor imobiliário, incluindo a gestão das leads que lhes chegam, sob o modelo "Real Estate Operations as a Service";');
-  P("(b) O Cliente exerce atividade no setor imobiliário e pretende contratar a OPERA para assumir a gestão das leads que lhe chegam, para que se possa concentrar na angariação, negociação e relação com clientes;");
+  P(S ? "(a) A OPERA é uma empresa especializada na prestação de serviços de suporte comercial e operacional a profissionais e empresas, incluindo a gestão das leads que lhes chegam e o agendamento de reuniões comerciais;" : '(a) A OPERA é uma empresa especializada na prestação de serviços de suporte a profissionais e empresas do setor imobiliário, incluindo a gestão das leads que lhes chegam, sob o modelo "Real Estate Operations as a Service";');
+  P(S ? "(b) O Cliente pretende contratar a OPERA para assumir o contacto, a qualificação e o agendamento de reuniões comerciais com as leads que lhe chegam, para que a sua equipa comercial se possa concentrar nas reuniões e no fecho de negócio;" : "(b) O Cliente exerce atividade no setor imobiliário e pretende contratar a OPERA para assumir a gestão das leads que lhe chegam, para que se possa concentrar na angariação, negociação e relação com clientes;");
   P("(c) As Partes pretendem regular os termos e condições em que os referidos serviços serão prestados;");
   P('É livremente celebrado o presente Contrato de Prestação de Serviços ("Contrato"), que se rege pelas cláusulas seguintes.');
 
   H("Cláusula 1.ª · Objeto");
-  P('1.1. O presente Contrato tem por objeto a prestação, pela OPERA ao Cliente, de serviços de gestão de leads ("Serviços"), nos termos descritos na Cláusula 2.ª e no Anexo I (Ficha de Cliente e Condições do Serviço).');
-  P("1.2. Os Serviços têm por finalidade apoiar o Cliente no atendimento, qualificação e acompanhamento das leads que lhe chegam, sem que a OPERA assuma a qualidade de mediadora, angariadora ou parte nas transações imobiliárias, mantendo o Cliente total responsabilidade pela atividade de mediação imobiliária, nos termos da legislação aplicável, designadamente a Lei n.º 15/2013, de 8 de fevereiro.");
+  P(S ? "1.1. O presente Contrato tem por objeto a prestação, pela OPERA ao Cliente, de serviços de contacto, qualificação e agendamento de reuniões comerciais com as leads do Cliente (\"Serviços\"), nos termos descritos na Cláusula 2.ª e no Anexo I (Ficha de Cliente e Condições do Serviço)." : '1.1. O presente Contrato tem por objeto a prestação, pela OPERA ao Cliente, de serviços de gestão de leads ("Serviços"), nos termos descritos na Cláusula 2.ª e no Anexo I (Ficha de Cliente e Condições do Serviço).');
+  P(S ? "1.2. Os Serviços têm por finalidade apoiar o Cliente no contacto, na qualificação e no agendamento de reuniões comerciais com as leads que lhe chegam, sem que a OPERA assuma a qualidade de agente, representante comercial ou parte nos negócios celebrados entre o Cliente e os seus clientes, mantendo o Cliente total responsabilidade pela sua atividade e pelos serviços que presta." : "1.2. Os Serviços têm por finalidade apoiar o Cliente no atendimento, qualificação e acompanhamento das leads que lhe chegam, sem que a OPERA assuma a qualidade de mediadora, angariadora ou parte nas transações imobiliárias, mantendo o Cliente total responsabilidade pela atividade de mediação imobiliária, nos termos da legislação aplicável, designadamente a Lei n.º 15/2013, de 8 de fevereiro.");
 
   H("Cláusula 2.ª · Descrição dos Serviços");
-  P("2.1. No âmbito da gestão de leads, a OPERA prestará ao Cliente os seguintes serviços:");
-  BL("Receção das leads que chegam ao Cliente por qualquer canal inbound, com registo na plataforma de gestão de leads da OPERA (OPERA Leads);");
-  BL("Contacto telefónico às leads, em nome do Cliente, dentro do horário definido no Anexo I;");
-  BL("Qualificação das leads, designadamente tipo de imóvel (a comprar ou vender), zona, orçamento, prazo e capacidade financeira declarada;");
-  BL("Agendamento de visitas e reuniões diretamente na agenda do Cliente, desde que esta esteja partilhada com a OPERA e atualizada;");
-  BL("Follow ups às leads ainda não convertidas;");
-  BL("Registo dos contactos realizados, das qualificações e das respetivas notas no OPERA Leads.");
-  P("2.2. O serviço incide exclusivamente sobre as leads geradas pelo Cliente ou para o Cliente, não incluindo prospeção a frio, geração de leads nem gestão de campanhas publicitárias.", { before: 2 });
-  P("2.3. A OPERA não negoceia, não apresenta propostas nem presta informação vinculativa sobre imóveis, preços ou condições de negócio. A informação comercial transmitida às leads é fornecida e validada pelo Cliente.");
-  P("2.4. A OPERA assume uma obrigação de meios, não garantindo um número mínimo de leads qualificadas, visitas agendadas ou negócios concretizados, os quais dependem do volume e da qualidade das leads recebidas.");
-  P("2.5. A gestão das leads é feita no OPERA Leads, plataforma da titularidade da OPERA. Durante a vigência do Contrato, o Cliente tem acesso, com utilizador próprio, às suas leads, ao histórico de contactos e às qualificações, podendo acompanhá-las em tempo real.");
-  P("2.6. Não estão incluídos no presente Contrato serviços de gestão processual, documental ou de suporte jurídico, os quais, se solicitados pelo Cliente, poderão ser contratados à parte, nos termos da Cláusula 5.3.");
+  if (S) {
+    P("2.1. No âmbito do presente Contrato, a OPERA prestará ao Cliente os seguintes serviços:");
+    BL("Receção das leads que chegam ao Cliente por qualquer canal inbound e dos contactos da base de dados que o Cliente disponibilize para reativação, com registo na plataforma de gestão de leads da OPERA (OPERA Leads);");
+    BL("Contacto às leads, em nome do Cliente, dentro do horário definido no Anexo I;");
+    BL("Qualificação das leads de acordo com os critérios de lead qualificada para reunião, definidos por escrito entre as Partes na fase de implementação;");
+    BL("Agendamento de reuniões comerciais com as leads qualificadas, diretamente na agenda do Cliente, desde que esta esteja partilhada com a OPERA e atualizada;");
+    BL("Comunicação ao Cliente de cada reunião agendada, com a informação de qualificação recolhida;");
+    BL("Follow ups às leads ainda não agendadas;");
+    BL("Registo dos contactos realizados, das qualificações e das respetivas notas no OPERA Leads.");
+    P("2.2. O presente Contrato corresponde a 1 (uma) slot do serviço. Cada slot abrange, em cada mês, o volume de leads indicado no Anexo I, incluindo leads novas e contactos de base de dados a reativar, não transitando para o mês seguinte o volume não utilizado. As leads novas têm prioridade sobre a reativação da base de dados, salvo indicação escrita em contrário do Cliente.", { before: 2 });
+    P("2.3. O serviço incide exclusivamente sobre as leads geradas pelo Cliente ou para o Cliente e sobre a sua base de dados, não incluindo prospeção a frio, geração de leads nem gestão de campanhas publicitárias. Não inclui também a realização das reuniões comerciais, a apresentação de propostas, a negociação ou o fecho de negócios, que cabem exclusivamente ao Cliente.");
+    P("2.4. A OPERA não presta informação vinculativa sobre preços, condições ou resultados dos serviços do Cliente. A informação comercial transmitida às leads é fornecida pelo Cliente, que responde pela sua exatidão.");
+    P("2.5. A OPERA assume uma obrigação de meios, não garantindo um número mínimo de leads qualificadas, de reuniões agendadas, de comparências ou de negócios concretizados, os quais dependem do volume e da qualidade das leads recebidas e da oferta do Cliente.");
+    P("2.6. Os lembretes de reunião às leads agendadas são assegurados pelo Cliente, nos seus próprios sistemas, com o apoio da OPERA na respetiva configuração inicial.");
+    P("2.7. A gestão das leads é feita no OPERA Leads, plataforma da titularidade da OPERA. Durante a vigência do Contrato, o Cliente tem acesso, com utilizador próprio, às suas leads, ao histórico de contactos e às qualificações, podendo acompanhá-las em tempo real.");
+  } else {
+    P("2.1. No âmbito da gestão de leads, a OPERA prestará ao Cliente os seguintes serviços:");
+    BL("Receção das leads que chegam ao Cliente por qualquer canal inbound, com registo na plataforma de gestão de leads da OPERA (OPERA Leads);");
+    BL("Contacto telefónico às leads, em nome do Cliente, dentro do horário definido no Anexo I;");
+    BL("Qualificação das leads, designadamente tipo de imóvel (a comprar ou vender), zona, orçamento, prazo e capacidade financeira declarada;");
+    BL("Agendamento de visitas e reuniões diretamente na agenda do Cliente, desde que esta esteja partilhada com a OPERA e atualizada;");
+    BL("Follow ups às leads ainda não convertidas;");
+    BL("Registo dos contactos realizados, das qualificações e das respetivas notas no OPERA Leads.");
+    P("2.2. O serviço incide exclusivamente sobre as leads geradas pelo Cliente ou para o Cliente, não incluindo prospeção a frio, geração de leads nem gestão de campanhas publicitárias.", { before: 2 });
+    P("2.3. A OPERA não negoceia, não apresenta propostas nem presta informação vinculativa sobre imóveis, preços ou condições de negócio. A informação comercial transmitida às leads é fornecida e validada pelo Cliente.");
+    P("2.4. A OPERA assume uma obrigação de meios, não garantindo um número mínimo de leads qualificadas, visitas agendadas ou negócios concretizados, os quais dependem do volume e da qualidade das leads recebidas.");
+    P("2.5. A gestão das leads é feita no OPERA Leads, plataforma da titularidade da OPERA. Durante a vigência do Contrato, o Cliente tem acesso, com utilizador próprio, às suas leads, ao histórico de contactos e às qualificações, podendo acompanhá-las em tempo real.");
+    P("2.6. Não estão incluídos no presente Contrato serviços de gestão processual, documental ou de suporte jurídico, os quais, se solicitados pelo Cliente, poderão ser contratados à parte, nos termos da Cláusula 5.3.");
+  }
 
   H("Cláusula 3.ª · Modelo de Funcionamento");
-  P("3.1. A gestão de leads decorre de forma contínua, sem necessidade de pedido individual, a partir da entrada de cada lead inbound, seja qual for o canal de origem.");
-  P("3.2. A OPERA disponibiliza ao Cliente um ponto de contacto para o acompanhamento do serviço, alinhamento da informação comercial a transmitir às leads e resolução de qualquer questão relacionada com a prestação dos Serviços.");
-  P("3.3. A OPERA atuará como equipa externa de gestão de leads do Cliente, sem prejuízo da autonomia técnica e organizativa de cada uma das Partes, não se estabelecendo entre elas qualquer relação de subordinação jurídica, societária ou laboral.");
+  if (S) {
+    P("3.1. A prestação dos Serviços é precedida de uma fase de implementação, com duração estimada de até 1 (uma) semana, destinada à configuração técnica, à definição dos critérios de lead qualificada e ao estudo da oferta e do processo comercial do Cliente. Para esse efeito, o Cliente disponibiliza os acessos, os materiais comerciais e as gravações ou o acompanhamento de reuniões comerciais que se mostrem necessários.");
+    P("3.2. Concluída a implementação, o serviço decorre de forma contínua, sem necessidade de pedido individual, a partir da entrada de cada lead inbound, seja qual for o canal de origem.");
+    P("3.3. Os guiões e os métodos de contacto são definidos pela OPERA, com base na informação comercial fornecida pelo Cliente, e integram a sua metodologia, nos termos da Cláusula 11.ª.");
+    P("3.4. A OPERA disponibiliza ao Cliente um ponto de contacto para o acompanhamento do serviço, alinhamento da informação comercial a transmitir às leads e resolução de qualquer questão relacionada com a prestação dos Serviços.");
+    P("3.5. A OPERA atuará como equipa externa de agendamento do Cliente, sem prejuízo da autonomia técnica e organizativa de cada uma das Partes, não se estabelecendo entre elas qualquer relação de subordinação jurídica, societária ou laboral.");
+  } else {
+    P("3.1. A gestão de leads decorre de forma contínua, sem necessidade de pedido individual, a partir da entrada de cada lead inbound, seja qual for o canal de origem.");
+    P("3.2. A OPERA disponibiliza ao Cliente um ponto de contacto para o acompanhamento do serviço, alinhamento da informação comercial a transmitir às leads e resolução de qualquer questão relacionada com a prestação dos Serviços.");
+    P("3.3. A OPERA atuará como equipa externa de gestão de leads do Cliente, sem prejuízo da autonomia técnica e organizativa de cada uma das Partes, não se estabelecendo entre elas qualquer relação de subordinação jurídica, societária ou laboral.");
+  }
 
   H("Cláusula 4.ª · Duração e Renovação");
   P(`4.1. O presente Contrato entra em vigor na data indicada no Anexo I ("Data de Início") e vigora por um período de ${nExt(meses)} ${meses === 1 ? "mês" : "meses"}.`);
@@ -236,14 +265,24 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
 
   H("Cláusula 7.ª · Obrigações do Cliente");
   P("O Cliente fica obrigado a:");
-  BL("Fornecer, de forma tempestiva, verdadeira e completa, toda a informação necessária à prestação dos Serviços;");
-  BL("Manter a sua licença ou registo profissional (AMI, quando aplicável, ou vínculo válido a mediadora licenciada) em vigor durante toda a duração do Contrato;");
-  BL("Proceder ao pagamento pontual do Preço e demais valores devidos nos termos deste Contrato;");
-  BL("Garantir que as leads foram recolhidas licitamente e informadas de que podem ser contactadas por telefone, em seu nome, por prestadores de serviços;");
-  BL("Fornecer à OPERA a informação comercial necessária sobre os imóveis e serviços a apresentar às leads;");
-  BL("Assegurar que as suas leads inbound chegam à OPERA, pelos meios técnicos acordados entre as Partes;");
-  BL("Manter a sua agenda partilhada com a OPERA e atualizada, no caso de agendamento de visitas e reuniões;");
-  BL("Assumir integral responsabilidade legal, deontológica e fiscal pela atividade de mediação e consultoria imobiliária por si exercida, incluindo perante clientes, entidades reguladoras e terceiros, não sendo tal responsabilidade transferida para a OPERA.");
+  if (S) {
+    BL("Fornecer, de forma tempestiva, verdadeira e completa, toda a informação necessária à prestação dos Serviços;");
+    BL("Proceder ao pagamento pontual do Preço e demais valores devidos nos termos deste Contrato;");
+    BL("Garantir que as leads e os contactos da sua base de dados foram recolhidos licitamente e que dispõe de fundamento legal para que sejam contactados, em seu nome, por prestadores de serviços;");
+    BL("Fornecer à OPERA a informação comercial necessária sobre a sua oferta, incluindo serviços, preços, objeções frequentes e casos de sucesso;");
+    BL("Assegurar que as suas leads inbound chegam à OPERA, pelos meios técnicos acordados entre as Partes;");
+    BL("Manter a agenda de quem realiza as reuniões partilhada com a OPERA e atualizada;");
+    BL("Assumir integral responsabilidade legal e fiscal pela sua atividade e pelos serviços que presta, incluindo perante os seus clientes e terceiros, não sendo tal responsabilidade transferida para a OPERA.");
+  } else {
+    BL("Fornecer, de forma tempestiva, verdadeira e completa, toda a informação necessária à prestação dos Serviços;");
+    BL("Manter a sua licença ou registo profissional (AMI, quando aplicável, ou vínculo válido a mediadora licenciada) em vigor durante toda a duração do Contrato;");
+    BL("Proceder ao pagamento pontual do Preço e demais valores devidos nos termos deste Contrato;");
+    BL("Garantir que as leads foram recolhidas licitamente e informadas de que podem ser contactadas por telefone, em seu nome, por prestadores de serviços;");
+    BL("Fornecer à OPERA a informação comercial necessária sobre os imóveis e serviços a apresentar às leads;");
+    BL("Assegurar que as suas leads inbound chegam à OPERA, pelos meios técnicos acordados entre as Partes;");
+    BL("Manter a sua agenda partilhada com a OPERA e atualizada, no caso de agendamento de visitas e reuniões;");
+    BL("Assumir integral responsabilidade legal, deontológica e fiscal pela atividade de mediação e consultoria imobiliária por si exercida, incluindo perante clientes, entidades reguladoras e terceiros, não sendo tal responsabilidade transferida para a OPERA.");
+  }
 
   H("Cláusula 8.ª · Confidencialidade e Proteção de Dados");
   P("8.1. As Partes ficam obrigadas a manter confidencial toda a informação de natureza confidencial a que tenham acesso no âmbito da execução do presente Contrato, não a divulgando a terceiros nem a utilizando para fins distintos dos previstos neste Contrato, salvo consentimento prévio e escrito da outra Parte ou obrigação legal de divulgação.");
@@ -261,7 +300,7 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   H("Cláusula 10.ª · Responsabilidade");
   P("10.1. A OPERA responde pelos danos diretos causados ao Cliente em consequência de incumprimento culposo das obrigações previstas neste Contrato, nos termos gerais de direito.");
   P("10.2. A OPERA não é responsável por danos indiretos ou lucros cessantes, nem pela veracidade e exatidão da informação fornecida pelo Cliente, pelas leads ou por terceiros.");
-  P("10.3. A OPERA não assume, em caso algum, a posição de mediadora imobiliária, angariadora ou parte nas transações imobiliárias em que o Cliente intervenha, nem qualquer responsabilidade que, por lei ou por contrato, seja exclusiva do Cliente enquanto profissional do setor.");
+  P(S ? "10.3. A OPERA não assume, em caso algum, a posição de parte, agente ou representante nos negócios celebrados entre o Cliente e os seus clientes, nem qualquer responsabilidade pelos serviços prestados pelo Cliente ou que, por lei ou por contrato, seja exclusiva deste." : "10.3. A OPERA não assume, em caso algum, a posição de mediadora imobiliária, angariadora ou parte nas transações imobiliárias em que o Cliente intervenha, nem qualquer responsabilidade que, por lei ou por contrato, seja exclusiva do Cliente enquanto profissional do setor.");
 
   H("Cláusula 11.ª · Propriedade Intelectual e Titularidade dos Dados");
   P('11.1. A marca "OPERA", a plataforma OPERA Leads, os processos, metodologias, guiões, modelos e demais materiais desenvolvidos ou utilizados pela OPERA na prestação dos Serviços são e permanecem propriedade exclusiva da OPERA ou dos seus licenciantes, não conferindo o presente Contrato ao Cliente qualquer direito sobre os mesmos.');
@@ -271,19 +310,26 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   P("12.1. A relação entre as Partes é de prestação de serviços, não constituindo, em caso algum, contrato de trabalho, contrato de agência, mandato com representação, associação em participação ou qualquer outra forma de relação societária ou laboral.");
   P("12.2. Salvo acordo em contrário constante do Anexo I, o presente Contrato não tem natureza de exclusividade, podendo cada uma das Partes prestar serviços ou colaborar com terceiros.");
 
-  H("Cláusula 13.ª · Comunicações");
-  P("13.1. Todas as comunicações entre as Partes no âmbito deste Contrato deverão ser efetuadas por escrito, para os endereços de email indicados na identificação das Partes, sendo consideradas eficazes na data do respetivo envio, salvo prova de não entrega.");
-  P("13.2. Qualquer alteração aos dados de contacto de qualquer das Partes deverá ser comunicada à outra Parte no prazo de 10 (dez) dias a contar da respetiva alteração.");
+  if (S) {
+    H("Cláusula 13.ª · Caso de Estudo e Testemunho");
+    P("13.1. O Cliente autoriza a OPERA a utilizar o seu nome, marca e logótipo, bem como os resultados agregados da prestação dos Serviços, para a elaboração e divulgação de um caso de estudo nos canais de comunicação da OPERA.");
+    P("13.2. O Cliente compromete-se a gravar, a pedido da OPERA e em data a acordar entre as Partes, um testemunho em vídeo sobre a sua experiência com os Serviços, autorizando a respetiva divulgação nos mesmos canais.");
+    P("13.3. O caso de estudo e o testemunho não incluem dados pessoais de leads nem informação confidencial do Cliente.");
+  }
 
-  H("Cláusula 14.ª · Disposições Finais");
-  P("14.1. O presente Contrato, incluindo os seus Anexos, constitui a totalidade do acordo entre as Partes relativamente ao seu objeto, substituindo quaisquer entendimentos, propostas ou acordos anteriores, escritos ou verbais.");
-  P("14.2. Qualquer alteração ao presente Contrato só será válida se reduzida a escrito e assinada por ambas as Partes.");
-  P("14.3. A eventual invalidade ou ineficácia de qualquer cláusula deste Contrato não afeta a validade das restantes, devendo as Partes substituir a cláusula inválida por outra que mais se aproxime do efeito pretendido.");
-  P("14.4. A tolerância de qualquer das Partes quanto ao incumprimento, pela outra, de qualquer obrigação prevista neste Contrato não constitui renúncia ao direito de exigir o seu cumprimento.");
+  H(N("Cláusula 13.ª · Comunicações"));
+  P(N("13.1. Todas as comunicações entre as Partes no âmbito deste Contrato deverão ser efetuadas por escrito, para os endereços de email indicados na identificação das Partes, sendo consideradas eficazes na data do respetivo envio, salvo prova de não entrega."));
+  P(N("13.2. Qualquer alteração aos dados de contacto de qualquer das Partes deverá ser comunicada à outra Parte no prazo de 10 (dez) dias a contar da respetiva alteração."));
 
-  H("Cláusula 15.ª · Lei Aplicável e Resolução de Litígios");
-  P("15.1. O presente Contrato é regido pela lei portuguesa.");
-  P("15.2. As Partes procurarão resolver amigavelmente qualquer litígio emergente do presente Contrato. Não sendo possível a resolução amigável no prazo de 30 (trinta) dias, é competente o foro da comarca de Lisboa, com expressa renúncia a qualquer outro.");
+  H(N("Cláusula 14.ª · Disposições Finais"));
+  P(N("14.1. O presente Contrato, incluindo os seus Anexos, constitui a totalidade do acordo entre as Partes relativamente ao seu objeto, substituindo quaisquer entendimentos, propostas ou acordos anteriores, escritos ou verbais."));
+  P(N("14.2. Qualquer alteração ao presente Contrato só será válida se reduzida a escrito e assinada por ambas as Partes."));
+  P(N("14.3. A eventual invalidade ou ineficácia de qualquer cláusula deste Contrato não afeta a validade das restantes, devendo as Partes substituir a cláusula inválida por outra que mais se aproxime do efeito pretendido."));
+  P(N("14.4. A tolerância de qualquer das Partes quanto ao incumprimento, pela outra, de qualquer obrigação prevista neste Contrato não constitui renúncia ao direito de exigir o seu cumprimento."));
+
+  H(N("Cláusula 15.ª · Lei Aplicável e Resolução de Litígios"));
+  P(N("15.1. O presente Contrato é regido pela lei portuguesa."));
+  P(N("15.2. As Partes procurarão resolver amigavelmente qualquer litígio emergente do presente Contrato. Não sendo possível a resolução amigável no prazo de 30 (trinta) dias, é competente o foro da comarca de Lisboa, com expressa renúncia a qualquer outro."));
 
   // Assinaturas (bloco inteiro na mesma página)
   garante(190);
@@ -307,16 +353,29 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
     [empresa ? "NIPC" : "NIF", f.nif],
     [empresa ? "Sede" : "Morada", moradaCompleta],
     ["Tipo de Cliente", empresa ? "Empresa" : "Particular"],
-    ["Licença AMI", f.ami ? `AMI n.º ${f.ami}` : "Não aplicável"],
+    ...(S ? [] : [["Licença AMI", f.ami ? `AMI n.º ${f.ami}` : "Não aplicável"] as [string, string]]),
   ]);
   H3("2. Serviço incluído no Preço");
-  tabela([["Área", "Âmbito"], ["Gestão de leads (OPERA SA)", "Conforme Cláusula 2.ª"]]);
-  H3("3. Condições da Gestão de Leads");
-  tabela([
-    ["Campo", "Preenchimento"],
-    ["Plataforma de gestão de leads", "OPERA Leads, com acesso do Cliente por utilizador próprio"],
-    ["Horário de contacto às leads", "Dias úteis, das 9h30 às 18h30"],
-  ]);
+  if (S) {
+    tabela([["Área", "Âmbito"], ["Agendamento de reuniões comerciais (OPERA Setting)", "Conforme Cláusula 2.ª"]]);
+    H3("3. Condições do Serviço");
+    tabela([
+      ["Campo", "Preenchimento"],
+      ["Plataforma de gestão de leads", "OPERA Leads, com acesso do Cliente por utilizador próprio"],
+      ["Horário de contacto às leads", "Dias úteis, das 9h30 às 18h30"],
+      ["Volume incluído", "1 slot: até 300 leads por mês, incluindo leads novas e contactos de base de dados a reativar"],
+      ["Critérios de lead qualificada", "Definidos por escrito entre as Partes na fase de implementação"],
+      ["Lembretes de reunião", "A cargo do Cliente, com apoio da OPERA na configuração inicial"],
+    ]);
+  } else {
+    tabela([["Área", "Âmbito"], ["Gestão de leads (OPERA SA)", "Conforme Cláusula 2.ª"]]);
+    H3("3. Condições da Gestão de Leads");
+    tabela([
+      ["Campo", "Preenchimento"],
+      ["Plataforma de gestão de leads", "OPERA Leads, com acesso do Cliente por utilizador próprio"],
+      ["Horário de contacto às leads", "Dias úteis, das 9h30 às 18h30"],
+    ]);
+  }
   H3("4. Condições Comerciais");
   tabela([
     ["Campo", "Preenchimento"],
@@ -335,7 +394,7 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   BL("A OPERA trata os dados pessoais exclusivamente de acordo com as instruções documentadas do Cliente e para os fins previstos neste Contrato;");
   BL("A OPERA assegura que as pessoas autorizadas a tratar os dados pessoais assumiram um compromisso de confidencialidade;");
   BL("A OPERA adota as medidas técnicas e organizativas adequadas para garantir um nível de segurança adequado ao risco;");
-  BL("A OPERA não subcontrata o tratamento de dados a terceiros sem autorização prévia do Cliente, ficando desde já concedida autorização geral para os fornecedores de alojamento e infraestrutura do OPERA Leads, com dados alojados na União Europeia, e para os fornecedores de serviços de telefonia necessários ao contacto com as leads, sendo o Cliente informado de qualquer alteração;");
+  BL(`A OPERA não subcontrata o tratamento de dados a terceiros sem autorização prévia do Cliente, ficando desde já concedida autorização geral para os fornecedores de alojamento e infraestrutura do OPERA Leads, com dados alojados na União Europeia, e para os fornecedores de serviços de telefonia necessários ao contacto com as leads, sendo o Cliente informado de qualquer alteração;`);
   BL("A OPERA apoia o Cliente no cumprimento das obrigações relativas ao exercício dos direitos dos titulares dos dados e às obrigações previstas nos artigos 32.º a 36.º do RGPD;");
   BL("No termo da prestação dos Serviços, a OPERA disponibiliza ao Cliente, a seu pedido, a exportação dos dados pessoais e apaga-os no prazo de 6 (seis) meses após a cessação, salvo obrigação legal de conservação;");
   BL("A OPERA disponibiliza ao Cliente toda a informação necessária para demonstrar o cumprimento das obrigações previstas no artigo 28.º do RGPD, permitindo e contribuindo para auditorias, incluindo inspeções, realizadas pelo Cliente ou por outro auditor por este mandatado.");
@@ -343,14 +402,14 @@ export async function gerarContrato(c: Contrato, pagamentos: Pag[], opts: { roda
   tabela([
     ["Elemento", "Descrição"],
     ["Titulares", "Leads e potenciais clientes do Cliente"],
-    ["Dados", "Identificação, contacto, preferências imobiliárias e capacidade financeira declarada"],
-    ["Finalidades", "Atendimento, qualificação, agendamento e acompanhamento de leads por conta do Cliente"],
+    ["Dados", S ? "Identificação, contacto, dados profissionais e informação de qualificação comercial declarada" : "Identificação, contacto, preferências imobiliárias e capacidade financeira declarada"],
+    ["Finalidades", S ? "Contacto, qualificação e agendamento de reuniões comerciais por conta do Cliente" : "Atendimento, qualificação, agendamento e acompanhamento de leads por conta do Cliente"],
     ["Prazo de conservação", "Duração do Contrato e 6 (seis) meses após a sua cessação, sem prejuízo de obrigações legais de conservação"],
   ], 128);
 
   // Rodapé em todas as páginas
   const pages = doc.getPages();
-  const rod = opts.rodape ?? `OPERA · Contrato de Prestação de Serviços · Gestão de Leads · ${f.nome}`;
+  const rod = opts.rodape ?? `OPERA · Contrato de Prestação de Serviços · ${S ? "Agendamento de Reuniões" : "Gestão de Leads"} · ${f.nome}`;
   pages.forEach((pg, i) => {
     pg.drawText(rod, { x: M, y: 34, size: 7.5, font: R, color: GREY });
     const t = `Página ${i + 1} de ${pages.length}`;

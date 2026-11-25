@@ -325,7 +325,8 @@ export default function LeadModal({ id, ctx, onClose, inline = false }) {
           )}
           {setting && !lead.anonymized && (
             <MeetingPanel key={`${lead.id}-${lead.updated_at}`} lead={lead} stage={cur} qualificadaId={stages.find((s) => s.key === "qualificada").id}
-              busy={busy} after={after} refEl={meetingRef} />
+              busy={busy} after={after} refEl={meetingRef} toast={toast} clientName={lead.client.name}
+              bookingUrl={ctx.setting.bookingUrl(lead.client_id)} hosts={ctx.setting.hosts(lead.client_id)} />
           )}
           {setting ? <SettingQualPanel lead={lead} fields={ctx.setting.qualFields(lead.client_id)} busy={busy} onSave={qualSave} /> : (
           <div className="panel">

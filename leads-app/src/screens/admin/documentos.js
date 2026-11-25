@@ -173,8 +173,8 @@ export function mountDocumentos(box) {
       ].filter(Boolean).join(" · ");
       const tag = el("span", { className: "tag" + (c.contrato_assinado_em ? "" : c.contrato_enviado_em ? "" : " warn"), textContent: c.contrato_assinado_em ? "assinado" : c.contrato_enviado_em ? "à espera de assinatura" : c.contrato_pdf ? "segue com a 1.ª fatura" : "por gerar" });
       const gerar = botao(c.contrato_pdf ? "Gerar de novo" : "Gerar contrato", c.contrato_pdf ? "" : "pri");
-      gerar.disabled = c.servico !== "SA" || c.estado === "incompleto";
-      gerar.title = c.servico !== "SA" ? "Ainda não há modelo para este serviço" : c.estado === "incompleto" ? "Completa primeiro o contrato em Pagamentos e contratos" : "";
+      gerar.disabled = !["SA", "SETTING"].includes(c.servico) || c.estado === "incompleto";
+      gerar.title = !["SA", "SETTING"].includes(c.servico) ? "Ainda não há modelo para este serviço" : c.estado === "incompleto" ? "Completa primeiro o contrato em Pagamentos e contratos" : "";
       gerar.addEventListener("click", () => {
         const w = window.open("", "_blank");
         acao(gerar, () => chamar({ action: "gerar_contrato", contrato_id: c.id }), "Contrato gerado. Confirma o PDF antes de enviar.")
