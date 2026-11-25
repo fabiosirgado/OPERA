@@ -29,7 +29,7 @@ function perBucket(days) {
 export default function Dashboard({ ctx, isAdmin, opera }) {
   const { clients } = ctx;
   const [client, setClient] = useState("");
-  const [period, setPeriod] = useState("7");
+  const [period, setPeriod] = useState("1");
   const [range, setRange] = useState(() => ({ from: monthStartISO(), to: todayISO() }));
   const rangeOk = range.from && range.to && range.from <= range.to;
   const [d, setD] = useState(null);
