@@ -19,6 +19,8 @@ export const clientSettings = () => must(sb.from("clients").select("id,service_t
 export const clientSettingSave = (client, cfg) => must(sb.rpc("leads_cliente_setting_guardar", {
   p_client: client, p_qual_fields: cfg.qual_fields, p_desq_reasons: cfg.desq_reasons, p_meeting_hosts: cfg.meeting_hosts, p_booking_url: cfg.booking_url,
 }));
+// Emails do intermediário de crédito do cliente (aviso automático das leads qualificadas com Crédito). Devolve a lista guardada.
+export const clientIcSave = (client, emails) => must(sb.rpc("leads_cliente_ic_guardar", { p_client: client, p_emails: emails }));
 export const activeClients = () => must(sb.rpc("leads_clients_overview")).then((cs) => cs.filter((c) => c.leads_status === "ativo"));
 
 // ---------- Pipeline

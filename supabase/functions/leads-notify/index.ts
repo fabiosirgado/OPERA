@@ -25,7 +25,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 type Payload = {
-  id: number; kind: "qualificada" | "nova_lead_do_cliente" | "reuniao" | "etapa"; attempts: number; app_url: string | null; redirect_to: string | null;
+  id: number; kind: "qualificada" | "nova_lead_do_cliente" | "reuniao" | "etapa" | "credito"; attempts: number; app_url: string | null; redirect_to: string | null;
   lead: { id: string; name: string; phone: string | null; email: string | null; source: string | null; interest: string | null;
           qualification: Record<string, string>; created_at: string; stage: string;
           meeting_at?: string | null; meeting_with?: string | null; meeting_link?: string | null; reschedules?: number };
@@ -34,6 +34,8 @@ type Payload = {
   client: string; manager: { name: string | null; email: string | null } | null; pinned: string[]; to: string[];
   task?: { due_at: string; note: string | null; created_at: string; by: string | null } | null;
   stage_event?: { at: string; to: string | null; from: string | null; by: string | null } | null;
+  // Aviso ao intermediário de crédito: resumo da última chamada com a lead.
+  last_call?: { summary: string | null; at: string | null } | null;
 };
 
 type MsgPayload = {
@@ -187,6 +189,42 @@ export function renderEtapa(p: Payload) {
 const hora = (iso: string) =>
   new Intl.DateTimeFormat("pt-PT", { timeZone: "Europe/Lisbon", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
+// Lead qualificada com Crédito no Objetivo: aviso ao intermediário de crédito do cliente.
+// Sem ligação à plataforma, porque o intermediário não tem acesso ao OPERA Leads.
+const QUAL_CREDITO = ["Objetivo", "Financiamento", "Budget", "Prazo", "Tem imóvel para vender"];
+export function renderCredito(p: Payload) {
+  const l = p.lead;
+  const subject = `Lead de crédito: ${l.name} · ${p.client}`;
+  const intro = `A equipa OPERA qualificou uma lead de ${p.client} com interesse em crédito. Segue o contacto e o contexto para ligar.`;
+  const rows = ([
+    ["Nome", l.name], ["Telefone", l.phone ?? ""], ["Email", l.email ?? ""],
+    ...QUAL_CREDITO.filter((k) => l.qualification?.[k]).map((k) => [k, l.qualification[k]] as [string, string]),
+    ["Origem", l.source ?? ""],
+  ] as [string, string][]).filter(([, v]) => v);
+  const table = rows.map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#64748b;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;color:#0f172a"><b>${esc(v)}</b></td></tr>`).join("");
+  const pinned = p.pinned ?? [];
+  const notes = pinned.length
+    ? `<h3 style="font-size:15px;margin:24px 0 8px">Notas importantes</h3>${pinned.map((n) =>
+        `<p style="margin:0 0 8px;padding:10px 12px;background:#fef9c3;border-radius:8px;white-space:pre-line">${esc(n)}</p>`).join("")}`
+    : "";
+  const call = p.last_call?.summary
+    ? `<h3 style="font-size:15px;margin:24px 0 8px">Resumo da última chamada${p.last_call.at ? ` · ${esc(hora(p.last_call.at))}` : ""}</h3><p style="margin:0 0 8px;padding:10px 12px;background:#f1f5f9;border-radius:8px;white-space:pre-line;color:#0f172a">${esc(p.last_call.summary)}</p>`
+    : "";
+  const reply = p.manager?.name ? `<p style="color:#64748b;font-size:13px;margin-top:24px">Dúvidas sobre esta lead? Responda a este email e fala com ${esc(p.manager.name)}, da OPERA.</p>` : "";
+  const html = `<!doctype html><html lang="pt"><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
+<div style="max-width:560px;margin:0 auto;padding:24px"><div style="background:#fff;border-radius:12px;padding:28px">
+<p style="margin:0 0 4px;font-size:13px;color:#64748b"><b style="color:#0f172a">OPERA</b> Leads · ${esc(p.client)}</p>
+<h2 style="margin:0 0 12px;font-size:20px;color:#0f172a">${esc(subject)}</h2>
+<p style="margin:0 0 16px;color:#334155">${esc(intro)}</p>
+<table style="border-collapse:collapse;font-size:14px">${table}</table>${notes}${call}${reply}
+</div><p style="font-size:12px;color:#94a3b8;text-align:center">Recebe este email porque é o intermediário de crédito indicado por ${esc(p.client)}.</p></div></body></html>`;
+  const text = [subject, "", intro, "", ...rows.map(([k, v]) => `${k}: ${v}`),
+    ...(pinned.length ? ["", "Notas importantes:", ...pinned] : []),
+    ...(p.last_call?.summary ? ["", "Resumo da última chamada:", p.last_call.summary] : [])].join("\n");
+  return { subject, html, text, link: null as string | null };
+}
+
 // Aviso de mensagens por ler. Para o cliente, responder ao email fala com o gestor da OPERA; o resto da conversa é na plataforma.
 export function renderMessages(p: MsgPayload) {
   const link = p.app_url ? `${p.app_url}${p.app_url.includes("?") ? "&" : "?"}conversa=${p.client_id}` : null;
@@ -214,13 +252,16 @@ export function renderMessages(p: MsgPayload) {
   return { subject, html, text, link };
 }
 
+const renderLead = (p: Payload) =>
+  p.kind === "credito" ? renderCredito(p) : p.kind === "reuniao" || p.kind === "etapa" ? renderReuniao(p) : render(p);
+
 const replyTo = (p: Payload | MsgPayload) =>
-  (p.kind === "qualificada" || (p.kind === "mensagens" && p.side === "cliente")) && p.manager?.email ? p.manager.email : null;
+  (p.kind === "qualificada" || p.kind === "credito" || (p.kind === "mensagens" && p.side === "cliente")) && p.manager?.email ? p.manager.email : null;
 
 async function send(p: Payload | MsgPayload) {
   const to = p.redirect_to ? [p.redirect_to] : p.to;
   if (!to.length) return { ok: false, error: "Sem destinatários.", to };
-  const mail = p.kind === "mensagens" ? renderMessages(p) : p.kind === "reuniao" || p.kind === "etapa" ? renderReuniao(p) : render(p);
+  const mail = p.kind === "mensagens" ? renderMessages(p) : renderLead(p);
   const rt = replyTo(p);
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -303,7 +344,7 @@ Deno.serve(async (req) => {
     const { data, error } = await db.rpc("leads_notification_preview", { p_id: body.id });
     if (error || !data) return json({ error: "Aviso não encontrado." }, 404);
     const p = data as Payload;
-    return json({ to: p.redirect_to ? [p.redirect_to] : p.to, real_to: p.to, reply_to: replyTo(p), ...(p.kind === "reuniao" || p.kind === "etapa" ? renderReuniao(p) : render(p)) });
+    return json({ to: p.redirect_to ? [p.redirect_to] : p.to, real_to: p.to, reply_to: replyTo(p), ...renderLead(p) });
   }
 
   if (body.action === "preview_mensagens") {
